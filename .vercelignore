@@ -1,0 +1,34 @@
+# Python files
+*.py
+*.pyc
+__pycache__/
+venv/
+.env
+.env.example
+
+# Tests
+tests/
+pytest.ini
+
+# Config files
+config/
+
+# API directory
+api/
+
+# Docker files
+Dockerfile
+docker-compose.yml
+render.yaml
+
+# Documentation (keep only essential)
+docs/
+
+# Git
+.git/
+.gitignore
+
+# Dependencies
+requirements.txt
+
+# Only deploy the web directory
