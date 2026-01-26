@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BarberScore POS</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
         * {
             margin: 0;
@@ -14,39 +14,43 @@
         }
 
         :root {
-            /* 2026 Color Palette - Dark Mode First */
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #121218;
-            --bg-elevated: #1a1a24;
-            --bg-glass: rgba(255, 255, 255, 0.05);
-            --bg-glass-hover: rgba(255, 255, 255, 0.08);
+            /* White & Red Professional Color Scheme */
+            --white: #FFFFFF;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
 
-            /* Accent Colors - Vibrant but Refined */
-            --accent-primary: #8b5cf6; /* Purple */
-            --accent-secondary: #06b6d4; /* Cyan */
-            --accent-success: #10b981; /* Green */
-            --accent-warning: #f59e0b; /* Amber */
-            --accent-danger: #ef4444; /* Red */
+            /* Red Accents */
+            --red-50: #FEF2F2;
+            --red-100: #FEE2E2;
+            --red-500: #EF4444;
+            --red-600: #DC2626;
+            --red-700: #B91C1C;
 
-            /* Text Colors */
-            --text-primary: #f8fafc;
-            --text-secondary: #cbd5e1;
-            --text-tertiary: #64748b;
+            /* Success/Money */
+            --green-500: #10B981;
+            --green-600: #059669;
 
-            /* Borders & Dividers */
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-medium: rgba(255, 255, 255, 0.12);
+            /* Warning */
+            --amber-500: #F59E0B;
 
-            /* Shadows - Depth & Elevation */
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-
-            /* Glass Effect */
-            --blur-sm: blur(8px);
-            --blur-md: blur(12px);
-            --blur-lg: blur(24px);
+            /* Primary Colors */
+            --bg-primary: var(--white);
+            --bg-secondary: var(--gray-50);
+            --bg-elevated: var(--white);
+            --text-primary: var(--gray-900);
+            --text-secondary: var(--gray-600);
+            --text-tertiary: var(--gray-400);
+            --accent-primary: var(--red-600);
+            --accent-hover: var(--red-700);
+            --border-color: var(--gray-200);
 
             /* Spacing */
             --spacing-xs: 0.5rem;
@@ -57,142 +61,88 @@
             --spacing-2xl: 3rem;
 
             /* Border Radius */
-            --radius-sm: 0.5rem;
-            --radius-md: 0.75rem;
-            --radius-lg: 1rem;
-            --radius-xl: 1.5rem;
-            --radius-full: 9999px;
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
             /* Transitions */
-            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-primary);
+            background: var(--bg-secondary);
             color: var(--text-primary);
             line-height: 1.6;
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
-        /* Animated Background Gradient */
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 50% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
-            animation: gradientShift 20s ease infinite;
-            z-index: -1;
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(-5%, -5%) rotate(120deg); }
-            66% { transform: translate(5%, 5%) rotate(240deg); }
-        }
-
-        /* Glass Card */
-        .glass-card {
-            background: var(--bg-glass);
-            backdrop-filter: var(--blur-md);
-            -webkit-backdrop-filter: var(--blur-md);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-lg);
-            box-shadow: var(--shadow-lg);
-            transition: all var(--transition-base);
-        }
-
-        .glass-card:hover {
-            background: var(--bg-glass-hover);
-            border-color: var(--border-medium);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-xl);
-        }
-
-        /* Button Styles */
+        /* Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: var(--spacing-xs);
-            padding: 0.75rem 1.5rem;
-            font-size: 0.95rem;
+            padding: 0.625rem 1.25rem;
+            font-size: 0.875rem;
             font-weight: 600;
             border: none;
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all var(--transition-base);
+            transition: all var(--transition);
             font-family: inherit;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn:active::before {
-            width: 300px;
-            height: 300px;
+            text-decoration: none;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-primary) 0%, #a78bfa 100%);
+            background: var(--accent-primary);
             color: white;
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            box-shadow: var(--shadow-sm);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+            background: var(--accent-hover);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: var(--bg-elevated);
+            background: white;
             color: var(--text-primary);
-            border: 1px solid var(--border-medium);
+            border: 1px solid var(--border-color);
         }
 
         .btn-secondary:hover {
-            background: var(--bg-glass-hover);
-            border-color: var(--accent-primary);
+            background: var(--gray-50);
+            border-color: var(--gray-300);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, var(--accent-success) 0%, #34d399 100%);
+            background: var(--green-600);
             color: white;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
         .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            background: var(--green-500);
         }
 
-        .btn-danger {
-            background: linear-gradient(135deg, var(--accent-danger) 0%, #f87171 100%);
-            color: white;
+        .btn-lg {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
         }
 
-        /* Input Styles */
+        .btn-block {
+            width: 100%;
+        }
+
+        /* Input Fields */
         .input-group {
             margin-bottom: var(--spacing-lg);
         }
@@ -201,32 +151,117 @@
             display: block;
             font-size: 0.875rem;
             font-weight: 600;
-            color: var(--text-secondary);
+            color: var(--text-primary);
             margin-bottom: var(--spacing-xs);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        }
+
+        .input-label .required {
+            color: var(--accent-primary);
+            margin-left: 0.25rem;
         }
 
         .input-field {
             width: 100%;
-            padding: 0.875rem 1rem;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
+            padding: 0.625rem 0.875rem;
+            background: white;
+            border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             color: var(--text-primary);
-            font-size: 0.95rem;
+            font-size: 0.875rem;
             font-family: inherit;
-            transition: all var(--transition-base);
+            transition: all var(--transition);
         }
 
         .input-field:focus {
             outline: none;
             border-color: var(--accent-primary);
-            background: var(--bg-secondary);
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
         }
 
-        /* PIN Input Specific */
+        .input-error {
+            color: var(--accent-primary);
+            font-size: 0.75rem;
+            margin-top: var(--spacing-xs);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-header {
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+
+        /* Onboarding */
+        .onboarding-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-xl);
+        }
+
+        .onboarding-card {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-2xl);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .onboarding-header {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .onboarding-logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto var(--spacing-md);
+            background: var(--accent-primary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        .onboarding-title {
+            font-size: 1.875rem;
+            font-weight: 900;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .onboarding-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+        }
+
+        /* PIN Input */
         .pin-inputs {
             display: flex;
             gap: var(--spacing-md);
@@ -240,353 +275,429 @@
             text-align: center;
             font-size: 1.5rem;
             font-weight: 700;
-            background: var(--bg-glass);
-            border: 2px solid var(--border-medium);
+            background: white;
+            border: 2px solid var(--border-color);
             border-radius: var(--radius-md);
             color: var(--text-primary);
-            transition: all var(--transition-base);
+            transition: all var(--transition);
         }
 
         .pin-input:focus {
             outline: none;
             border-color: var(--accent-primary);
-            background: var(--bg-elevated);
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-            transform: scale(1.05);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
         }
 
-        /* Container */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: var(--spacing-xl);
-        }
-
-        /* Hide by default */
-        .hidden {
-            display: none !important;
-        }
-
-        /* Onboarding Screens */
-        .onboarding-container {
-            min-height: 100vh;
+        /* Main App Layout */
+        .app-container {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: var(--spacing-xl);
-        }
-
-        .onboarding-card {
-            width: 100%;
-            max-width: 500px;
-            background: var(--bg-glass);
-            backdrop-filter: var(--blur-lg);
-            -webkit-backdrop-filter: var(--blur-lg);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-2xl);
-            box-shadow: var(--shadow-xl);
-        }
-
-        .onboarding-header {
-            text-align: center;
-            margin-bottom: var(--spacing-2xl);
-        }
-
-        .onboarding-logo {
-            font-size: 3rem;
-            margin-bottom: var(--spacing-md);
-        }
-
-        .onboarding-title {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: var(--spacing-sm);
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .onboarding-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-        }
-
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-xl);
-        }
-
-        .step-dot {
-            width: 0.5rem;
-            height: 0.5rem;
-            border-radius: var(--radius-full);
-            background: var(--border-medium);
-            transition: all var(--transition-base);
-        }
-
-        .step-dot.active {
-            width: 2rem;
-            background: var(--accent-primary);
-        }
-
-        /* Main POS Layout */
-        .pos-container {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: var(--spacing-xl);
             height: 100vh;
-            padding: var(--spacing-xl);
+            overflow: hidden;
         }
 
-        .pos-left {
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 240px;
+            background: white;
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            gap: var(--spacing-lg);
         }
 
-        .pos-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .sidebar-header {
             padding: var(--spacing-lg);
-            background: var(--bg-glass);
-            backdrop-filter: var(--blur-md);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-lg);
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .shop-info h1 {
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: 0.25rem;
-        }
-
-        .shop-info p {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .header-actions {
+        .sidebar-logo {
             display: flex;
+            align-items: center;
             gap: var(--spacing-sm);
         }
 
-        .icon-btn {
-            width: 2.5rem;
-            height: 2.5rem;
+        .sidebar-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-primary);
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all var(--transition-base);
+            color: white;
+            font-weight: 700;
             font-size: 1.25rem;
         }
 
-        .icon-btn:hover {
-            background: var(--bg-glass-hover);
-            border-color: var(--accent-primary);
-            transform: translateY(-2px);
+        .sidebar-logo-text {
+            font-weight: 700;
+            font-size: 1.125rem;
         }
 
-        /* Services Grid */
-        .services-section {
+        .sidebar-nav {
             flex: 1;
-            background: var(--bg-glass);
-            backdrop-filter: var(--blur-md);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-lg);
+            padding: var(--spacing-md);
             overflow-y: auto;
         }
 
-        .section-header {
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: 0.75rem var(--spacing-md);
+            margin-bottom: var(--spacing-xs);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: var(--gray-50);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--red-50);
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            font-size: 1.125rem;
+        }
+
+        .sidebar-footer {
+            padding: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg-secondary);
+        }
+
+        .content-header {
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-lg) var(--spacing-xl);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: var(--spacing-lg);
         }
 
-        .section-title {
-            font-size: 1.25rem;
+        .content-title {
+            font-size: 1.5rem;
             font-weight: 700;
         }
 
+        .content-body {
+            padding: var(--spacing-xl);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        /* Stat Card */
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--red-50);
+            color: var(--accent-primary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .stat-change.positive {
+            color: var(--green-600);
+        }
+
+        .stat-change.negative {
+            color: var(--accent-primary);
+        }
+
+        /* BarberScore Display */
+        .score-display {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--red-700) 100%);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-2xl);
+            color: white;
+            margin-bottom: var(--spacing-xl);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .score-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .score-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .score-value {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .score-tier {
+            font-size: 1.25rem;
+            font-weight: 600;
+            opacity: 0.95;
+        }
+
+        .score-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .score-metric {
+            background: rgba(255, 255, 255, 0.1);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+        }
+
+        .score-metric-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .score-metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Service Grid */
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: var(--spacing-md);
         }
 
         .service-card {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-md);
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
             padding: var(--spacing-lg);
             cursor: pointer;
-            transition: all var(--transition-base);
+            transition: all var(--transition);
             text-align: center;
-            position: relative;
         }
 
         .service-card:hover {
-            background: var(--bg-glass-hover);
             border-color: var(--accent-primary);
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .service-card.selected {
-            border-color: var(--accent-primary);
-            background: rgba(139, 92, 246, 0.1);
-        }
-
-        .service-icon {
-            font-size: 2rem;
-            margin-bottom: var(--spacing-sm);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
 
         .service-name {
             font-weight: 600;
             margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
         }
 
         .service-price {
-            color: var(--accent-success);
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-
-        .add-service-card {
-            background: var(--bg-glass);
-            border: 2px dashed var(--border-medium);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            color: var(--text-tertiary);
-        }
-
-        .add-service-card:hover {
-            border-color: var(--accent-primary);
-            color: var(--accent-primary);
-            background: rgba(139, 92, 246, 0.05);
-        }
-
-        /* Cart Sidebar */
-        .cart-sidebar {
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-glass);
-            backdrop-filter: var(--blur-md);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-lg);
-        }
-
-        .cart-header {
             font-size: 1.25rem;
             font-weight: 700;
-            margin-bottom: var(--spacing-lg);
-            padding-bottom: var(--spacing-md);
-            border-bottom: 1px solid var(--border-subtle);
+            color: var(--accent-primary);
         }
 
-        .cart-items {
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: var(--spacing-lg);
+        /* Table */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
         }
 
-        .cart-item {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-md);
-            margin-bottom: var(--spacing-sm);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .cart-item-info {
-            flex: 1;
-        }
-
-        .cart-item-name {
+        .table th {
+            background: var(--gray-50);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.875rem;
             font-weight: 600;
-            margin-bottom: 0.25rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .cart-item-price {
-            color: var(--text-secondary);
+        .table td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border-color);
             font-size: 0.875rem;
         }
 
-        .cart-item-remove {
-            width: 2rem;
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-subtle);
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.625rem;
             border-radius: var(--radius-sm);
-            cursor: pointer;
-            color: var(--accent-danger);
-            transition: all var(--transition-fast);
+            font-size: 0.75rem;
+            font-weight: 600;
         }
 
-        .cart-item-remove:hover {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: var(--accent-danger);
+        .badge-success {
+            background: #D1FAE5;
+            color: var(--green-600);
         }
 
-        .cart-empty {
-            text-align: center;
-            padding: var(--spacing-2xl);
-            color: var(--text-tertiary);
+        .badge-warning {
+            background: #FEF3C7;
+            color: var(--amber-500);
         }
 
-        .cart-empty-icon {
-            font-size: 3rem;
+        .badge-danger {
+            background: var(--red-100);
+            color: var(--accent-primary);
+        }
+
+        .badge-gray {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        /* Procurement Section */
+        .tier-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
             margin-bottom: var(--spacing-md);
-            opacity: 0.3;
         }
 
-        .cart-totals {
-            border-top: 1px solid var(--border-subtle);
-            padding-top: var(--spacing-lg);
-            margin-bottom: var(--spacing-lg);
+        .tier-card.locked {
+            opacity: 0.6;
         }
 
-        .cart-total-row {
+        .tier-card.unlocked {
+            border-color: var(--green-600);
+            background: #F0FDF4;
+        }
+
+        .tier-card.current {
+            border-color: var(--accent-primary);
+            background: var(--red-50);
+        }
+
+        .tier-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: var(--spacing-sm);
-            font-size: 0.95rem;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
         }
 
-        .cart-total-row.total {
-            font-size: 1.25rem;
+        .tier-name {
+            font-size: 1.125rem;
             font-weight: 700;
-            color: var(--accent-success);
-            margin-top: var(--spacing-md);
-            padding-top: var(--spacing-md);
-            border-top: 1px solid var(--border-subtle);
         }
 
-        .cart-actions {
+        .tier-score-range {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .tier-benefits {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tier-benefits li {
+            padding: var(--spacing-xs) 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .tier-benefits li:before {
+            content: "✓";
+            color: var(--green-600);
+            font-weight: 700;
+            margin-right: var(--spacing-sm);
+        }
+
+        /* Time Period Selector */
+        .period-selector {
             display: flex;
-            flex-direction: column;
-            gap: var(--spacing-sm);
+            gap: var(--spacing-xs);
+            margin-bottom: var(--spacing-lg);
+            background: white;
+            padding: var(--spacing-xs);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            width: fit-content;
+        }
+
+        .period-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+        }
+
+        .period-btn.active {
+            background: var(--accent-primary);
+            color: white;
         }
 
         /* Modal */
@@ -596,40 +707,23 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: var(--blur-lg);
+            background: rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            animation: fadeIn 0.2s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            padding: var(--spacing-xl);
         }
 
         .modal {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-subtle);
+            background: white;
             border-radius: var(--radius-xl);
             padding: var(--spacing-2xl);
             max-width: 500px;
-            width: 90%;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: var(--shadow-xl);
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .modal-header {
@@ -642,22 +736,119 @@
             margin-bottom: var(--spacing-xs);
         }
 
-        .modal-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
         .modal-actions {
             display: flex;
             gap: var(--spacing-sm);
             margin-top: var(--spacing-xl);
         }
 
-        .modal-actions .btn {
-            flex: 1;
+        /* Cart Sidebar */
+        .cart-sidebar {
+            width: 360px;
+            background: white;
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Success Animation */
+        .cart-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-md);
+        }
+
+        .cart-item {
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .cart-item-price {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .cart-item-remove {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .cart-footer {
+            border-top: 1px solid var(--border-color);
+            padding: var(--spacing-lg);
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-sm);
+            font-size: 0.875rem;
+        }
+
+        .cart-total.total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+            margin-top: var(--spacing-md);
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-4 {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .mt-4 {
+            margin-top: var(--spacing-lg);
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-2xl);
+            color: var(--text-tertiary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.3;
+        }
+
+        /* Success State */
         .success-overlay {
             position: fixed;
             top: 0;
@@ -670,108 +861,85 @@
             align-items: center;
             justify-content: center;
             z-index: 2000;
-            animation: fadeIn 0.3s ease;
+            color: white;
         }
 
         .success-icon {
-            font-size: 6rem;
-            margin-bottom: var(--spacing-xl);
-            animation: successPop 0.5s ease;
-        }
-
-        @keyframes successPop {
-            0% {
-                transform: scale(0);
-                opacity: 0;
-            }
-            50% {
-                transform: scale(1.2);
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
+            font-size: 5rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-lg);
         }
 
         .success-message {
             font-size: 2rem;
             font-weight: 700;
+        }
+
+        /* File Upload */
+        .file-upload {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
             text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .file-upload:hover {
+            border-color: var(--accent-primary);
+            background: var(--red-50);
+        }
+
+        .file-upload input {
+            display: none;
         }
 
         /* Responsive */
         @media (max-width: 1024px) {
-            .pos-container {
-                grid-template-columns: 1fr;
-            }
-
-            .cart-sidebar {
+            .sidebar {
                 position: fixed;
+                left: -240px;
+                top: 0;
                 bottom: 0;
-                left: 0;
-                right: 0;
-                border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-                max-height: 60vh;
-                transform: translateY(calc(100% - 60px));
-                transition: transform var(--transition-base);
+                z-index: 100;
+                transition: left var(--transition);
             }
 
-            .cart-sidebar.expanded {
-                transform: translateY(0);
+            .sidebar.open {
+                left: 0;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
             }
         }
 
         @media (max-width: 768px) {
+            .cart-sidebar {
+                position: fixed;
+                bottom: -100%;
+                left: 0;
+                right: 0;
+                width: 100%;
+                height: 70vh;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+                border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+                z-index: 90;
+                transition: bottom var(--transition);
+            }
+
+            .cart-sidebar.open {
+                bottom: 0;
+            }
+
             .services-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             }
-
-            .onboarding-card {
-                padding: var(--spacing-lg);
-            }
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            border: 3px solid var(--border-subtle);
-            border-top: 3px solid var(--accent-primary);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .mt-4 {
-            margin-top: var(--spacing-lg);
-        }
-
-        .text-error {
-            color: var(--accent-danger);
-            font-size: 0.875rem;
-            margin-top: var(--spacing-xs);
-        }
-
-        .text-success {
-            color: var(--accent-success);
-        }
-
-        .text-muted {
-            color: var(--text-secondary);
         }
     </style>
 </head>
 <body>
-    <!-- Loading React -->
     <div id="root"></div>
 
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -785,17 +953,20 @@
         // Main App Component
         function App() {
             const [currentScreen, setCurrentScreen] = useState('welcome'); // welcome, setup, passcode, main
+            const [currentView, setCurrentView] = useState('dashboard'); // dashboard, pos, analytics, barberscore, procurement, settings
             const [user, setUser] = useState(null);
             const [services, setServices] = useState([]);
             const [cart, setCart] = useState([]);
-            const [showModal, setShowModal] = useState(null); // null, 'addService', 'editService', 'settings', 'checkout', 'passcode'
+            const [transactions, setTransactions] = useState([]);
+            const [showModal, setShowModal] = useState(null);
             const [selectedService, setSelectedService] = useState(null);
             const [showSuccess, setShowSuccess] = useState(false);
             const [error, setError] = useState('');
-            const api = new APIClient();
+            const [analyticsPeriod, setAnalyticsPeriod] = useState('week'); // day, week, month, year
 
             useEffect(() => {
                 checkAuth();
+                loadTransactions();
             }, []);
 
             const checkAuth = () => {
@@ -806,15 +977,21 @@
                     setUser(JSON.parse(savedUser));
                     setServices(savedServices ? JSON.parse(savedServices) : []);
 
-                    // Check if passcode is set
                     const hasPasscode = localStorage.getItem('pos_passcode');
                     if (!hasPasscode) {
                         setCurrentScreen('passcode');
                     } else {
-                        setShowModal('passcode'); // Require passcode to enter
+                        setShowModal('passcode');
                     }
                 } else {
                     setCurrentScreen('welcome');
+                }
+            };
+
+            const loadTransactions = () => {
+                const saved = localStorage.getItem('pos_transactions');
+                if (saved) {
+                    setTransactions(JSON.parse(saved));
                 }
             };
 
@@ -822,7 +999,9 @@
                 const newUser = {
                     id: Date.now().toString(),
                     ...businessData,
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    barberScore: 0,
+                    tier: 'Level 0'
                 };
 
                 setUser(newUser);
@@ -847,10 +1026,7 @@
             };
 
             const addService = (service) => {
-                const newService = {
-                    id: Date.now().toString(),
-                    ...service
-                };
+                const newService = { id: Date.now().toString(), ...service };
                 const updated = [...services, newService];
                 setServices(updated);
                 localStorage.setItem('pos_services', JSON.stringify(updated));
@@ -876,6 +1052,10 @@
                 setCart(cart.filter(item => item.cartId !== cartId));
             };
 
+            const clearCart = () => {
+                setCart([]);
+            };
+
             const calculateTotal = () => {
                 const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
                 const tax = subtotal * 0.08;
@@ -883,12 +1063,9 @@
                 return { subtotal, tax, total };
             };
 
-            const handleCheckout = async () => {
+            const handleCheckout = () => {
                 if (cart.length === 0) return;
 
-                const { total } = calculateTotal();
-
-                // Log transaction
                 const transaction = {
                     id: Date.now().toString(),
                     items: cart,
@@ -898,12 +1075,13 @@
                     shopName: user.shopName
                 };
 
-                // Save to transaction history
-                const history = JSON.parse(localStorage.getItem('pos_transactions') || '[]');
-                history.push(transaction);
-                localStorage.setItem('pos_transactions', JSON.stringify(history));
+                const updated = [...transactions, transaction];
+                setTransactions(updated);
+                localStorage.setItem('pos_transactions', JSON.stringify(updated));
 
-                // Show success
+                // Update BarberScore (simplified)
+                updateBarberScore(transaction);
+
                 setShowSuccess(true);
                 setCart([]);
                 setShowModal(null);
@@ -913,52 +1091,152 @@
                 }, 2000);
             };
 
-            // Render appropriate screen
+            const updateBarberScore = (transaction) => {
+                // Simplified scoring: +1 point per $10 spent
+                const points = Math.floor(transaction.total / 10);
+                const newScore = Math.min(100, user.barberScore + points);
+                const newTier = calculateTier(newScore);
+
+                const updatedUser = {
+                    ...user,
+                    barberScore: newScore,
+                    tier: newTier
+                };
+
+                setUser(updatedUser);
+                localStorage.setItem('pos_user', JSON.stringify(updatedUser));
+            };
+
+            const calculateTier = (score) => {
+                if (score >= 95) return 'Level 4';
+                if (score >= 85) return 'Level 3';
+                if (score >= 70) return 'Level 2';
+                if (score >= 50) return 'Level 1';
+                return 'Level 0';
+            };
+
+            const getAnalytics = () => {
+                const now = new Date();
+                let filtered = transactions;
+
+                switch (analyticsPeriod) {
+                    case 'day':
+                        filtered = transactions.filter(t => {
+                            const tDate = new Date(t.timestamp);
+                            return tDate.toDateString() === now.toDateString();
+                        });
+                        break;
+                    case 'week':
+                        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        filtered = transactions.filter(t => new Date(t.timestamp) >= weekAgo);
+                        break;
+                    case 'month':
+                        filtered = transactions.filter(t => {
+                            const tDate = new Date(t.timestamp);
+                            return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+                        });
+                        break;
+                    case 'year':
+                        filtered = transactions.filter(t => {
+                            const tDate = new Date(t.timestamp);
+                            return tDate.getFullYear() === now.getFullYear();
+                        });
+                        break;
+                }
+
+                const revenue = filtered.reduce((sum, t) => sum + t.total, 0);
+                const count = filtered.length;
+                const avgTransaction = count > 0 ? revenue / count : 0;
+
+                return { revenue, count, avgTransaction, transactions: filtered };
+            };
+
+            const handleCSVImport = (file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const text = e.target.result;
+                    const lines = text.split('\n').slice(1); // Skip header
+                    const imported = [];
+
+                    lines.forEach(line => {
+                        const [timestamp, amount, items] = line.split(',');
+                        if (timestamp && amount) {
+                            imported.push({
+                                id: Date.now().toString() + Math.random(),
+                                timestamp,
+                                total: parseFloat(amount),
+                                subtotal: parseFloat(amount) / 1.08,
+                                tax: parseFloat(amount) * 0.08 / 1.08,
+                                items: items ? items.split('|').map(i => ({ name: i })) : [],
+                                barberId: user.id,
+                                shopName: user.shopName,
+                                imported: true
+                            });
+                        }
+                    });
+
+                    const updated = [...transactions, ...imported];
+                    setTransactions(updated);
+                    localStorage.setItem('pos_transactions', JSON.stringify(updated));
+                    alert(`Imported ${imported.length} transactions`);
+                    setShowModal(null);
+                };
+                reader.readAsText(file);
+            };
+
+            // Render screens
             if (currentScreen === 'welcome') {
                 return <WelcomeScreen onNext={() => setCurrentScreen('setup')} />;
             }
 
             if (currentScreen === 'setup') {
-                return <BusinessSetupScreen onComplete={handleBusinessSetup} />;
+                return <BusinessSetupScreen onComplete={handleBusinessSetup} onBack={() => setCurrentScreen('welcome')} />;
             }
 
             if (currentScreen === 'passcode') {
-                return (
-                    <PasscodeSetupScreen
-                        onComplete={handlePasscodeSetup}
-                        isSetup={true}
-                    />
-                );
+                return <PasscodeSetupScreen onComplete={handlePasscodeSetup} isSetup={true} />;
             }
 
             if (currentScreen === 'main') {
                 return (
                     <>
-                        <MainPOS
-                            user={user}
-                            services={services}
-                            cart={cart}
-                            onAddToCart={addToCart}
-                            onRemoveFromCart={removeFromCart}
-                            onCheckout={() => setShowModal('checkout')}
-                            onAddService={() => setShowModal('addService')}
-                            onEditService={(service) => {
-                                setSelectedService(service);
-                                setShowModal('editService');
-                            }}
-                            onSettings={() => setShowModal('settings')}
-                            onLogout={() => {
-                                localStorage.clear();
-                                window.location.reload();
-                            }}
-                            calculateTotal={calculateTotal}
-                        />
-
-                        {showModal === 'addService' && (
-                            <ServiceModal
-                                onClose={() => setShowModal(null)}
-                                onSave={addService}
+                        <div className="app-container">
+                            <Sidebar
+                                currentView={currentView}
+                                onViewChange={setCurrentView}
+                                user={user}
+                                onLogout={() => {
+                                    localStorage.clear();
+                                    window.location.reload();
+                                }}
                             />
+
+                            <MainContent
+                                currentView={currentView}
+                                user={user}
+                                services={services}
+                                cart={cart}
+                                transactions={transactions}
+                                analyticsPeriod={analyticsPeriod}
+                                onPeriodChange={setAnalyticsPeriod}
+                                onAddToCart={addToCart}
+                                onRemoveFromCart={removeFromCart}
+                                onClearCart={clearCart}
+                                onCheckout={() => setShowModal('checkout')}
+                                onAddService={() => setShowModal('addService')}
+                                onEditService={(service) => {
+                                    setSelectedService(service);
+                                    setShowModal('editService');
+                                }}
+                                onImportCSV={() => setShowModal('importCSV')}
+                                calculateTotal={calculateTotal}
+                                getAnalytics={getAnalytics}
+                            />
+                        </div>
+
+                        {/* Modals */}
+                        {showModal === 'addService' && (
+                            <ServiceModal onClose={() => setShowModal(null)} onSave={addService} />
                         )}
 
                         {showModal === 'editService' && (
@@ -986,12 +1264,16 @@
                             />
                         )}
 
+                        {showModal === 'importCSV' && (
+                            <CSVImportModal
+                                onClose={() => setShowModal(null)}
+                                onImport={handleCSVImport}
+                            />
+                        )}
+
                         {showModal === 'passcode' && (
                             <PasscodeVerifyModal
                                 onVerify={handlePasscodeVerify}
-                                onClose={() => {
-                                    // Can't close without correct passcode
-                                }}
                                 error={error}
                             />
                         )}
@@ -1010,24 +1292,38 @@
                 <div className="onboarding-container">
                     <div className="onboarding-card">
                         <div className="onboarding-header">
-                            <div className="onboarding-logo">💈</div>
+                            <div className="onboarding-logo">BS</div>
                             <h1 className="onboarding-title">BarberScore POS</h1>
                             <p className="onboarding-subtitle">
-                                Modern point of sale for barbershops. Built for 2026.
+                                Complete point-of-sale system with integrated BarberScore tracking and procurement access.
                             </p>
                         </div>
 
-                        <div style={{ marginBottom: 'var(--spacing-xl)', textAlign: 'center' }}>
-                            <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--spacing-lg)' }}>
-                                ✂️ Manage services & pricing<br/>
-                                💳 Process payments instantly<br/>
-                                📊 Track your earnings<br/>
-                                🔒 Secure with passcode protection
-                            </p>
+                        <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+                            <div style={{ marginBottom: 'var(--spacing-md)', paddingBottom: 'var(--spacing-md)', borderBottom: '1px solid var(--border-color)' }}>
+                                <strong>Track Your Score</strong>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                                    Every transaction builds your BarberScore, unlocking better pricing and procurement access.
+                                </p>
+                            </div>
+
+                            <div style={{ marginBottom: 'var(--spacing-md)', paddingBottom: 'var(--spacing-md)', borderBottom: '1px solid var(--border-color)' }}>
+                                <strong>Earn Procurement Access</strong>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                                    Build your score to unlock warehouse ordering, better pricing, and net terms.
+                                </p>
+                            </div>
+
+                            <div>
+                                <strong>Manage Everything</strong>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                                    Services, pricing, analytics, and income tracking all in one place.
+                                </p>
+                            </div>
                         </div>
 
-                        <button className="btn btn-primary" style={{ width: '100%' }} onClick={onNext}>
-                            Get Started →
+                        <button className="btn btn-primary btn-lg btn-block" onClick={onNext}>
+                            Get Started
                         </button>
                     </div>
                 </div>
@@ -1035,7 +1331,7 @@
         }
 
         // Business Setup Screen
-        function BusinessSetupScreen({ onComplete }) {
+        function BusinessSetupScreen({ onComplete, onBack }) {
             const [formData, setFormData] = useState({
                 shopName: '',
                 ownerName: '',
@@ -1048,8 +1344,15 @@
                 const newErrors = {};
                 if (!formData.shopName.trim()) newErrors.shopName = 'Shop name is required';
                 if (!formData.ownerName.trim()) newErrors.ownerName = 'Owner name is required';
-                if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+                if (!formData.email.trim()) {
+                    newErrors.email = 'Email is required';
+                } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
                     newErrors.email = 'Invalid email address';
+                }
+                if (!formData.phone.trim()) {
+                    newErrors.phone = 'Phone number is required';
+                } else if (!/^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/.test(formData.phone)) {
+                    newErrors.phone = 'Invalid phone number';
                 }
                 return newErrors;
             };
@@ -1067,17 +1370,14 @@
                 <div className="onboarding-container">
                     <div className="onboarding-card">
                         <div className="onboarding-header">
-                            <h2 className="onboarding-title">Set Up Your Shop</h2>
-                            <p className="onboarding-subtitle">Tell us about your business</p>
-                        </div>
-
-                        <div className="step-indicator">
-                            <div className="step-dot active"></div>
-                            <div className="step-dot"></div>
+                            <h2 className="onboarding-title">Set Up Your Business</h2>
+                            <p className="onboarding-subtitle">Enter your business information to get started</p>
                         </div>
 
                         <div className="input-group">
-                            <label className="input-label">Shop Name *</label>
+                            <label className="input-label">
+                                Shop Name <span className="required">*</span>
+                            </label>
                             <input
                                 type="text"
                                 className="input-field"
@@ -1085,11 +1385,13 @@
                                 value={formData.shopName}
                                 onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
                             />
-                            {errors.shopName && <div className="text-error">{errors.shopName}</div>}
+                            {errors.shopName && <div className="input-error">{errors.shopName}</div>}
                         </div>
 
                         <div className="input-group">
-                            <label className="input-label">Owner Name *</label>
+                            <label className="input-label">
+                                Owner Name <span className="required">*</span>
+                            </label>
                             <input
                                 type="text"
                                 className="input-field"
@@ -1097,11 +1399,13 @@
                                 value={formData.ownerName}
                                 onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
                             />
-                            {errors.ownerName && <div className="text-error">{errors.ownerName}</div>}
+                            {errors.ownerName && <div className="input-error">{errors.ownerName}</div>}
                         </div>
 
                         <div className="input-group">
-                            <label className="input-label">Email (Optional)</label>
+                            <label className="input-label">
+                                Email <span className="required">*</span>
+                            </label>
                             <input
                                 type="email"
                                 className="input-field"
@@ -1109,11 +1413,13 @@
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             />
-                            {errors.email && <div className="text-error">{errors.email}</div>}
+                            {errors.email && <div className="input-error">{errors.email}</div>}
                         </div>
 
                         <div className="input-group">
-                            <label className="input-label">Phone (Optional)</label>
+                            <label className="input-label">
+                                Phone Number <span className="required">*</span>
+                            </label>
                             <input
                                 type="tel"
                                 className="input-field"
@@ -1121,21 +1427,27 @@
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                             />
+                            {errors.phone && <div className="input-error">{errors.phone}</div>}
                         </div>
 
-                        <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleSubmit}>
-                            Continue →
-                        </button>
+                        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                            <button className="btn btn-secondary btn-block" onClick={onBack}>
+                                Back
+                            </button>
+                            <button className="btn btn-primary btn-block" onClick={handleSubmit}>
+                                Continue
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
         }
 
         // Passcode Setup Screen
-        function PasscodeSetupScreen({ onComplete, isSetup }) {
+        function PasscodeSetupScreen({ onComplete }) {
             const [pin, setPin] = useState(['', '', '', '']);
             const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
-            const [step, setStep] = useState(1); // 1 = set, 2 = confirm
+            const [step, setStep] = useState(1);
             const [error, setError] = useState('');
             const inputRefs = [useRef(), useRef(), useRef(), useRef()];
             const confirmRefs = [useRef(), useRef(), useRef(), useRef()];
@@ -1202,11 +1514,6 @@
                             </p>
                         </div>
 
-                        <div className="step-indicator">
-                            <div className="step-dot"></div>
-                            <div className="step-dot active"></div>
-                        </div>
-
                         {step === 1 ? (
                             <div className="pin-inputs">
                                 {pin.map((digit, index) => (
@@ -1243,30 +1550,30 @@
                         )}
 
                         {error && (
-                            <div className="text-error text-center" style={{ marginTop: 'var(--spacing-md)' }}>
+                            <div className="input-error text-center" style={{ marginTop: 'var(--spacing-md)' }}>
                                 {error}
                             </div>
                         )}
 
                         <button
-                            className="btn btn-primary"
-                            style={{ width: '100%', marginTop: 'var(--spacing-xl)' }}
+                            className="btn btn-primary btn-lg btn-block"
+                            style={{ marginTop: 'var(--spacing-xl)' }}
                             onClick={handleSubmit}
                         >
-                            {step === 1 ? 'Continue' : 'Complete Setup'} →
+                            {step === 1 ? 'Continue' : 'Complete Setup'}
                         </button>
 
                         {step === 2 && (
                             <button
-                                className="btn btn-secondary"
-                                style={{ width: '100%', marginTop: 'var(--spacing-sm)' }}
+                                className="btn btn-secondary btn-block"
+                                style={{ marginTop: 'var(--spacing-sm)' }}
                                 onClick={() => {
                                     setStep(1);
                                     setConfirmPin(['', '', '', '']);
                                     setError('');
                                 }}
                             >
-                                ← Back
+                                Back
                             </button>
                         )}
                     </div>
@@ -1290,7 +1597,6 @@
                     inputRefs[index + 1].current.focus();
                 }
 
-                // Auto-submit when all 4 digits entered
                 if (index === 3 && value) {
                     setTimeout(() => {
                         onVerify([...newPin.slice(0, 3), value].join(''));
@@ -1315,11 +1621,9 @@
                 <div className="modal-overlay">
                     <div className="modal">
                         <div className="modal-header">
-                            <div style={{ fontSize: '3rem', textAlign: 'center', marginBottom: 'var(--spacing-md)' }}>
-                                🔐
-                            </div>
+                            <div className="onboarding-logo" style={{ margin: '0 auto var(--spacing-md)' }}>🔐</div>
                             <h3 className="modal-title text-center">Enter Passcode</h3>
-                            <p className="modal-subtitle text-center">
+                            <p className="card-subtitle text-center">
                                 Enter your 4-digit passcode to access POS
                             </p>
                         </div>
@@ -1342,7 +1646,7 @@
                         </div>
 
                         {error && (
-                            <div className="text-error text-center" style={{ marginTop: 'var(--spacing-md)' }}>
+                            <div className="input-error text-center" style={{ marginTop: 'var(--spacing-md)' }}>
                                 {error}
                             </div>
                         )}
@@ -1351,61 +1655,271 @@
             );
         }
 
-        // Main POS Interface
-        function MainPOS({ user, services, cart, onAddToCart, onRemoveFromCart, onCheckout, onAddService, onEditService, onSettings, onLogout, calculateTotal }) {
+        // Sidebar Component
+        function Sidebar({ currentView, onViewChange, user, onLogout }) {
             return (
-                <div className="pos-container">
-                    <div className="pos-left">
-                        {/* Header */}
-                        <div className="pos-header">
-                            <div className="shop-info">
-                                <h1>💈 {user.shopName}</h1>
-                                <p>{user.ownerName}</p>
+                <div className="sidebar">
+                    <div className="sidebar-header">
+                        <div className="sidebar-logo">
+                            <div className="sidebar-logo-icon">BS</div>
+                            <div className="sidebar-logo-text">BarberScore</div>
+                        </div>
+                    </div>
+
+                    <div className="sidebar-nav">
+                        <div
+                            className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
+                            onClick={() => onViewChange('dashboard')}
+                        >
+                            <span className="nav-icon">📊</span>
+                            <span>Dashboard</span>
+                        </div>
+
+                        <div
+                            className={`nav-item ${currentView === 'pos' ? 'active' : ''}`}
+                            onClick={() => onViewChange('pos')}
+                        >
+                            <span className="nav-icon">💳</span>
+                            <span>Point of Sale</span>
+                        </div>
+
+                        <div
+                            className={`nav-item ${currentView === 'analytics' ? 'active' : ''}`}
+                            onClick={() => onViewChange('analytics')}
+                        >
+                            <span className="nav-icon">📈</span>
+                            <span>Income Analytics</span>
+                        </div>
+
+                        <div
+                            className={`nav-item ${currentView === 'barberscore' ? 'active' : ''}`}
+                            onClick={() => onViewChange('barberscore')}
+                        >
+                            <span className="nav-icon">⭐</span>
+                            <span>BarberScore</span>
+                        </div>
+
+                        <div
+                            className={`nav-item ${currentView === 'procurement' ? 'active' : ''}`}
+                            onClick={() => onViewChange('procurement')}
+                        >
+                            <span className="nav-icon">📦</span>
+                            <span>Procurement</span>
+                        </div>
+
+                        <div
+                            className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
+                            onClick={() => onViewChange('settings')}
+                        >
+                            <span className="nav-icon">⚙️</span>
+                            <span>Settings</span>
+                        </div>
+                    </div>
+
+                    <div className="sidebar-footer">
+                        <div style={{ marginBottom: 'var(--spacing-sm)', paddingBottom: 'var(--spacing-sm)', borderBottom: '1px solid var(--border-color)' }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{user.shopName}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{user.ownerName}</div>
+                        </div>
+                        <button className="btn btn-secondary btn-block" onClick={onLogout}>
+                            Lock & Exit
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Main Content Component
+        function MainContent({ currentView, user, services, cart, transactions, analyticsPeriod, onPeriodChange, onAddToCart, onRemoveFromCart, onClearCart, onCheckout, onAddService, onEditService, onImportCSV, calculateTotal, getAnalytics }) {
+            const renderView = () => {
+                switch (currentView) {
+                    case 'dashboard':
+                        return <DashboardView user={user} transactions={transactions} getAnalytics={getAnalytics} />;
+                    case 'pos':
+                        return <POSView services={services} cart={cart} onAddToCart={onAddToCart} onRemoveFromCart={onRemoveFromCart} onClearCart={onClearCart} onCheckout={onCheckout} onAddService={onAddService} onEditService={onEditService} calculateTotal={calculateTotal} />;
+                    case 'analytics':
+                        return <AnalyticsView period={analyticsPeriod} onPeriodChange={onPeriodChange} getAnalytics={getAnalytics} />;
+                    case 'barberscore':
+                        return <BarberScoreView user={user} transactions={transactions} />;
+                    case 'procurement':
+                        return <ProcurementView user={user} />;
+                    case 'settings':
+                        return <SettingsView user={user} onImportCSV={onImportCSV} />;
+                    default:
+                        return <DashboardView user={user} transactions={transactions} getAnalytics={getAnalytics} />;
+                }
+            };
+
+            return (
+                <div className="main-content">
+                    {renderView()}
+                </div>
+            );
+        }
+
+        // Dashboard View
+        function DashboardView({ user, transactions, getAnalytics }) {
+            const analytics = getAnalytics();
+            const todayRevenue = transactions.filter(t => {
+                const tDate = new Date(t.timestamp);
+                const now = new Date();
+                return tDate.toDateString() === now.toDateString();
+            }).reduce((sum, t) => sum + t.total, 0);
+
+            return (
+                <>
+                    <div className="content-header">
+                        <div>
+                            <h1 className="content-title">Dashboard</h1>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                                Welcome back, {user.ownerName}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="content-body">
+                        {/* BarberScore Highlight */}
+                        <div className="score-display">
+                            <div className="score-header">
+                                <div className="score-label">Your BarberScore</div>
+                                <div className="score-value">{user.barberScore}</div>
+                                <div className="score-tier">{user.tier}</div>
                             </div>
-                            <div className="header-actions">
-                                <div className="icon-btn" onClick={onSettings} title="Settings">
-                                    ⚙️
+
+                            <div className="score-details">
+                                <div className="score-metric">
+                                    <div className="score-metric-label">Transactions</div>
+                                    <div className="score-metric-value">{transactions.length}</div>
                                 </div>
-                                <div className="icon-btn" onClick={onLogout} title="Lock & Exit">
-                                    🔒
+                                <div className="score-metric">
+                                    <div className="score-metric-label">Total Revenue</div>
+                                    <div className="score-metric-value">${analytics.revenue.toFixed(0)}</div>
+                                </div>
+                                <div className="score-metric">
+                                    <div className="score-metric-label">Avg Transaction</div>
+                                    <div className="score-metric-value">${analytics.avgTransaction.toFixed(0)}</div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Services */}
-                        <div className="services-section">
-                            <div className="section-header">
-                                <h2 className="section-title">Services</h2>
-                                <button className="btn btn-secondary" onClick={onAddService}>
-                                    + Add Service
-                                </button>
-                            </div>
-
-                            <div className="services-grid">
-                                {services.map(service => (
-                                    <div
-                                        key={service.id}
-                                        className="service-card"
-                                        onClick={() => onAddToCart(service)}
-                                        onContextMenu={(e) => {
-                                            e.preventDefault();
-                                            onEditService(service);
-                                        }}
-                                        title="Click to add • Right-click to edit"
-                                    >
-                                        <div className="service-icon">{service.icon}</div>
-                                        <div className="service-name">{service.name}</div>
-                                        <div className="service-price">${service.price}</div>
+                        {/* Stats Grid */}
+                        <div className="dashboard-grid">
+                            <div className="stat-card">
+                                <div className="stat-card-header">
+                                    <div>
+                                        <div className="stat-label">Today's Revenue</div>
+                                        <div className="stat-value">${todayRevenue.toFixed(2)}</div>
                                     </div>
-                                ))}
-
-                                <div className="service-card add-service-card" onClick={onAddService}>
-                                    <div>+</div>
-                                    <div style={{ fontSize: '0.875rem', marginTop: 'var(--spacing-xs)' }}>
-                                        Add Service
-                                    </div>
+                                    <div className="stat-icon">$</div>
                                 </div>
                             </div>
+
+                            <div className="stat-card">
+                                <div className="stat-card-header">
+                                    <div>
+                                        <div className="stat-label">Week Revenue</div>
+                                        <div className="stat-value">${analytics.revenue.toFixed(2)}</div>
+                                    </div>
+                                    <div className="stat-icon">📊</div>
+                                </div>
+                            </div>
+
+                            <div className="stat-card">
+                                <div className="stat-card-header">
+                                    <div>
+                                        <div className="stat-label">Total Transactions</div>
+                                        <div className="stat-value">{transactions.length}</div>
+                                    </div>
+                                    <div className="stat-icon">#</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recent Transactions */}
+                        <div className="card">
+                            <div className="card-header">
+                                <h3 className="card-title">Recent Transactions</h3>
+                                <p className="card-subtitle">Your latest sales activity</p>
+                            </div>
+
+                            {transactions.length === 0 ? (
+                                <div className="empty-state">
+                                    <div className="empty-state-icon">📋</div>
+                                    <div>No transactions yet</div>
+                                    <p style={{ fontSize: '0.875rem', marginTop: 'var(--spacing-xs)' }}>
+                                        Start processing sales to see your history
+                                    </p>
+                                </div>
+                            ) : (
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Items</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {transactions.slice(-10).reverse().map(t => (
+                                            <tr key={t.id}>
+                                                <td>{new Date(t.timestamp).toLocaleString()}</td>
+                                                <td>{t.items.length} items</td>
+                                                <td>${t.total.toFixed(2)}</td>
+                                                <td>
+                                                    <span className="badge badge-success">Completed</span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        // POS View
+        function POSView({ services, cart, onAddToCart, onRemoveFromCart, onClearCart, onCheckout, onAddService, onEditService, calculateTotal }) {
+            return (
+                <div style={{ display: 'flex', height: '100%' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <div className="content-header">
+                            <h1 className="content-title">Point of Sale</h1>
+                            <button className="btn btn-primary" onClick={onAddService}>
+                                + Add Service
+                            </button>
+                        </div>
+
+                        <div className="content-body">
+                            {services.length === 0 ? (
+                                <div className="empty-state">
+                                    <div className="empty-state-icon">✂️</div>
+                                    <div>No services added yet</div>
+                                    <p style={{ fontSize: '0.875rem', marginTop: 'var(--spacing-xs)' }}>
+                                        Click "+ Add Service" to create your first service
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="services-grid">
+                                    {services.map(service => (
+                                        <div
+                                            key={service.id}
+                                            className="service-card"
+                                            onClick={() => onAddToCart(service)}
+                                            onContextMenu={(e) => {
+                                                e.preventDefault();
+                                                onEditService(service);
+                                            }}
+                                            title="Click to add • Right-click to edit"
+                                        >
+                                            <div className="service-name">{service.name}</div>
+                                            <div className="service-price">${service.price}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -1417,20 +1931,15 @@
 
                         <div className="cart-items">
                             {cart.length === 0 ? (
-                                <div className="cart-empty">
-                                    <div className="cart-empty-icon">🛒</div>
+                                <div className="empty-state">
+                                    <div className="empty-state-icon">🛒</div>
                                     <div>Cart is empty</div>
-                                    <div style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', marginTop: 'var(--spacing-xs)' }}>
-                                        Add services to get started
-                                    </div>
                                 </div>
                             ) : (
                                 cart.map(item => (
                                     <div key={item.cartId} className="cart-item">
-                                        <div className="cart-item-info">
-                                            <div className="cart-item-name">
-                                                {item.icon} {item.name}
-                                            </div>
+                                        <div>
+                                            <div className="cart-item-name">{item.name}</div>
                                             <div className="cart-item-price">${item.price}</div>
                                         </div>
                                         <div
@@ -1445,34 +1954,370 @@
                         </div>
 
                         {cart.length > 0 && (
-                            <>
-                                <div className="cart-totals">
-                                    <div className="cart-total-row">
-                                        <span>Subtotal</span>
-                                        <span>${calculateTotal().subtotal.toFixed(2)}</span>
-                                    </div>
-                                    <div className="cart-total-row">
-                                        <span>Tax (8%)</span>
-                                        <span>${calculateTotal().tax.toFixed(2)}</span>
-                                    </div>
-                                    <div className="cart-total-row total">
-                                        <span>Total</span>
-                                        <span>${calculateTotal().total.toFixed(2)}</span>
-                                    </div>
+                            <div className="cart-footer">
+                                <div className="cart-total">
+                                    <span>Subtotal</span>
+                                    <span>${calculateTotal().subtotal.toFixed(2)}</span>
+                                </div>
+                                <div className="cart-total">
+                                    <span>Tax (8%)</span>
+                                    <span>${calculateTotal().tax.toFixed(2)}</span>
+                                </div>
+                                <div className="cart-total total">
+                                    <span>Total</span>
+                                    <span>${calculateTotal().total.toFixed(2)}</span>
                                 </div>
 
-                                <div className="cart-actions">
-                                    <button className="btn btn-success" style={{ width: '100%', fontSize: '1.1rem', padding: '1rem' }} onClick={onCheckout}>
-                                        💳 Charge ${calculateTotal().total.toFixed(2)}
-                                    </button>
-                                    <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => onRemoveFromCart('all')}>
-                                        Clear Cart
-                                    </button>
-                                </div>
-                            </>
+                                <button className="btn btn-success btn-lg btn-block" onClick={onCheckout} style={{ marginTop: 'var(--spacing-md)' }}>
+                                    Charge ${calculateTotal().total.toFixed(2)}
+                                </button>
+                                <button className="btn btn-secondary btn-block" onClick={onClearCart} style={{ marginTop: 'var(--spacing-sm)' }}>
+                                    Clear Cart
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
+            );
+        }
+
+        // Analytics View
+        function AnalyticsView({ period, onPeriodChange, getAnalytics }) {
+            const analytics = getAnalytics();
+
+            return (
+                <>
+                    <div className="content-header">
+                        <h1 className="content-title">Income Analytics</h1>
+                    </div>
+
+                    <div className="content-body">
+                        <div className="period-selector">
+                            <button className={`period-btn ${period === 'day' ? 'active' : ''}`} onClick={() => onPeriodChange('day')}>
+                                Day
+                            </button>
+                            <button className={`period-btn ${period === 'week' ? 'active' : ''}`} onClick={() => onPeriodChange('week')}>
+                                Week
+                            </button>
+                            <button className={`period-btn ${period === 'month' ? 'active' : ''}`} onClick={() => onPeriodChange('month')}>
+                                Month
+                            </button>
+                            <button className={`period-btn ${period === 'year' ? 'active' : ''}`} onClick={() => onPeriodChange('year')}>
+                                Year
+                            </button>
+                        </div>
+
+                        <div className="dashboard-grid">
+                            <div className="stat-card">
+                                <div className="stat-card-header">
+                                    <div>
+                                        <div className="stat-label">Total Revenue</div>
+                                        <div className="stat-value">${analytics.revenue.toFixed(2)}</div>
+                                    </div>
+                                    <div className="stat-icon">$</div>
+                                </div>
+                            </div>
+
+                            <div className="stat-card">
+                                <div className="stat-card-header">
+                                    <div>
+                                        <div className="stat-label">Transactions</div>
+                                        <div className="stat-value">{analytics.count}</div>
+                                    </div>
+                                    <div className="stat-icon">#</div>
+                                </div>
+                            </div>
+
+                            <div className="stat-card">
+                                <div className="stat-card-header">
+                                    <div>
+                                        <div className="stat-label">Avg Transaction</div>
+                                        <div className="stat-value">${analytics.avgTransaction.toFixed(2)}</div>
+                                    </div>
+                                    <div className="stat-icon">📊</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card mt-4">
+                            <div className="card-header">
+                                <h3 className="card-title">Transaction History</h3>
+                                <p className="card-subtitle">Filtered by {period}</p>
+                            </div>
+
+                            {analytics.transactions.length === 0 ? (
+                                <div className="empty-state">
+                                    <div className="empty-state-icon">📋</div>
+                                    <div>No transactions in this period</div>
+                                </div>
+                            ) : (
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Items</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {analytics.transactions.map(t => (
+                                            <tr key={t.id}>
+                                                <td>{new Date(t.timestamp).toLocaleString()}</td>
+                                                <td>
+                                                    {t.items.map(i => i.name).join(', ')}
+                                                </td>
+                                                <td>${t.total.toFixed(2)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        // BarberScore View
+        function BarberScoreView({ user, transactions }) {
+            return (
+                <>
+                    <div className="content-header">
+                        <h1 className="content-title">BarberScore</h1>
+                    </div>
+
+                    <div className="content-body">
+                        <div className="score-display">
+                            <div className="score-header">
+                                <div className="score-label">Your Current Score</div>
+                                <div className="score-value">{user.barberScore}</div>
+                                <div className="score-tier">{user.tier}</div>
+                            </div>
+
+                            <div className="score-details">
+                                <div className="score-metric">
+                                    <div className="score-metric-label">Total Transactions</div>
+                                    <div className="score-metric-value">{transactions.length}</div>
+                                </div>
+                                <div className="score-metric">
+                                    <div className="score-metric-label">Points to Next Level</div>
+                                    <div className="score-metric-value">
+                                        {Math.max(0, getNextLevelThreshold(user.barberScore) - user.barberScore)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <div className="card-header">
+                                <h3 className="card-title">How BarberScore Works</h3>
+                                <p className="card-subtitle">Understanding your score and how to improve it</p>
+                            </div>
+
+                            <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                                <h4 style={{ marginBottom: 'var(--spacing-md)', fontWeight: 600 }}>Earning Points</h4>
+                                <ul style={{ paddingLeft: 'var(--spacing-lg)', color: 'var(--text-secondary)' }}>
+                                    <li>Earn 1 point for every $10 in sales</li>
+                                    <li>Consistent transactions build your score faster</li>
+                                    <li>Higher average transaction values earn more points</li>
+                                    <li>Maintain low refund rates to protect your score</li>
+                                </ul>
+                            </div>
+
+                            <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                                <h4 style={{ marginBottom: 'var(--spacing-md)', fontWeight: 600 }}>Score Levels</h4>
+                                <ul style={{ paddingLeft: 'var(--spacing-lg)', color: 'var(--text-secondary)' }}>
+                                    <li><strong>Level 0 (0-49):</strong> POS access only</li>
+                                    <li><strong>Level 1 (50-69):</strong> Prepaid warehouse orders</li>
+                                    <li><strong>Level 2 (70-84):</strong> 5-10% better pricing</li>
+                                    <li><strong>Level 3 (85-94):</strong> Net-30 payment terms</li>
+                                    <li><strong>Level 4 (95-100):</strong> Best pricing + priority fulfillment</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 style={{ marginBottom: 'var(--spacing-md)', fontWeight: 600 }}>Tips to Improve</h4>
+                                <ul style={{ paddingLeft: 'var(--spacing-lg)', color: 'var(--text-secondary)' }}>
+                                    <li>Process transactions consistently throughout the week</li>
+                                    <li>Upsell additional services to increase transaction values</li>
+                                    <li>Provide excellent service to minimize refunds</li>
+                                    <li>Import historical transaction data to boost initial score</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function getNextLevelThreshold(score) {
+            if (score < 50) return 50;
+            if (score < 70) return 70;
+            if (score < 85) return 85;
+            if (score < 95) return 95;
+            return 100;
+        }
+
+        // Procurement View
+        function ProcurementView({ user }) {
+            const tiers = [
+                {
+                    level: 0,
+                    name: 'Level 0',
+                    scoreRange: '0-49',
+                    benefits: ['POS access only', 'No procurement access'],
+                    unlocked: user.barberScore >= 0,
+                    current: user.tier === 'Level 0'
+                },
+                {
+                    level: 1,
+                    name: 'Level 1',
+                    scoreRange: '50-69',
+                    benefits: ['Prepaid warehouse orders', 'Up to $500 per order', 'Standard pricing'],
+                    unlocked: user.barberScore >= 50,
+                    current: user.tier === 'Level 1'
+                },
+                {
+                    level: 2,
+                    name: 'Level 2',
+                    scoreRange: '70-84',
+                    benefits: ['5-10% discount on products', 'Up to $1,500 per order', 'Faster processing'],
+                    unlocked: user.barberScore >= 70,
+                    current: user.tier === 'Level 2'
+                },
+                {
+                    level: 3,
+                    name: 'Level 3',
+                    scoreRange: '85-94',
+                    benefits: ['Net-30 payment terms', 'Up to $3,000 per order', '$1,000 credit line', '10-15% discount'],
+                    unlocked: user.barberScore >= 85,
+                    current: user.tier === 'Level 3'
+                },
+                {
+                    level: 4,
+                    name: 'Level 4',
+                    scoreRange: '95-100',
+                    benefits: ['15% discount on all products', 'Up to $10,000 per order', '$5,000 credit line', 'Priority fulfillment', 'Dedicated account manager'],
+                    unlocked: user.barberScore >= 95,
+                    current: user.tier === 'Level 4'
+                }
+            ];
+
+            return (
+                <>
+                    <div className="content-header">
+                        <h1 className="content-title">Procurement & Warehouse Access</h1>
+                    </div>
+
+                    <div className="content-body">
+                        <div className="card mb-4">
+                            <div className="card-header">
+                                <h3 className="card-title">Your Current Access</h3>
+                                <p className="card-subtitle">
+                                    You are currently at <strong>{user.tier}</strong> with a score of <strong>{user.barberScore}</strong>
+                                </p>
+                            </div>
+
+                            <p style={{ color: 'var(--text-secondary)' }}>
+                                Your BarberScore determines your procurement access level. Higher scores unlock better pricing,
+                                payment terms, and order limits. Keep processing transactions to improve your score and unlock more benefits.
+                            </p>
+                        </div>
+
+                        <h3 style={{ marginBottom: 'var(--spacing-lg)', fontWeight: 700 }}>All Access Tiers</h3>
+
+                        {tiers.map(tier => (
+                            <div
+                                key={tier.level}
+                                className={`tier-card ${tier.current ? 'current' : tier.unlocked ? 'unlocked' : 'locked'}`}
+                            >
+                                <div className="tier-header">
+                                    <div>
+                                        <div className="tier-name">{tier.name}</div>
+                                        <div className="tier-score-range">Score: {tier.scoreRange}</div>
+                                    </div>
+                                    <div>
+                                        {tier.current && <span className="badge badge-danger">Current Tier</span>}
+                                        {!tier.current && tier.unlocked && <span className="badge badge-success">Unlocked</span>}
+                                        {!tier.unlocked && <span className="badge badge-gray">Locked</span>}
+                                    </div>
+                                </div>
+
+                                <ul className="tier-benefits">
+                                    {tier.benefits.map((benefit, index) => (
+                                        <li key={index}>{benefit}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+
+                        {user.barberScore < 50 && (
+                            <div className="card" style={{ background: 'var(--red-50)', borderColor: 'var(--accent-primary)' }}>
+                                <p style={{ margin: 0, fontWeight: 600 }}>
+                                    You need {50 - user.barberScore} more points to unlock warehouse ordering!
+                                </p>
+                                <p style={{ margin: '0.5rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                    Keep processing transactions to build your score.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </>
+            );
+        }
+
+        // Settings View
+        function SettingsView({ user, onImportCSV }) {
+            return (
+                <>
+                    <div className="content-header">
+                        <h1 className="content-title">Settings</h1>
+                    </div>
+
+                    <div className="content-body">
+                        <div className="card mb-4">
+                            <div className="card-header">
+                                <h3 className="card-title">Business Information</h3>
+                            </div>
+
+                            <div style={{ display: 'grid', gap: 'var(--spacing-md)' }}>
+                                <div>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Shop Name</div>
+                                    <div style={{ color: 'var(--text-secondary)' }}>{user.shopName}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Owner Name</div>
+                                    <div style={{ color: 'var(--text-secondary)' }}>{user.ownerName}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Email</div>
+                                    <div style={{ color: 'var(--text-secondary)' }}>{user.email}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Phone</div>
+                                    <div style={{ color: 'var(--text-secondary)' }}>{user.phone}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <div className="card-header">
+                                <h3 className="card-title">Import Transaction Data</h3>
+                                <p className="card-subtitle">Upload historical transaction data to boost your BarberScore</p>
+                            </div>
+
+                            <p style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                                CSV format: timestamp, amount, items (optional)
+                                <br />
+                                Example: 2026-01-15T10:30:00, 45.50, Haircut|Shave
+                            </p>
+
+                            <button className="btn btn-primary" onClick={onImportCSV}>
+                                Upload CSV File
+                            </button>
+                        </div>
+                    </div>
+                </>
             );
         }
 
@@ -1480,16 +2325,12 @@
         function ServiceModal({ service, onClose, onSave, onDelete }) {
             const [formData, setFormData] = useState({
                 name: service?.name || '',
-                price: service?.price || '',
-                icon: service?.icon || '✂️',
-                category: service?.category || 'haircut'
+                price: service?.price || ''
             });
-
-            const iconOptions = ['✂️', '💈', '🪒', '💇', '💆', '🎨', '✨', '💫', '🌟', '⭐', '💎', '👑'];
 
             const handleSubmit = () => {
                 if (!formData.name || !formData.price) {
-                    alert('Please fill in all required fields');
+                    alert('Please fill in all fields');
                     return;
                 }
                 onSave(formData);
@@ -1503,13 +2344,13 @@
                             <h3 className="modal-title">
                                 {service ? 'Edit Service' : 'Add New Service'}
                             </h3>
-                            <p className="modal-subtitle">
+                            <p className="card-subtitle">
                                 {service ? 'Update service details' : 'Create a new service for your menu'}
                             </p>
                         </div>
 
                         <div className="input-group">
-                            <label className="input-label">Service Name *</label>
+                            <label className="input-label">Service Name</label>
                             <input
                                 type="text"
                                 className="input-field"
@@ -1520,7 +2361,7 @@
                         </div>
 
                         <div className="input-group">
-                            <label className="input-label">Price ($) *</label>
+                            <label className="input-label">Price ($)</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -1531,37 +2372,13 @@
                             />
                         </div>
 
-                        <div className="input-group">
-                            <label className="input-label">Icon</label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 'var(--spacing-sm)' }}>
-                                {iconOptions.map(icon => (
-                                    <div
-                                        key={icon}
-                                        style={{
-                                            padding: 'var(--spacing-sm)',
-                                            textAlign: 'center',
-                                            fontSize: '1.5rem',
-                                            cursor: 'pointer',
-                                            border: `2px solid ${formData.icon === icon ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
-                                            borderRadius: 'var(--radius-md)',
-                                            background: formData.icon === icon ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
-                                            transition: 'all var(--transition-fast)'
-                                        }}
-                                        onClick={() => setFormData({ ...formData, icon })}
-                                    >
-                                        {icon}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
                         <div className="modal-actions">
                             {service && onDelete && (
-                                <button className="btn btn-danger" onClick={() => {
+                                <button className="btn btn-secondary" onClick={() => {
                                     if (confirm('Delete this service?')) {
                                         onDelete();
                                     }
-                                }}>
+                                }} style={{ color: 'var(--accent-primary)' }}>
                                     Delete
                                 </button>
                             )}
@@ -1583,7 +2400,7 @@
 
             const handleConfirm = async () => {
                 setProcessing(true);
-                await new Promise(resolve => setTimeout(resolve, 800)); // Simulate processing
+                await new Promise(resolve => setTimeout(resolve, 800));
                 onConfirm();
             };
 
@@ -1592,20 +2409,18 @@
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Confirm Checkout</h3>
-                            <p className="modal-subtitle">
-                                Review transaction details
-                            </p>
+                            <p className="card-subtitle">Review transaction details</p>
                         </div>
 
-                        <div style={{ background: 'var(--bg-elevated)', padding: 'var(--spacing-lg)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--spacing-lg)' }}>
+                        <div className="card mb-4">
                             {cart.map((item, index) => (
                                 <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-sm)' }}>
-                                    <span>{item.icon} {item.name}</span>
+                                    <span>{item.name}</span>
                                     <span>${item.price}</span>
                                 </div>
                             ))}
 
-                            <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: 'var(--spacing-md)', paddingTop: 'var(--spacing-md)' }}>
+                            <div style={{ borderTop: '1px solid var(--border-color)', marginTop: 'var(--spacing-md)', paddingTop: 'var(--spacing-md)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-xs)' }}>
                                     <span>Subtotal</span>
                                     <span>${totals.subtotal.toFixed(2)}</span>
@@ -1614,7 +2429,7 @@
                                     <span>Tax</span>
                                     <span>${totals.tax.toFixed(2)}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: '700', color: 'var(--accent-success)', marginTop: 'var(--spacing-sm)', paddingTop: 'var(--spacing-sm)', borderTop: '1px solid var(--border-subtle)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: '700', marginTop: 'var(--spacing-sm)', paddingTop: 'var(--spacing-sm)', borderTop: '1px solid var(--border-color)' }}>
                                     <span>Total</span>
                                     <span>${totals.total.toFixed(2)}</span>
                                 </div>
@@ -1623,10 +2438,8 @@
 
                         {processing ? (
                             <div className="text-center" style={{ padding: 'var(--spacing-xl)' }}>
-                                <div className="spinner"></div>
-                                <div style={{ marginTop: 'var(--spacing-md)', color: 'var(--text-secondary)' }}>
-                                    Processing payment...
-                                </div>
+                                <div style={{ fontSize: '2rem', marginBottom: 'var(--spacing-md)' }}>⏳</div>
+                                <div style={{ color: 'var(--text-secondary)' }}>Processing payment...</div>
                             </div>
                         ) : (
                             <div className="modal-actions">
@@ -1634,10 +2447,66 @@
                                     Cancel
                                 </button>
                                 <button className="btn btn-success" onClick={handleConfirm} style={{ flex: 2 }}>
-                                    💳 Charge ${totals.total.toFixed(2)}
+                                    Charge ${totals.total.toFixed(2)}
                                 </button>
                             </div>
                         )}
+                    </div>
+                </div>
+            );
+        }
+
+        // CSV Import Modal
+        function CSVImportModal({ onClose, onImport }) {
+            const fileInputRef = useRef();
+
+            const handleFileSelect = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    onImport(file);
+                }
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Import Transaction Data</h3>
+                            <p className="card-subtitle">Upload a CSV file with your historical transactions</p>
+                        </div>
+
+                        <div className="card mb-4">
+                            <h4 style={{ marginBottom: 'var(--spacing-md)', fontWeight: 600, fontSize: '0.875rem' }}>CSV Format</h4>
+                            <pre style={{ background: 'var(--gray-50)', padding: 'var(--spacing-md)', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', overflow: 'auto' }}>
+{`timestamp, amount, items (optional)
+2026-01-15T10:30:00, 45.50, Haircut|Shave
+2026-01-15T14:20:00, 35.00, Haircut
+2026-01-16T09:15:00, 65.00, Haircut|Color`}
+                            </pre>
+                        </div>
+
+                        <div
+                            className="file-upload"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <div style={{ fontSize: '2rem', marginBottom: 'var(--spacing-sm)' }}>📁</div>
+                            <div style={{ fontWeight: 600, marginBottom: 'var(--spacing-xs)' }}>Click to upload CSV file</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                Your BarberScore will be updated based on imported transactions
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".csv"
+                                onChange={handleFileSelect}
+                            />
+                        </div>
+
+                        <div className="modal-actions">
+                            <button className="btn btn-secondary btn-block" onClick={onClose}>
+                                Cancel
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
