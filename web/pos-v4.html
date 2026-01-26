@@ -1333,13 +1333,9 @@
                 return;
             }
 
-            // Normal login flow
+            // Normal login flow - show passcode screen
+            // Don't update dashboard/analytics/score until passcode is entered
             showPasscodeScreen();
-            loadProfile();
-            renderServices();
-            updateDashboard();
-            updateAnalytics();
-            updateBarberScore();
         }
 
         // Onboarding Flow
@@ -1555,6 +1551,14 @@
                         document.getElementById('passcodeError').textContent = '';
                         passcodeInput = '';
                         updatePasscodeDots();
+
+                        // Load app after successful login
+                        loadProfile();
+                        renderServices();
+                        updateDashboard();
+                        updateAnalytics();
+                        updateBarberScore();
+                        updateProcurement();
                     } else {
                         document.getElementById('passcodeError').textContent = 'Incorrect passcode';
                         setTimeout(() => {
@@ -1826,13 +1830,19 @@
             const todayTransactions = transactions.filter(t => new Date(t.date).toDateString() === today);
             const todayRevenue = todayTransactions.reduce((sum, t) => sum + t.total, 0);
 
-            document.getElementById('todayRevenue').textContent = `$${todayRevenue.toFixed(2)}`;
-            document.getElementById('todayTransactions').textContent = todayTransactions.length;
+            const todayRevenueEl = document.getElementById('todayRevenue');
+            const todayTransactionsEl = document.getElementById('todayTransactions');
+            if (todayRevenueEl) todayRevenueEl.textContent = `$${todayRevenue.toFixed(2)}`;
+            if (todayTransactionsEl) todayTransactionsEl.textContent = todayTransactions.length;
 
-            const score = calculateBarberScore();
+            const result = calculateBarberScore();
+            const score = result.score;
             const tier = getTier(score);
-            document.getElementById('dashboardScore').textContent = score;
-            document.getElementById('dashboardTier').textContent = tier;
+
+            const dashboardScoreEl = document.getElementById('dashboardScore');
+            const dashboardTierEl = document.getElementById('dashboardTier');
+            if (dashboardScoreEl) dashboardScoreEl.textContent = score;
+            if (dashboardTierEl) dashboardTierEl.textContent = tier;
         }
 
         // Analytics
@@ -2054,8 +2064,11 @@
             const metrics = result.metrics;
             const stage = getScoreStage(score);
 
-            document.getElementById('barberscoreValue').textContent = score;
-            document.getElementById('barberscoreTier').textContent = stage.name;
+            const scoreValueEl = document.getElementById('barberscoreValue');
+            const scoreTierEl = document.getElementById('barberscoreTier');
+
+            if (scoreValueEl) scoreValueEl.textContent = score;
+            if (scoreTierEl) scoreTierEl.textContent = stage.name;
 
             // Update score breakdown
             const breakdownHTML = `
@@ -2118,7 +2131,8 @@
             const stage = getScoreStage(score);
             const currentTierNum = stage.tier;
 
-            document.getElementById('currentTier').textContent = `Level ${currentTierNum} - ${stage.name}`;
+            const currentTierEl = document.getElementById('currentTier');
+            if (currentTierEl) currentTierEl.textContent = `Level ${currentTierNum} - ${stage.name}`;
 
             // Highlight current tier
             for (let i = 0; i <= 4; i++) {
