@@ -2,8 +2,8 @@
   "buildCommand": "echo 'No build needed - static site'",
   "outputDirectory": "web",
   "rewrites": [
-    { "source": "/", "destination": "/pos-v3.html" },
-    { "source": "/index.html", "destination": "/pos-v3.html" }
+    { "source": "/", "destination": "/pos-v4.html" },
+    { "source": "/index.html", "destination": "/pos-v4.html" }
   ],
   "headers": [
     {
