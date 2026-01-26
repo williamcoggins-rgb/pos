@@ -739,7 +739,7 @@
 <body>
     <div class="container">
         <!-- Passcode Screen -->
-        <div class="passcode-screen" id="passcodeScreen">
+        <div class="passcode-screen hidden" id="passcodeScreen">
             <h1 class="passcode-title">Enter Passcode</h1>
             <p class="passcode-subtitle">Enter your 4-digit passcode</p>
             <div class="passcode-dots">
@@ -1143,9 +1143,8 @@
 
         // Initialize
         function init() {
-            if (!currentPasscode) {
-                promptNewPasscode();
-            } else {
+            // Skip passcode on first use, user can set it in settings
+            if (currentPasscode) {
                 showPasscodeScreen();
             }
             loadProfile();
