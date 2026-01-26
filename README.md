@@ -2,6 +2,21 @@
 
 Complete event-sourced system integrating Square-like POS with BarberScore eligibility engine and tier-based procurement access.
 
+---
+
+## 👀 Want to View It Right Now?
+
+**Two options:**
+- **[View Locally](VIEW.md)** - Run on your computer in 5 minutes
+- **[Deploy Online](DEPLOYMENT.md)** - Access from anywhere in 30 minutes
+
+**Quick guides:**
+- **[Local Setup](LOCAL_SETUP.md)** - Detailed local development guide
+- **[Quick Start](QUICK_START.md)** - API-only setup
+- **[Deployment](DEPLOYMENT.md)** - Production deployment to Render + Vercel
+
+---
+
 ## 🎯 Overview
 
 This system creates a flywheel where:
