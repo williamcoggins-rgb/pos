@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarberScore POS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* 2026 Color Palette - Dark Mode First */
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #121218;
+            --bg-elevated: #1a1a24;
+            --bg-glass: rgba(255, 255, 255, 0.05);
+            --bg-glass-hover: rgba(255, 255, 255, 0.08);
+
+            /* Accent Colors - Vibrant but Refined */
+            --accent-primary: #8b5cf6; /* Purple */
+            --accent-secondary: #06b6d4; /* Cyan */
+            --accent-success: #10b981; /* Green */
+            --accent-warning: #f59e0b; /* Amber */
+            --accent-danger: #ef4444; /* Red */
+
+            /* Text Colors */
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #64748b;
+
+            /* Borders & Dividers */
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-medium: rgba(255, 255, 255, 0.12);
+
+            /* Shadows - Depth & Elevation */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+
+            /* Glass Effect */
+            --blur-sm: blur(8px);
+            --blur-md: blur(12px);
+            --blur-lg: blur(24px);
+
+            /* Spacing */
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 0.75rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+
+            /* Border Radius */
+            --radius-sm: 0.5rem;
+            --radius-md: 0.75rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+            --radius-full: 9999px;
+
+            /* Transitions */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background Gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+            animation: gradientShift 20s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-5%, -5%) rotate(120deg); }
+            66% { transform: translate(5%, 5%) rotate(240deg); }
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: var(--bg-glass);
+            backdrop-filter: var(--blur-md);
+            -webkit-backdrop-filter: var(--blur-md);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-base);
+        }
+
+        .glass-card:hover {
+            background: var(--bg-glass-hover);
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+            padding: 0.75rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #a78bfa 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border-medium);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-glass-hover);
+            border-color: var(--accent-primary);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-success) 0%, #34d399 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--accent-danger) 0%, #f87171 100%);
+            color: white;
+        }
+
+        /* Input Styles */
+        .input-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all var(--transition-base);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        /* PIN Input Specific */
+        .pin-inputs {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: center;
+            margin: var(--spacing-xl) 0;
+        }
+
+        .pin-input {
+            width: 3.5rem;
+            height: 3.5rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--bg-glass);
+            border: 2px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            transition: all var(--transition-base);
+        }
+
+        .pin-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: var(--bg-elevated);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+            transform: scale(1.05);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl);
+        }
+
+        /* Hide by default */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Onboarding Screens */
+        .onboarding-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-xl);
+        }
+
+        .onboarding-card {
+            width: 100%;
+            max-width: 500px;
+            background: var(--bg-glass);
+            backdrop-filter: var(--blur-lg);
+            -webkit-backdrop-filter: var(--blur-lg);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-2xl);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .onboarding-header {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .onboarding-logo {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .onboarding-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-sm);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .onboarding-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .step-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: var(--radius-full);
+            background: var(--border-medium);
+            transition: all var(--transition-base);
+        }
+
+        .step-dot.active {
+            width: 2rem;
+            background: var(--accent-primary);
+        }
+
+        /* Main POS Layout */
+        .pos-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: var(--spacing-xl);
+            height: 100vh;
+            padding: var(--spacing-xl);
+        }
+
+        .pos-left {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .pos-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg);
+            background: var(--bg-glass);
+            backdrop-filter: var(--blur-md);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+        }
+
+        .shop-info h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .shop-info p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .icon-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            font-size: 1.25rem;
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-glass-hover);
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        /* Services Grid */
+        .services-section {
+            flex: 1;
+            background: var(--bg-glass);
+            backdrop-filter: var(--blur-md);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            overflow-y: auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .service-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: center;
+            position: relative;
+        }
+
+        .service-card:hover {
+            background: var(--bg-glass-hover);
+            border-color: var(--accent-primary);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .service-card.selected {
+            border-color: var(--accent-primary);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .service-icon {
+            font-size: 2rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .service-name {
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .service-price {
+            color: var(--accent-success);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .add-service-card {
+            background: var(--bg-glass);
+            border: 2px dashed var(--border-medium);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--text-tertiary);
+        }
+
+        .add-service-card:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        /* Cart Sidebar */
+        .cart-sidebar {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-glass);
+            backdrop-filter: var(--blur-md);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+        }
+
+        .cart-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .cart-item {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .cart-item-price {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .cart-item-remove {
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--accent-danger);
+            transition: all var(--transition-fast);
+        }
+
+        .cart-item-remove:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--accent-danger);
+        }
+
+        .cart-empty {
+            text-align: center;
+            padding: var(--spacing-2xl);
+            color: var(--text-tertiary);
+        }
+
+        .cart-empty-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.3;
+        }
+
+        .cart-totals {
+            border-top: 1px solid var(--border-subtle);
+            padding-top: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-sm);
+            font-size: 0.95rem;
+        }
+
+        .cart-total-row.total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-success);
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .cart-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: var(--blur-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-2xl);
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow-xl);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .modal-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-xl);
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* Success Animation */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(16, 185, 129, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .success-icon {
+            font-size: 6rem;
+            margin-bottom: var(--spacing-xl);
+            animation: successPop 0.5s ease;
+        }
+
+        @keyframes successPop {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-message {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .pos-container {
+                grid-template-columns: 1fr;
+            }
+
+            .cart-sidebar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+                max-height: 60vh;
+                transform: translateY(calc(100% - 60px));
+                transition: transform var(--transition-base);
+            }
+
+            .cart-sidebar.expanded {
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .services-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .onboarding-card {
+                padding: var(--spacing-lg);
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid var(--border-subtle);
+            border-top: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-4 {
+            margin-top: var(--spacing-lg);
+        }
+
+        .text-error {
+            color: var(--accent-danger);
+            font-size: 0.875rem;
+            margin-top: var(--spacing-xs);
+        }
+
+        .text-success {
+            color: var(--accent-success);
+        }
+
+        .text-muted {
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading React -->
+    <div id="root"></div>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="api-client.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Main App Component
+        function App() {
+            const [currentScreen, setCurrentScreen] = useState('welcome'); // welcome, setup, passcode, main
+            const [user, setUser] = useState(null);
+            const [services, setServices] = useState([]);
+            const [cart, setCart] = useState([]);
+            const [showModal, setShowModal] = useState(null); // null, 'addService', 'editService', 'settings', 'checkout', 'passcode'
+            const [selectedService, setSelectedService] = useState(null);
+            const [showSuccess, setShowSuccess] = useState(false);
+            const [error, setError] = useState('');
+            const api = new APIClient();
+
+            useEffect(() => {
+                checkAuth();
+            }, []);
+
+            const checkAuth = () => {
+                const savedUser = localStorage.getItem('pos_user');
+                const savedServices = localStorage.getItem('pos_services');
+
+                if (savedUser) {
+                    setUser(JSON.parse(savedUser));
+                    setServices(savedServices ? JSON.parse(savedServices) : []);
+
+                    // Check if passcode is set
+                    const hasPasscode = localStorage.getItem('pos_passcode');
+                    if (!hasPasscode) {
+                        setCurrentScreen('passcode');
+                    } else {
+                        setShowModal('passcode'); // Require passcode to enter
+                    }
+                } else {
+                    setCurrentScreen('welcome');
+                }
+            };
+
+            const handleBusinessSetup = (businessData) => {
+                const newUser = {
+                    id: Date.now().toString(),
+                    ...businessData,
+                    createdAt: new Date().toISOString()
+                };
+
+                setUser(newUser);
+                localStorage.setItem('pos_user', JSON.stringify(newUser));
+                setCurrentScreen('passcode');
+            };
+
+            const handlePasscodeSetup = (passcode) => {
+                localStorage.setItem('pos_passcode', passcode);
+                setCurrentScreen('main');
+            };
+
+            const handlePasscodeVerify = (passcode) => {
+                const savedPasscode = localStorage.getItem('pos_passcode');
+                if (passcode === savedPasscode) {
+                    setShowModal(null);
+                    setCurrentScreen('main');
+                } else {
+                    setError('Incorrect passcode');
+                    setTimeout(() => setError(''), 2000);
+                }
+            };
+
+            const addService = (service) => {
+                const newService = {
+                    id: Date.now().toString(),
+                    ...service
+                };
+                const updated = [...services, newService];
+                setServices(updated);
+                localStorage.setItem('pos_services', JSON.stringify(updated));
+            };
+
+            const editService = (id, updates) => {
+                const updated = services.map(s => s.id === id ? { ...s, ...updates } : s);
+                setServices(updated);
+                localStorage.setItem('pos_services', JSON.stringify(updated));
+            };
+
+            const deleteService = (id) => {
+                const updated = services.filter(s => s.id !== id);
+                setServices(updated);
+                localStorage.setItem('pos_services', JSON.stringify(updated));
+            };
+
+            const addToCart = (service) => {
+                setCart([...cart, { ...service, cartId: Date.now().toString() }]);
+            };
+
+            const removeFromCart = (cartId) => {
+                setCart(cart.filter(item => item.cartId !== cartId));
+            };
+
+            const calculateTotal = () => {
+                const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
+                const tax = subtotal * 0.08;
+                const total = subtotal + tax;
+                return { subtotal, tax, total };
+            };
+
+            const handleCheckout = async () => {
+                if (cart.length === 0) return;
+
+                const { total } = calculateTotal();
+
+                // Log transaction
+                const transaction = {
+                    id: Date.now().toString(),
+                    items: cart,
+                    ...calculateTotal(),
+                    timestamp: new Date().toISOString(),
+                    barberId: user.id,
+                    shopName: user.shopName
+                };
+
+                // Save to transaction history
+                const history = JSON.parse(localStorage.getItem('pos_transactions') || '[]');
+                history.push(transaction);
+                localStorage.setItem('pos_transactions', JSON.stringify(history));
+
+                // Show success
+                setShowSuccess(true);
+                setCart([]);
+                setShowModal(null);
+
+                setTimeout(() => {
+                    setShowSuccess(false);
+                }, 2000);
+            };
+
+            // Render appropriate screen
+            if (currentScreen === 'welcome') {
+                return <WelcomeScreen onNext={() => setCurrentScreen('setup')} />;
+            }
+
+            if (currentScreen === 'setup') {
+                return <BusinessSetupScreen onComplete={handleBusinessSetup} />;
+            }
+
+            if (currentScreen === 'passcode') {
+                return (
+                    <PasscodeSetupScreen
+                        onComplete={handlePasscodeSetup}
+                        isSetup={true}
+                    />
+                );
+            }
+
+            if (currentScreen === 'main') {
+                return (
+                    <>
+                        <MainPOS
+                            user={user}
+                            services={services}
+                            cart={cart}
+                            onAddToCart={addToCart}
+                            onRemoveFromCart={removeFromCart}
+                            onCheckout={() => setShowModal('checkout')}
+                            onAddService={() => setShowModal('addService')}
+                            onEditService={(service) => {
+                                setSelectedService(service);
+                                setShowModal('editService');
+                            }}
+                            onSettings={() => setShowModal('settings')}
+                            onLogout={() => {
+                                localStorage.clear();
+                                window.location.reload();
+                            }}
+                            calculateTotal={calculateTotal}
+                        />
+
+                        {showModal === 'addService' && (
+                            <ServiceModal
+                                onClose={() => setShowModal(null)}
+                                onSave={addService}
+                            />
+                        )}
+
+                        {showModal === 'editService' && (
+                            <ServiceModal
+                                service={selectedService}
+                                onClose={() => {
+                                    setShowModal(null);
+                                    setSelectedService(null);
+                                }}
+                                onSave={(updates) => editService(selectedService.id, updates)}
+                                onDelete={() => {
+                                    deleteService(selectedService.id);
+                                    setShowModal(null);
+                                    setSelectedService(null);
+                                }}
+                            />
+                        )}
+
+                        {showModal === 'checkout' && (
+                            <CheckoutModal
+                                cart={cart}
+                                totals={calculateTotal()}
+                                onClose={() => setShowModal(null)}
+                                onConfirm={handleCheckout}
+                            />
+                        )}
+
+                        {showModal === 'passcode' && (
+                            <PasscodeVerifyModal
+                                onVerify={handlePasscodeVerify}
+                                onClose={() => {
+                                    // Can't close without correct passcode
+                                }}
+                                error={error}
+                            />
+                        )}
+
+                        {showSuccess && <SuccessOverlay />}
+                    </>
+                );
+            }
+
+            return null;
+        }
+
+        // Welcome Screen
+        function WelcomeScreen({ onNext }) {
+            return (
+                <div className="onboarding-container">
+                    <div className="onboarding-card">
+                        <div className="onboarding-header">
+                            <div className="onboarding-logo">💈</div>
+                            <h1 className="onboarding-title">BarberScore POS</h1>
+                            <p className="onboarding-subtitle">
+                                Modern point of sale for barbershops. Built for 2026.
+                            </p>
+                        </div>
+
+                        <div style={{ marginBottom: 'var(--spacing-xl)', textAlign: 'center' }}>
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--spacing-lg)' }}>
+                                ✂️ Manage services & pricing<br/>
+                                💳 Process payments instantly<br/>
+                                📊 Track your earnings<br/>
+                                🔒 Secure with passcode protection
+                            </p>
+                        </div>
+
+                        <button className="btn btn-primary" style={{ width: '100%' }} onClick={onNext}>
+                            Get Started →
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Business Setup Screen
+        function BusinessSetupScreen({ onComplete }) {
+            const [formData, setFormData] = useState({
+                shopName: '',
+                ownerName: '',
+                email: '',
+                phone: ''
+            });
+            const [errors, setErrors] = useState({});
+
+            const validate = () => {
+                const newErrors = {};
+                if (!formData.shopName.trim()) newErrors.shopName = 'Shop name is required';
+                if (!formData.ownerName.trim()) newErrors.ownerName = 'Owner name is required';
+                if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+                    newErrors.email = 'Invalid email address';
+                }
+                return newErrors;
+            };
+
+            const handleSubmit = () => {
+                const newErrors = validate();
+                if (Object.keys(newErrors).length > 0) {
+                    setErrors(newErrors);
+                    return;
+                }
+                onComplete(formData);
+            };
+
+            return (
+                <div className="onboarding-container">
+                    <div className="onboarding-card">
+                        <div className="onboarding-header">
+                            <h2 className="onboarding-title">Set Up Your Shop</h2>
+                            <p className="onboarding-subtitle">Tell us about your business</p>
+                        </div>
+
+                        <div className="step-indicator">
+                            <div className="step-dot active"></div>
+                            <div className="step-dot"></div>
+                        </div>
+
+                        <div className="input-group">
+                            <label className="input-label">Shop Name *</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder="e.g. The Fresh Cut"
+                                value={formData.shopName}
+                                onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
+                            />
+                            {errors.shopName && <div className="text-error">{errors.shopName}</div>}
+                        </div>
+
+                        <div className="input-group">
+                            <label className="input-label">Owner Name *</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder="Your full name"
+                                value={formData.ownerName}
+                                onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
+                            />
+                            {errors.ownerName && <div className="text-error">{errors.ownerName}</div>}
+                        </div>
+
+                        <div className="input-group">
+                            <label className="input-label">Email (Optional)</label>
+                            <input
+                                type="email"
+                                className="input-field"
+                                placeholder="your@email.com"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            />
+                            {errors.email && <div className="text-error">{errors.email}</div>}
+                        </div>
+
+                        <div className="input-group">
+                            <label className="input-label">Phone (Optional)</label>
+                            <input
+                                type="tel"
+                                className="input-field"
+                                placeholder="(555) 123-4567"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            />
+                        </div>
+
+                        <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleSubmit}>
+                            Continue →
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Passcode Setup Screen
+        function PasscodeSetupScreen({ onComplete, isSetup }) {
+            const [pin, setPin] = useState(['', '', '', '']);
+            const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
+            const [step, setStep] = useState(1); // 1 = set, 2 = confirm
+            const [error, setError] = useState('');
+            const inputRefs = [useRef(), useRef(), useRef(), useRef()];
+            const confirmRefs = [useRef(), useRef(), useRef(), useRef()];
+
+            const handlePinChange = (index, value, refs, setter, pinArray) => {
+                if (!/^\d*$/.test(value)) return;
+
+                const newPin = [...pinArray];
+                newPin[index] = value;
+                setter(newPin);
+
+                if (value && index < 3) {
+                    refs[index + 1].current.focus();
+                }
+            };
+
+            const handleKeyDown = (index, e, refs, pinArray) => {
+                if (e.key === 'Backspace' && !pinArray[index] && index > 0) {
+                    refs[index - 1].current.focus();
+                }
+            };
+
+            const handleSubmit = () => {
+                if (step === 1) {
+                    if (pin.some(digit => !digit)) {
+                        setError('Please enter all 4 digits');
+                        return;
+                    }
+                    setStep(2);
+                    setError('');
+                    setTimeout(() => confirmRefs[0].current?.focus(), 100);
+                } else {
+                    const pinCode = pin.join('');
+                    const confirmCode = confirmPin.join('');
+
+                    if (confirmCode.length !== 4) {
+                        setError('Please enter all 4 digits');
+                        return;
+                    }
+
+                    if (pinCode !== confirmCode) {
+                        setError('Passcodes do not match');
+                        setConfirmPin(['', '', '', '']);
+                        setTimeout(() => confirmRefs[0].current?.focus(), 100);
+                        return;
+                    }
+
+                    onComplete(pinCode);
+                }
+            };
+
+            return (
+                <div className="onboarding-container">
+                    <div className="onboarding-card">
+                        <div className="onboarding-header">
+                            <div className="onboarding-logo">🔒</div>
+                            <h2 className="onboarding-title">
+                                {step === 1 ? 'Create Passcode' : 'Confirm Passcode'}
+                            </h2>
+                            <p className="onboarding-subtitle">
+                                {step === 1
+                                    ? 'Choose a 4-digit code to secure your POS'
+                                    : 'Enter your passcode again to confirm'}
+                            </p>
+                        </div>
+
+                        <div className="step-indicator">
+                            <div className="step-dot"></div>
+                            <div className="step-dot active"></div>
+                        </div>
+
+                        {step === 1 ? (
+                            <div className="pin-inputs">
+                                {pin.map((digit, index) => (
+                                    <input
+                                        key={index}
+                                        ref={inputRefs[index]}
+                                        type="password"
+                                        inputMode="numeric"
+                                        maxLength="1"
+                                        className="pin-input"
+                                        value={digit}
+                                        onChange={(e) => handlePinChange(index, e.target.value, inputRefs, setPin, pin)}
+                                        onKeyDown={(e) => handleKeyDown(index, e, inputRefs, pin)}
+                                        autoFocus={index === 0}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="pin-inputs">
+                                {confirmPin.map((digit, index) => (
+                                    <input
+                                        key={index}
+                                        ref={confirmRefs[index]}
+                                        type="password"
+                                        inputMode="numeric"
+                                        maxLength="1"
+                                        className="pin-input"
+                                        value={digit}
+                                        onChange={(e) => handlePinChange(index, e.target.value, confirmRefs, setConfirmPin, confirmPin)}
+                                        onKeyDown={(e) => handleKeyDown(index, e, confirmRefs, confirmPin)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="text-error text-center" style={{ marginTop: 'var(--spacing-md)' }}>
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            className="btn btn-primary"
+                            style={{ width: '100%', marginTop: 'var(--spacing-xl)' }}
+                            onClick={handleSubmit}
+                        >
+                            {step === 1 ? 'Continue' : 'Complete Setup'} →
+                        </button>
+
+                        {step === 2 && (
+                            <button
+                                className="btn btn-secondary"
+                                style={{ width: '100%', marginTop: 'var(--spacing-sm)' }}
+                                onClick={() => {
+                                    setStep(1);
+                                    setConfirmPin(['', '', '', '']);
+                                    setError('');
+                                }}
+                            >
+                                ← Back
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Passcode Verify Modal
+        function PasscodeVerifyModal({ onVerify, error }) {
+            const [pin, setPin] = useState(['', '', '', '']);
+            const inputRefs = [useRef(), useRef(), useRef(), useRef()];
+
+            const handlePinChange = (index, value) => {
+                if (!/^\d*$/.test(value)) return;
+
+                const newPin = [...pin];
+                newPin[index] = value;
+                setPin(newPin);
+
+                if (value && index < 3) {
+                    inputRefs[index + 1].current.focus();
+                }
+
+                // Auto-submit when all 4 digits entered
+                if (index === 3 && value) {
+                    setTimeout(() => {
+                        onVerify([...newPin.slice(0, 3), value].join(''));
+                    }, 100);
+                }
+            };
+
+            const handleKeyDown = (index, e) => {
+                if (e.key === 'Backspace' && !pin[index] && index > 0) {
+                    inputRefs[index - 1].current.focus();
+                }
+            };
+
+            useEffect(() => {
+                if (error) {
+                    setPin(['', '', '', '']);
+                    inputRefs[0].current?.focus();
+                }
+            }, [error]);
+
+            return (
+                <div className="modal-overlay">
+                    <div className="modal">
+                        <div className="modal-header">
+                            <div style={{ fontSize: '3rem', textAlign: 'center', marginBottom: 'var(--spacing-md)' }}>
+                                🔐
+                            </div>
+                            <h3 className="modal-title text-center">Enter Passcode</h3>
+                            <p className="modal-subtitle text-center">
+                                Enter your 4-digit passcode to access POS
+                            </p>
+                        </div>
+
+                        <div className="pin-inputs">
+                            {pin.map((digit, index) => (
+                                <input
+                                    key={index}
+                                    ref={inputRefs[index]}
+                                    type="password"
+                                    inputMode="numeric"
+                                    maxLength="1"
+                                    className="pin-input"
+                                    value={digit}
+                                    onChange={(e) => handlePinChange(index, e.target.value)}
+                                    onKeyDown={(e) => handleKeyDown(index, e)}
+                                    autoFocus={index === 0}
+                                />
+                            ))}
+                        </div>
+
+                        {error && (
+                            <div className="text-error text-center" style={{ marginTop: 'var(--spacing-md)' }}>
+                                {error}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Main POS Interface
+        function MainPOS({ user, services, cart, onAddToCart, onRemoveFromCart, onCheckout, onAddService, onEditService, onSettings, onLogout, calculateTotal }) {
+            return (
+                <div className="pos-container">
+                    <div className="pos-left">
+                        {/* Header */}
+                        <div className="pos-header">
+                            <div className="shop-info">
+                                <h1>💈 {user.shopName}</h1>
+                                <p>{user.ownerName}</p>
+                            </div>
+                            <div className="header-actions">
+                                <div className="icon-btn" onClick={onSettings} title="Settings">
+                                    ⚙️
+                                </div>
+                                <div className="icon-btn" onClick={onLogout} title="Lock & Exit">
+                                    🔒
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Services */}
+                        <div className="services-section">
+                            <div className="section-header">
+                                <h2 className="section-title">Services</h2>
+                                <button className="btn btn-secondary" onClick={onAddService}>
+                                    + Add Service
+                                </button>
+                            </div>
+
+                            <div className="services-grid">
+                                {services.map(service => (
+                                    <div
+                                        key={service.id}
+                                        className="service-card"
+                                        onClick={() => onAddToCart(service)}
+                                        onContextMenu={(e) => {
+                                            e.preventDefault();
+                                            onEditService(service);
+                                        }}
+                                        title="Click to add • Right-click to edit"
+                                    >
+                                        <div className="service-icon">{service.icon}</div>
+                                        <div className="service-name">{service.name}</div>
+                                        <div className="service-price">${service.price}</div>
+                                    </div>
+                                ))}
+
+                                <div className="service-card add-service-card" onClick={onAddService}>
+                                    <div>+</div>
+                                    <div style={{ fontSize: '0.875rem', marginTop: 'var(--spacing-xs)' }}>
+                                        Add Service
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Cart Sidebar */}
+                    <div className="cart-sidebar">
+                        <div className="cart-header">
+                            Cart {cart.length > 0 && `(${cart.length})`}
+                        </div>
+
+                        <div className="cart-items">
+                            {cart.length === 0 ? (
+                                <div className="cart-empty">
+                                    <div className="cart-empty-icon">🛒</div>
+                                    <div>Cart is empty</div>
+                                    <div style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', marginTop: 'var(--spacing-xs)' }}>
+                                        Add services to get started
+                                    </div>
+                                </div>
+                            ) : (
+                                cart.map(item => (
+                                    <div key={item.cartId} className="cart-item">
+                                        <div className="cart-item-info">
+                                            <div className="cart-item-name">
+                                                {item.icon} {item.name}
+                                            </div>
+                                            <div className="cart-item-price">${item.price}</div>
+                                        </div>
+                                        <div
+                                            className="cart-item-remove"
+                                            onClick={() => onRemoveFromCart(item.cartId)}
+                                        >
+                                            ×
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {cart.length > 0 && (
+                            <>
+                                <div className="cart-totals">
+                                    <div className="cart-total-row">
+                                        <span>Subtotal</span>
+                                        <span>${calculateTotal().subtotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="cart-total-row">
+                                        <span>Tax (8%)</span>
+                                        <span>${calculateTotal().tax.toFixed(2)}</span>
+                                    </div>
+                                    <div className="cart-total-row total">
+                                        <span>Total</span>
+                                        <span>${calculateTotal().total.toFixed(2)}</span>
+                                    </div>
+                                </div>
+
+                                <div className="cart-actions">
+                                    <button className="btn btn-success" style={{ width: '100%', fontSize: '1.1rem', padding: '1rem' }} onClick={onCheckout}>
+                                        💳 Charge ${calculateTotal().total.toFixed(2)}
+                                    </button>
+                                    <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => onRemoveFromCart('all')}>
+                                        Clear Cart
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Service Modal
+        function ServiceModal({ service, onClose, onSave, onDelete }) {
+            const [formData, setFormData] = useState({
+                name: service?.name || '',
+                price: service?.price || '',
+                icon: service?.icon || '✂️',
+                category: service?.category || 'haircut'
+            });
+
+            const iconOptions = ['✂️', '💈', '🪒', '💇', '💆', '🎨', '✨', '💫', '🌟', '⭐', '💎', '👑'];
+
+            const handleSubmit = () => {
+                if (!formData.name || !formData.price) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                onSave(formData);
+                onClose();
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">
+                                {service ? 'Edit Service' : 'Add New Service'}
+                            </h3>
+                            <p className="modal-subtitle">
+                                {service ? 'Update service details' : 'Create a new service for your menu'}
+                            </p>
+                        </div>
+
+                        <div className="input-group">
+                            <label className="input-label">Service Name *</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder="e.g. Haircut, Beard Trim"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="input-group">
+                            <label className="input-label">Price ($) *</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                className="input-field"
+                                placeholder="35.00"
+                                value={formData.price}
+                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="input-group">
+                            <label className="input-label">Icon</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 'var(--spacing-sm)' }}>
+                                {iconOptions.map(icon => (
+                                    <div
+                                        key={icon}
+                                        style={{
+                                            padding: 'var(--spacing-sm)',
+                                            textAlign: 'center',
+                                            fontSize: '1.5rem',
+                                            cursor: 'pointer',
+                                            border: `2px solid ${formData.icon === icon ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                                            borderRadius: 'var(--radius-md)',
+                                            background: formData.icon === icon ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+                                            transition: 'all var(--transition-fast)'
+                                        }}
+                                        onClick={() => setFormData({ ...formData, icon })}
+                                    >
+                                        {icon}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="modal-actions">
+                            {service && onDelete && (
+                                <button className="btn btn-danger" onClick={() => {
+                                    if (confirm('Delete this service?')) {
+                                        onDelete();
+                                    }
+                                }}>
+                                    Delete
+                                </button>
+                            )}
+                            <button className="btn btn-secondary" onClick={onClose}>
+                                Cancel
+                            </button>
+                            <button className="btn btn-primary" onClick={handleSubmit}>
+                                {service ? 'Save Changes' : 'Add Service'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Checkout Modal
+        function CheckoutModal({ cart, totals, onClose, onConfirm }) {
+            const [processing, setProcessing] = useState(false);
+
+            const handleConfirm = async () => {
+                setProcessing(true);
+                await new Promise(resolve => setTimeout(resolve, 800)); // Simulate processing
+                onConfirm();
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Confirm Checkout</h3>
+                            <p className="modal-subtitle">
+                                Review transaction details
+                            </p>
+                        </div>
+
+                        <div style={{ background: 'var(--bg-elevated)', padding: 'var(--spacing-lg)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--spacing-lg)' }}>
+                            {cart.map((item, index) => (
+                                <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-sm)' }}>
+                                    <span>{item.icon} {item.name}</span>
+                                    <span>${item.price}</span>
+                                </div>
+                            ))}
+
+                            <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: 'var(--spacing-md)', paddingTop: 'var(--spacing-md)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-xs)' }}>
+                                    <span>Subtotal</span>
+                                    <span>${totals.subtotal.toFixed(2)}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-xs)' }}>
+                                    <span>Tax</span>
+                                    <span>${totals.tax.toFixed(2)}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: '700', color: 'var(--accent-success)', marginTop: 'var(--spacing-sm)', paddingTop: 'var(--spacing-sm)', borderTop: '1px solid var(--border-subtle)' }}>
+                                    <span>Total</span>
+                                    <span>${totals.total.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {processing ? (
+                            <div className="text-center" style={{ padding: 'var(--spacing-xl)' }}>
+                                <div className="spinner"></div>
+                                <div style={{ marginTop: 'var(--spacing-md)', color: 'var(--text-secondary)' }}>
+                                    Processing payment...
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="modal-actions">
+                                <button className="btn btn-secondary" onClick={onClose}>
+                                    Cancel
+                                </button>
+                                <button className="btn btn-success" onClick={handleConfirm} style={{ flex: 2 }}>
+                                    💳 Charge ${totals.total.toFixed(2)}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Success Overlay
+        function SuccessOverlay() {
+            return (
+                <div className="success-overlay">
+                    <div className="success-icon">✓</div>
+                    <div className="success-message">Payment Complete!</div>
+                </div>
+            );
+        }
+
+        // Render App
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
