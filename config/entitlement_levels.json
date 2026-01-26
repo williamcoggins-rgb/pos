@@ -1,0 +1,76 @@
+{
+  "levels": {
+    "Level 0": {
+      "score_min": 0,
+      "score_max": 49,
+      "access": ["POS_ONLY"],
+      "caps": {},
+      "description": "New user - POS access only, build your score",
+      "benefits": [
+        "Accept payments with POS",
+        "Basic transaction tracking"
+      ]
+    },
+    "Level 1": {
+      "score_min": 50,
+      "score_max": 69,
+      "access": ["POS", "STORE_PREPAID"],
+      "caps": {
+        "max_order_value": 50000
+      },
+      "description": "Store access unlocked - prepaid orders up to $500",
+      "benefits": [
+        "All Level 0 benefits",
+        "Procurement store access",
+        "Prepaid orders up to $500"
+      ]
+    },
+    "Level 2": {
+      "score_min": 70,
+      "score_max": 84,
+      "access": ["POS", "STORE_PREPAID", "BETTER_PRICING"],
+      "caps": {
+        "max_order_value": 150000
+      },
+      "description": "Better pricing tier - orders up to $1,500",
+      "benefits": [
+        "All Level 1 benefits",
+        "5% discount on supplies",
+        "Orders up to $1,500"
+      ]
+    },
+    "Level 3": {
+      "score_min": 85,
+      "score_max": 94,
+      "access": ["POS", "STORE_PREPAID", "BETTER_PRICING", "TERMS_ELIGIBLE"],
+      "caps": {
+        "max_order_value": 300000,
+        "max_terms_outstanding": 100000
+      },
+      "description": "Net terms eligible - credit up to $1,000",
+      "benefits": [
+        "All Level 2 benefits",
+        "10% discount on supplies",
+        "Net-30 terms up to $1,000",
+        "Orders up to $3,000"
+      ]
+    },
+    "Level 4": {
+      "score_min": 95,
+      "score_max": 100,
+      "access": ["POS", "STORE_PREPAID", "BEST_PRICING", "TERMS_MATURE", "PRIORITY_FULFILLMENT"],
+      "caps": {
+        "max_order_value": 999999,
+        "max_terms_outstanding": 500000
+      },
+      "description": "Elite tier - best pricing and priority service",
+      "benefits": [
+        "All Level 3 benefits",
+        "15% discount on supplies",
+        "Net-60 terms up to $5,000",
+        "Priority fulfillment (24hr SLA)",
+        "Dedicated account manager"
+      ]
+    }
+  }
+}

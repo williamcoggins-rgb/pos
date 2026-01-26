@@ -1,0 +1,50 @@
+{
+  "qualified_transaction_rules": {
+    "min_amount_cents": 500,
+    "refund_quarantine_days": 7,
+    "excluded_event_types": [
+      "VOID_APPLIED",
+      "PAYMENT_DECLINED",
+      "PAYMENT_FAILED"
+    ]
+  },
+  "metric_weights": {
+    "completed_transactions": 0.25,
+    "revenue_consistency": 0.20,
+    "refund_rate": -0.15,
+    "void_rate": -0.10,
+    "chargeback_rate": -0.20,
+    "active_days": 0.15,
+    "avg_ticket_size": 0.10,
+    "payment_method_diversity": 0.05
+  },
+  "time_decay": {
+    "enabled": true,
+    "recent_weight": 0.70,
+    "historical_weight": 0.30,
+    "recent_days": 60
+  },
+  "hard_gates": {
+    "excessive_refund_rate": {
+      "threshold": 0.25,
+      "action": "BLOCK_ENTITLEMENTS",
+      "reason": "Refund rate exceeds 25% - manual review required"
+    },
+    "chargeback_spike": {
+      "threshold": 0.05,
+      "action": "FREEZE_ACCESS",
+      "reason": "Chargeback rate exceeds 5% - account frozen"
+    },
+    "insufficient_history": {
+      "min_qualified_transactions": 10,
+      "min_active_days": 7,
+      "action": "LIMIT_LEVEL_0",
+      "reason": "Insufficient transaction history"
+    }
+  },
+  "score_calculation": {
+    "base_score": 50,
+    "max_score": 100,
+    "min_score": 0
+  }
+}

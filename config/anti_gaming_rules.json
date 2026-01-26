@@ -1,0 +1,84 @@
+{
+  "pattern_detection": {
+    "identical_amounts": {
+      "enabled": true,
+      "min_occurrences": 10,
+      "uniqueness_threshold": 1,
+      "flag": "IDENTICAL_AMOUNTS_REPEATED",
+      "severity": "HIGH",
+      "description": "Multiple transactions with exact same amount"
+    },
+    "excessive_refund_rate": {
+      "enabled": true,
+      "threshold": 0.20,
+      "flag": "EXCESSIVE_REFUND_RATE",
+      "severity": "HIGH",
+      "description": "Refund rate exceeds 20% of all transactions"
+    },
+    "refund_clusters": {
+      "enabled": true,
+      "window_hours": 24,
+      "min_refunds": 5,
+      "flag": "REFUND_CLUSTER_DETECTED",
+      "severity": "MEDIUM",
+      "description": "Multiple refunds in short time window"
+    },
+    "void_spike": {
+      "enabled": true,
+      "threshold": 0.15,
+      "min_voids": 5,
+      "flag": "VOID_SPIKE",
+      "severity": "MEDIUM",
+      "description": "Void rate exceeds 15% of transactions"
+    },
+    "round_number_bias": {
+      "enabled": true,
+      "threshold": 0.80,
+      "round_amounts": [1000, 2000, 5000, 10000],
+      "flag": "ROUND_NUMBER_BIAS",
+      "severity": "MEDIUM",
+      "description": "Excessive use of round-number amounts"
+    },
+    "rapid_sequence": {
+      "enabled": true,
+      "window_minutes": 5,
+      "min_transactions": 10,
+      "flag": "RAPID_TRANSACTION_SEQUENCE",
+      "severity": "MEDIUM",
+      "description": "Unusual transaction velocity"
+    },
+    "late_night_spike": {
+      "enabled": true,
+      "hours_start": 1,
+      "hours_end": 5,
+      "threshold": 0.30,
+      "flag": "LATE_NIGHT_SPIKE",
+      "severity": "LOW",
+      "description": "Unusual activity during late hours (1-5 AM)"
+    },
+    "manual_entry_bias": {
+      "enabled": true,
+      "threshold": 0.70,
+      "flag": "EXCESSIVE_MANUAL_ENTRY",
+      "severity": "MEDIUM",
+      "description": "Excessive manual card entry vs card present"
+    }
+  },
+  "response_actions": {
+    "HIGH": {
+      "block_score_increase": true,
+      "require_manual_review": true,
+      "notify_risk_team": true
+    },
+    "MEDIUM": {
+      "block_score_increase": false,
+      "require_manual_review": true,
+      "notify_risk_team": false
+    },
+    "LOW": {
+      "block_score_increase": false,
+      "require_manual_review": false,
+      "notify_risk_team": false
+    }
+  }
+}

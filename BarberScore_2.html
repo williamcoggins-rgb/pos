@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarberScore - Business Intelligence Dashboard</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .score-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .score-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .score-number {
+            font-size: 72px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tier-badge {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .tier-0 { background: #e2e8f0; color: #4a5568; }
+        .tier-1 { background: #fed7d7; color: #c53030; }
+        .tier-2 { background: #feebc8; color: #c05621; }
+        .tier-3 { background: #c6f6d5; color: #22543d; }
+        .tier-4 { background: #bee3f8; color: #2c5282; }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .metric-label {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1a202c;
+        }
+
+        .access-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .access-title {
+            font-size: 24px;
+            color: #1a202c;
+            margin-bottom: 20px;
+        }
+
+        .access-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .access-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f7fafc;
+        }
+
+        .access-item.unlocked {
+            background: #c6f6d5;
+        }
+
+        .access-item.locked {
+            background: #fed7d7;
+            opacity: 0.6;
+        }
+
+        .access-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .access-text {
+            flex: 1;
+        }
+
+        .access-text h4 {
+            font-size: 16px;
+            color: #1a202c;
+            margin-bottom: 4px;
+        }
+
+        .access-text p {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .alert-warning {
+            background: #fef5e7;
+            border-left: 4px solid #f39c12;
+            color: #7d6608;
+        }
+
+        .alert-error {
+            background: #fadbd8;
+            border-left: 4px solid #e74c3c;
+            color: #922b21;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .store-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .store-locked {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .store-locked-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .unlock-requirements {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .unlock-requirements h4 {
+            font-size: 18px;
+            color: #1a202c;
+            margin-bottom: 12px;
+        }
+
+        .unlock-requirements ul {
+            list-style: none;
+        }
+
+        .unlock-requirements li {
+            padding: 8px 0;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+        }
+
+        .unlock-requirements li:before {
+            content: "✓";
+            margin-right: 10px;
+            color: #48bb78;
+            font-weight: bold;
+        }
+
+        .flags-section {
+            background: #fff5f5;
+            border-left: 4px solid #fc8181;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .flags-section h4 {
+            color: #c53030;
+            margin-bottom: 10px;
+        }
+
+        .flag-item {
+            padding: 8px 0;
+            color: #742a2a;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Mock API - In production, replace with real API calls
+        const mockAPI = {
+            async getEntitlementSummary(barberId) {
+                // Simulate API call
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({
+                            barber_id: barberId,
+                            tier: "Level 2",
+                            score: 72,
+                            is_active: true,
+                            access: ["POS", "STORE_PREPAID", "BETTER_PRICING"],
+                            caps: {
+                                max_order_value: 150000
+                            },
+                            store_access: true,
+                            terms_access: false,
+                            pricing_tier: "BETTER",
+                            fulfillment_sla: "STANDARD",
+                            next_tier: "Level 3",
+                            points_to_next: 13,
+                            blocked_reasons: [],
+                            granted_at: "2024-01-15T10:30:00Z",
+                            last_updated: "2024-01-20T14:20:00Z",
+                        });
+                    }, 500);
+                });
+            },
+
+            async getBarberMetrics(barberId) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({
+                            qualified_transactions: 45,
+                            total_revenue_cents: 156000,
+                            refund_rate: 0.04,
+                            void_rate: 0.02,
+                            active_days: 28,
+                            avg_ticket_cents: 3467,
+                        });
+                    }, 500);
+                });
+            },
+
+            async getGameFlags(barberId) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve([]);
+                    }, 500);
+                });
+            }
+        };
+
+        function ScoreCard({ score, tier, nextTier, pointsToNext, isActive, blockedReasons }) {
+            const progress = (score % 100);
+
+            return (
+                <div className="score-card">
+                    <div className="score-display">
+                        <div>
+                            <div className="score-number">{score}</div>
+                            <span className={`tier-badge tier-${tier.split(' ')[1]}`}>
+                                {tier}
+                            </span>
+                        </div>
+                    </div>
+
+                    {isActive && pointsToNext > 0 && (
+                        <>
+                            <div className="progress-bar">
+                                <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+                            </div>
+                            <div className="progress-text">
+                                {pointsToNext} points to {nextTier}
+                            </div>
+                        </>
+                    )}
+
+                    {!isActive && blockedReasons.length > 0 && (
+                        <div className="alert alert-error">
+                            <strong>Account Locked:</strong> {blockedReasons.join(', ')}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function MetricsGrid({ metrics }) {
+            return (
+                <div className="metrics-grid">
+                    <div className="metric-card">
+                        <div className="metric-label">Qualified Transactions</div>
+                        <div className="metric-value">{metrics.qualified_transactions}</div>
+                    </div>
+                    <div className="metric-card">
+                        <div className="metric-label">Total Revenue</div>
+                        <div className="metric-value">
+                            ${(metrics.total_revenue_cents / 100).toFixed(2)}
+                        </div>
+                    </div>
+                    <div className="metric-card">
+                        <div className="metric-label">Avg Ticket</div>
+                        <div className="metric-value">
+                            ${(metrics.avg_ticket_cents / 100).toFixed(2)}
+                        </div>
+                    </div>
+                    <div className="metric-card">
+                        <div className="metric-label">Refund Rate</div>
+                        <div className="metric-value">
+                            {(metrics.refund_rate * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                    <div className="metric-card">
+                        <div className="metric-label">Active Days</div>
+                        <div className="metric-value">{metrics.active_days}</div>
+                    </div>
+                </div>
+            );
+        }
+
+        function AccessSection({ entitlement }) {
+            const accessItems = [
+                { key: 'POS', icon: '💳', title: 'POS System', desc: 'Accept payments' },
+                { key: 'STORE_PREPAID', icon: '🛒', title: 'Procurement Store', desc: 'Order supplies prepaid' },
+                { key: 'BETTER_PRICING', icon: '💰', title: 'Better Pricing', desc: '5-10% discount' },
+                { key: 'BEST_PRICING', icon: '💎', title: 'Best Pricing', desc: '15% discount' },
+                { key: 'TERMS_ELIGIBLE', icon: '📄', title: 'Net Terms', desc: 'Net-30 credit' },
+                { key: 'PRIORITY_FULFILLMENT', icon: '⚡', title: 'Priority Fulfillment', desc: '24hr shipping' },
+            ];
+
+            return (
+                <div className="access-section">
+                    <h3 className="access-title">Your Access & Benefits</h3>
+                    <div className="access-grid">
+                        {accessItems.map(item => {
+                            const unlocked = entitlement.access.includes(item.key);
+                            return (
+                                <div key={item.key} className={`access-item ${unlocked ? 'unlocked' : 'locked'}`}>
+                                    <div className="access-icon">{item.icon}</div>
+                                    <div className="access-text">
+                                        <h4>{item.title}</h4>
+                                        <p>{item.desc}</p>
+                                    </div>
+                                    {unlocked && <span style={{ color: '#48bb78' }}>✓</span>}
+                                    {!unlocked && <span style={{ color: '#cbd5e0' }}>🔒</span>}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {entitlement.caps.max_order_value && (
+                        <div className="alert alert-success" style={{ marginTop: '20px' }}>
+                            <strong>Order Limit:</strong> ${(entitlement.caps.max_order_value / 100).toFixed(2)} per order
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function ProcurementStore({ entitlement }) {
+            if (!entitlement.store_access) {
+                return (
+                    <div className="store-section">
+                        <div className="store-locked">
+                            <div className="store-locked-icon">🔒</div>
+                            <h2>Procurement Store Locked</h2>
+                            <p style={{ color: '#718096', marginTop: '10px' }}>
+                                Build your BarberScore to Level 1 (50+) to unlock store access
+                            </p>
+
+                            <div className="unlock-requirements">
+                                <h4>How to Unlock:</h4>
+                                <ul>
+                                    <li>Complete at least 10 qualified transactions</li>
+                                    <li>Maintain transactions above $5 minimum</li>
+                                    <li>Keep refund rate below 25%</li>
+                                    <li>Be active for at least 7 days</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="store-section">
+                    <h3 className="access-title">Procurement Store</h3>
+                    <div className="alert alert-success">
+                        ✓ Store access granted! You can place orders up to ${(entitlement.caps.max_order_value / 100).toFixed(2)}
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                        <button className="btn btn-primary" onClick={() => alert('Navigate to store')}>
+                            Browse Supplies
+                        </button>
+                        <button className="btn btn-secondary" style={{ marginLeft: '10px' }} onClick={() => alert('View order history')}>
+                            Order History
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function FlagsSection({ flags }) {
+            if (flags.length === 0) return null;
+
+            return (
+                <div className="flags-section">
+                    <h4>⚠️ Activity Flags Detected</h4>
+                    <p style={{ marginBottom: '10px', fontSize: '14px' }}>
+                        These patterns may affect your score. Please review your transaction activity.
+                    </p>
+                    {flags.map((flag, idx) => (
+                        <div key={idx} className="flag-item">• {flag.replace(/_/g, ' ')}</div>
+                    ))}
+                </div>
+            );
+        }
+
+        function Dashboard() {
+            const [loading, setLoading] = useState(true);
+            const [entitlement, setEntitlement] = useState(null);
+            const [metrics, setMetrics] = useState(null);
+            const [flags, setFlags] = useState([]);
+
+            const barberId = "barber_demo"; // In production, get from auth
+
+            useEffect(() => {
+                async function loadData() {
+                    try {
+                        const [entitlementData, metricsData, flagsData] = await Promise.all([
+                            mockAPI.getEntitlementSummary(barberId),
+                            mockAPI.getBarberMetrics(barberId),
+                            mockAPI.getGameFlags(barberId),
+                        ]);
+
+                        setEntitlement(entitlementData);
+                        setMetrics(metricsData);
+                        setFlags(flagsData);
+                    } catch (error) {
+                        console.error('Failed to load data:', error);
+                    } finally {
+                        setLoading(false);
+                    }
+                }
+
+                loadData();
+            }, [barberId]);
+
+            if (loading) {
+                return (
+                    <div className="dashboard">
+                        <div className="header" style={{ textAlign: 'center' }}>
+                            <h1>Loading...</h1>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="dashboard">
+                    <div className="header">
+                        <h1>BarberScore Dashboard</h1>
+                        <p>Track your score, unlock benefits, and grow your business</p>
+                    </div>
+
+                    <ScoreCard
+                        score={entitlement.score}
+                        tier={entitlement.tier}
+                        nextTier={entitlement.next_tier}
+                        pointsToNext={entitlement.points_to_next}
+                        isActive={entitlement.is_active}
+                        blockedReasons={entitlement.blocked_reasons}
+                    />
+
+                    <div className="score-card">
+                        <h3 style={{ marginBottom: '20px', color: '#1a202c' }}>Your Metrics</h3>
+                        <MetricsGrid metrics={metrics} />
+                        <FlagsSection flags={flags} />
+                    </div>
+
+                    <AccessSection entitlement={entitlement} />
+
+                    <ProcurementStore entitlement={entitlement} />
+                </div>
+            );
+        }
+
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>
