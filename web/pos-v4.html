@@ -734,11 +734,167 @@
             font-weight: 600;
             margin-left: 4px;
         }
+
+        /* Onboarding Screens */
+        .onboarding-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .onboarding-screen.hidden {
+            display: none;
+        }
+
+        .welcome-logo {
+            width: 80px;
+            height: 80px;
+            background: #DC2626;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .welcome-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .setup-form {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .form-subtitle {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .input-error {
+            border-color: #DC2626 !important;
+        }
+
+        .error-text {
+            color: #DC2626;
+            font-size: 12px;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Passcode Screen -->
+        <!-- Welcome Screen -->
+        <div class="onboarding-screen hidden" id="welcomeScreen">
+            <div class="welcome-logo">BS</div>
+            <h1 class="welcome-title">Welcome to BarberScore POS</h1>
+            <p class="welcome-subtitle">Your complete point of sale system with built-in credit scoring for warehouse access</p>
+            <button class="btn-primary" onclick="showBusinessSetup()">Get Started</button>
+        </div>
+
+        <!-- Business Setup Screen -->
+        <div class="onboarding-screen hidden" id="businessSetupScreen">
+            <form class="setup-form" onsubmit="submitBusinessSetup(event)">
+                <h2 class="form-title">Business Setup</h2>
+                <p class="form-subtitle">Tell us about your business</p>
+
+                <div class="form-group">
+                    <label class="form-label">Shop Name <span class="required-badge">*</span></label>
+                    <input type="text" class="form-input" id="setupShopName" placeholder="e.g., Elite Cuts Barbershop" required>
+                    <div class="error-text" id="shopNameError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Owner Name <span class="required-badge">*</span></label>
+                    <input type="text" class="form-input" id="setupOwnerName" placeholder="e.g., John Smith" required>
+                    <div class="error-text" id="ownerNameError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email <span class="required-badge">*</span></label>
+                    <input type="email" class="form-input" id="setupEmail" placeholder="e.g., john@elitecuts.com" required>
+                    <div class="error-text" id="emailError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Phone Number <span class="required-badge">*</span></label>
+                    <input type="tel" class="form-input" id="setupPhone" placeholder="e.g., (555) 123-4567" required>
+                    <div class="error-text" id="phoneError"></div>
+                </div>
+
+                <button type="submit" class="btn-primary">Continue</button>
+                <button type="button" class="btn-secondary" onclick="showWelcomeScreen()">Back</button>
+            </form>
+        </div>
+
+        <!-- Passcode Setup Screen -->
+        <div class="onboarding-screen hidden" id="passcodeSetupScreen">
+            <h1 class="passcode-title" id="passcodeSetupTitle">Create Your Passcode</h1>
+            <p class="passcode-subtitle" id="passcodeSetupSubtitle">Enter a 4-digit passcode to secure your POS</p>
+            <div class="passcode-dots">
+                <div class="passcode-dot" id="setupDot1"></div>
+                <div class="passcode-dot" id="setupDot2"></div>
+                <div class="passcode-dot" id="setupDot3"></div>
+                <div class="passcode-dot" id="setupDot4"></div>
+            </div>
+            <div class="passcode-keypad">
+                <button class="passcode-key" onclick="enterSetupPasscode('1')">1</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('2')">2</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('3')">3</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('4')">4</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('5')">5</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('6')">6</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('7')">7</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('8')">8</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('9')">9</button>
+                <button class="passcode-key"></button>
+                <button class="passcode-key" onclick="enterSetupPasscode('0')">0</button>
+                <button class="passcode-key" onclick="clearSetupPasscode()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="error-message" id="passcodeSetupError"></div>
+            <button class="btn-secondary" style="margin-top: 20px;" onclick="showBusinessSetup()">Back</button>
+        </div>
+
+        <!-- Passcode Screen (Login) -->
         <div class="passcode-screen hidden" id="passcodeScreen">
             <h1 class="passcode-title">Enter Passcode</h1>
             <p class="passcode-subtitle">Enter your 4-digit passcode</p>
@@ -1141,12 +1297,24 @@
             ownerPhone: ''
         };
 
+        let userProfile = JSON.parse(localStorage.getItem('userProfile')) || null;
+
         // Initialize
         function init() {
-            // Skip passcode on first use, user can set it in settings
-            if (currentPasscode) {
-                showPasscodeScreen();
+            // Check if user has completed setup
+            if (!userProfile || !userProfile.shopName) {
+                showWelcomeScreen();
+                return;
             }
+
+            // If setup complete but no passcode, shouldn't happen but handle it
+            if (!currentPasscode) {
+                showPasscodeSetupScreen();
+                return;
+            }
+
+            // Normal login flow
+            showPasscodeScreen();
             loadProfile();
             renderServices();
             updateDashboard();
@@ -1154,7 +1322,190 @@
             updateBarberScore();
         }
 
-        // Passcode Management
+        // Onboarding Flow
+        function showWelcomeScreen() {
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+            document.getElementById('businessSetupScreen').classList.add('hidden');
+            document.getElementById('passcodeSetupScreen').classList.add('hidden');
+        }
+
+        function showBusinessSetup() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('businessSetupScreen').classList.remove('hidden');
+            document.getElementById('passcodeSetupScreen').classList.add('hidden');
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validatePhone(phone) {
+            const re = /^[\d\s\-\(\)]+$/;
+            return re.test(phone) && phone.replace(/\D/g, '').length >= 10;
+        }
+
+        function submitBusinessSetup(event) {
+            event.preventDefault();
+
+            // Clear previous errors
+            document.querySelectorAll('.error-text').forEach(el => el.textContent = '');
+            document.querySelectorAll('.form-input').forEach(el => el.classList.remove('input-error'));
+
+            const shopName = document.getElementById('setupShopName').value.trim();
+            const ownerName = document.getElementById('setupOwnerName').value.trim();
+            const email = document.getElementById('setupEmail').value.trim();
+            const phone = document.getElementById('setupPhone').value.trim();
+
+            let hasError = false;
+
+            if (!shopName) {
+                document.getElementById('shopNameError').textContent = 'Shop name is required';
+                document.getElementById('setupShopName').classList.add('input-error');
+                hasError = true;
+            }
+
+            if (!ownerName) {
+                document.getElementById('ownerNameError').textContent = 'Owner name is required';
+                document.getElementById('setupOwnerName').classList.add('input-error');
+                hasError = true;
+            }
+
+            if (!email) {
+                document.getElementById('emailError').textContent = 'Email is required';
+                document.getElementById('setupEmail').classList.add('input-error');
+                hasError = true;
+            } else if (!validateEmail(email)) {
+                document.getElementById('emailError').textContent = 'Please enter a valid email address';
+                document.getElementById('setupEmail').classList.add('input-error');
+                hasError = true;
+            }
+
+            if (!phone) {
+                document.getElementById('phoneError').textContent = 'Phone number is required';
+                document.getElementById('setupPhone').classList.add('input-error');
+                hasError = true;
+            } else if (!validatePhone(phone)) {
+                document.getElementById('phoneError').textContent = 'Please enter a valid phone number';
+                document.getElementById('setupPhone').classList.add('input-error');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Save profile data (will be completed after passcode setup)
+            tempProfile = {
+                shopName,
+                ownerName,
+                email,
+                phone
+            };
+
+            showPasscodeSetupScreen();
+        }
+
+        let setupPasscodeInput = '';
+        let setupPasscodeConfirm = '';
+        let isConfirmingPasscode = false;
+        let tempProfile = null;
+
+        function showPasscodeSetupScreen() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('businessSetupScreen').classList.add('hidden');
+            document.getElementById('passcodeSetupScreen').classList.remove('hidden');
+            setupPasscodeInput = '';
+            setupPasscodeConfirm = '';
+            isConfirmingPasscode = false;
+            updateSetupPasscodeDots();
+            document.getElementById('passcodeSetupTitle').textContent = 'Create Your Passcode';
+            document.getElementById('passcodeSetupSubtitle').textContent = 'Enter a 4-digit passcode to secure your POS';
+        }
+
+        function enterSetupPasscode(digit) {
+            if (!isConfirmingPasscode && setupPasscodeInput.length < 4) {
+                setupPasscodeInput += digit;
+                updateSetupPasscodeDots();
+
+                if (setupPasscodeInput.length === 4) {
+                    // Move to confirmation
+                    setTimeout(() => {
+                        isConfirmingPasscode = true;
+                        document.getElementById('passcodeSetupTitle').textContent = 'Confirm Your Passcode';
+                        document.getElementById('passcodeSetupSubtitle').textContent = 'Re-enter your passcode to confirm';
+                        updateSetupPasscodeDots();
+                    }, 300);
+                }
+            } else if (isConfirmingPasscode && setupPasscodeConfirm.length < 4) {
+                setupPasscodeConfirm += digit;
+                updateSetupPasscodeDots();
+
+                if (setupPasscodeConfirm.length === 4) {
+                    if (setupPasscodeInput === setupPasscodeConfirm) {
+                        // Success! Complete setup
+                        completeSetup();
+                    } else {
+                        document.getElementById('passcodeSetupError').textContent = 'Passcodes do not match. Try again.';
+                        setTimeout(() => {
+                            setupPasscodeInput = '';
+                            setupPasscodeConfirm = '';
+                            isConfirmingPasscode = false;
+                            document.getElementById('passcodeSetupTitle').textContent = 'Create Your Passcode';
+                            document.getElementById('passcodeSetupSubtitle').textContent = 'Enter a 4-digit passcode to secure your POS';
+                            document.getElementById('passcodeSetupError').textContent = '';
+                            updateSetupPasscodeDots();
+                        }, 2000);
+                    }
+                }
+            }
+        }
+
+        function clearSetupPasscode() {
+            if (isConfirmingPasscode) {
+                setupPasscodeConfirm = '';
+            } else {
+                setupPasscodeInput = '';
+            }
+            updateSetupPasscodeDots();
+            document.getElementById('passcodeSetupError').textContent = '';
+        }
+
+        function updateSetupPasscodeDots() {
+            const currentInput = isConfirmingPasscode ? setupPasscodeConfirm : setupPasscodeInput;
+            ['setupDot1', 'setupDot2', 'setupDot3', 'setupDot4'].forEach((id, index) => {
+                const dot = document.getElementById(id);
+                if (index < currentInput.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        }
+
+        function completeSetup() {
+            // Save passcode
+            currentPasscode = setupPasscodeInput;
+            localStorage.setItem('passcode', currentPasscode);
+
+            // Save profile
+            userProfile = {
+                id: Date.now().toString(),
+                ...tempProfile,
+                barberScore: 0,
+                tier: 0,
+                createdAt: new Date().toISOString()
+            };
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+
+            // Hide onboarding and start app
+            document.getElementById('passcodeSetupScreen').classList.add('hidden');
+            renderServices();
+            updateDashboard();
+            updateAnalytics();
+            updateBarberScore();
+            updateProcurement();
+        }
+
+        // Passcode Management (Login)
         function showPasscodeScreen() {
             document.getElementById('passcodeScreen').classList.remove('hidden');
             passcodeInput = '';
@@ -1587,21 +1938,23 @@
 
         // Profile
         function loadProfile() {
-            document.getElementById('businessName').value = profile.businessName || '';
-            document.getElementById('ownerName').value = profile.ownerName || '';
-            document.getElementById('ownerEmail').value = profile.ownerEmail || '';
-            document.getElementById('ownerPhone').value = profile.ownerPhone || '';
+            if (userProfile) {
+                document.getElementById('businessName').value = userProfile.shopName || '';
+                document.getElementById('ownerName').value = userProfile.ownerName || '';
+                document.getElementById('ownerEmail').value = userProfile.email || '';
+                document.getElementById('ownerPhone').value = userProfile.phone || '';
+            }
         }
 
         function saveProfile() {
-            profile = {
-                businessName: document.getElementById('businessName').value,
-                ownerName: document.getElementById('ownerName').value,
-                ownerEmail: document.getElementById('ownerEmail').value,
-                ownerPhone: document.getElementById('ownerPhone').value
-            };
-            localStorage.setItem('profile', JSON.stringify(profile));
-            alert('Profile saved successfully!');
+            if (userProfile) {
+                userProfile.shopName = document.getElementById('businessName').value;
+                userProfile.ownerName = document.getElementById('ownerName').value;
+                userProfile.email = document.getElementById('ownerEmail').value;
+                userProfile.phone = document.getElementById('ownerPhone').value;
+                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+                alert('Profile saved successfully!');
+            }
         }
 
         // CSV Import
