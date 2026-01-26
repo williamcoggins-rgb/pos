@@ -980,6 +980,24 @@
                             </label>
                             <input type="text" class="form-input" id="customerContact" placeholder="customer@email.com or (555) 123-4567">
                         </div>
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #E5E5E5;">
+                            <label class="form-label" style="margin-bottom: 12px; display: block;">BarberScore Tracking</label>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                                    <input type="checkbox" id="trackRebook" style="width: 18px; height: 18px; cursor: pointer;">
+                                    <span>Client rebooked next appointment</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                                    <input type="checkbox" id="trackRetail" style="width: 18px; height: 18px; cursor: pointer;">
+                                    <span>Client purchased retail product</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                                    <input type="checkbox" id="trackAddons" style="width: 18px; height: 18px; cursor: pointer;">
+                                    <span>Client added service upgrade</span>
+                                </label>
+                            </div>
+                            <p style="font-size: 11px; color: #666; margin-top: 8px;">Track these to improve your BarberScore</p>
+                        </div>
                     </div>
                     <div class="cart-list" id="cartList"></div>
                     <div class="cart-total">
@@ -1048,37 +1066,39 @@
                 </div>
 
                 <h2 style="font-size: 18px; font-weight: 600; margin: 24px 0 16px;">Score Breakdown</h2>
-                <div class="score-breakdown">
-                    <div class="score-item">
-                        <div class="score-item-header">
-                            <span class="score-item-label">Transaction Volume</span>
-                            <span class="score-item-value" id="scoreTransactions">0 pts</span>
-                        </div>
-                        <div class="score-item-desc">Points from total number of transactions</div>
-                    </div>
-
-                    <div class="score-item">
-                        <div class="score-item-header">
-                            <span class="score-item-label">Revenue Generated</span>
-                            <span class="score-item-value" id="scoreRevenue">0 pts</span>
-                        </div>
-                        <div class="score-item-desc">Points from total revenue (1 point per $100)</div>
-                    </div>
-
-                    <div class="score-item">
-                        <div class="score-item-header">
-                            <span class="score-item-label">Customer Data Collection</span>
-                            <span class="score-item-value" id="scoreCustomers">0 pts</span>
-                        </div>
-                        <div class="score-item-desc">Bonus points for collecting customer contact info</div>
+                <div id="scoreBreakdown">
+                    <!-- Populated by updateBarberScore() -->
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <p>Complete transactions to see your detailed score breakdown</p>
                     </div>
                 </div>
 
-                <h2 style="font-size: 18px; font-weight: 600; margin: 24px 0 16px;">How to Improve</h2>
+                <h2 style="font-size: 18px; font-weight: 600; margin: 24px 0 16px;">How to Improve Your Score</h2>
                 <div class="stat-card">
-                    <p style="color: #666; line-height: 1.6;">
-                        Increase your BarberScore by completing more transactions, growing your revenue, and collecting customer contact information. Higher scores unlock better procurement tiers with exclusive benefits.
-                    </p>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ Rebook Clients (200 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Always ask to schedule the next appointment at checkout. Target: 55%+ rebook rate</p>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ Completion Rate (150 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Reduce no-shows with reminders. Minimize cancellations. Target: 95%+ completion</p>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ Client Retention (100 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Track customer info to identify returning clients. Build relationships for repeat business.</p>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ No-Show Control (100 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Send reminders, collect deposits, follow up with clients. Target: Under 5%</p>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ Average Ticket (75 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Upsell add-ons and retail products. Increase service prices. Target: $45+ average</p>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ Retail & Add-ons (125 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Recommend products and service upgrades. Track what clients buy beyond the base service.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1098,71 +1118,71 @@
                 <div class="tier-list">
                     <div class="tier-card" id="tier0">
                         <div class="tier-header">
-                            <span class="tier-name">Tier 0 - Getting Started</span>
-                            <span class="tier-range">0-99 pts</span>
+                            <span class="tier-name">Level 0 - Beginning</span>
+                            <span class="tier-range">0-200 pts</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>Basic POS access</li>
-                            <li>Transaction tracking</li>
-                            <li>Standard analytics</li>
+                            <li>POS access only</li>
+                            <li>No procurement access</li>
+                            <li>Focus on building your foundation</li>
                         </ul>
                     </div>
 
                     <div class="tier-card" id="tier1">
                         <div class="tier-header">
-                            <span class="tier-name">Tier 1 - Bronze</span>
-                            <span class="tier-range">100-299 pts</span>
+                            <span class="tier-name">Level 1 - Building</span>
+                            <span class="tier-range">201-400 pts</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>5% discount on supplies</li>
-                            <li>Priority customer support</li>
-                            <li>Advanced analytics</li>
-                            <li>Monthly product samples</li>
+                            <li>Prepaid warehouse orders</li>
+                            <li>Up to $500 per order</li>
+                            <li>Standard pricing</li>
+                            <li>Email support</li>
                         </ul>
                     </div>
 
                     <div class="tier-card" id="tier2">
                         <div class="tier-header">
-                            <span class="tier-name">Tier 2 - Silver</span>
-                            <span class="tier-range">300-599 pts</span>
+                            <span class="tier-name">Level 2 - Growing</span>
+                            <span class="tier-range">401-600 pts</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>10% discount on supplies</li>
-                            <li>Free shipping on orders</li>
-                            <li>Quarterly business consultation</li>
-                            <li>Exclusive product access</li>
-                            <li>Marketing materials</li>
+                            <li>5-10% discount on products</li>
+                            <li>Up to $1,500 per order</li>
+                            <li>Faster order processing</li>
+                            <li>Priority support</li>
+                            <li>Free shipping</li>
                         </ul>
                     </div>
 
                     <div class="tier-card" id="tier3">
                         <div class="tier-header">
-                            <span class="tier-name">Tier 3 - Gold</span>
-                            <span class="tier-range">600-999 pts</span>
+                            <span class="tier-name">Level 3 - Scaling</span>
+                            <span class="tier-range">601-750 pts</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>15% discount on supplies</li>
-                            <li>Free premium shipping</li>
-                            <li>Monthly business consultation</li>
-                            <li>VIP product launches</li>
-                            <li>Custom marketing campaigns</li>
-                            <li>Staff training resources</li>
+                            <li>Net-30 payment terms</li>
+                            <li>Up to $3,000 per order</li>
+                            <li>$1,000 credit line</li>
+                            <li>10-15% discount</li>
+                            <li>Quarterly business review</li>
+                            <li>Exclusive product access</li>
                         </ul>
                     </div>
 
                     <div class="tier-card" id="tier4">
                         <div class="tier-header">
-                            <span class="tier-name">Tier 4 - Platinum</span>
-                            <span class="tier-range">1000+ pts</span>
+                            <span class="tier-name">Level 4 - Mastery</span>
+                            <span class="tier-range">751-850 pts</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>20% discount on supplies</li>
-                            <li>Free overnight shipping</li>
+                            <li>15% discount on all products</li>
+                            <li>Up to $10,000 per order</li>
+                            <li>$5,000 credit line</li>
+                            <li>Net-60 payment terms</li>
+                            <li>Priority fulfillment</li>
                             <li>Dedicated account manager</li>
-                            <li>Exclusive partnership opportunities</li>
-                            <li>Featured in marketing campaigns</li>
-                            <li>Premium staff training</li>
-                            <li>Annual business retreat invitation</li>
+                            <li>VIP partnership opportunities</li>
                         </ul>
                     </div>
                 </div>
@@ -1765,13 +1785,23 @@
                 return;
             }
 
+            // Get tracking checkboxes
+            const rebooked = document.getElementById('trackRebook').checked;
+            const hadRetail = document.getElementById('trackRetail').checked;
+            const hadAddons = document.getElementById('trackAddons').checked;
+
             const total = cart.reduce((sum, item) => sum + item.price, 0);
             const transaction = {
                 id: Date.now(),
                 date: new Date().toISOString(),
                 services: [...cart],
                 total: total,
-                customerContact: customerContact
+                customerContact: customerContact,
+                rebooked: rebooked,
+                hadRetail: hadRetail,
+                hadAddons: hadAddons,
+                noShow: false,
+                cancelled: false
             };
 
             transactions.push(transaction);
@@ -1779,6 +1809,9 @@
 
             cart = [];
             document.getElementById('customerContact').value = '';
+            document.getElementById('trackRebook').checked = false;
+            document.getElementById('trackRetail').checked = false;
+            document.getElementById('trackAddons').checked = false;
             renderCart();
             updateDashboard();
             updateBarberScore();
@@ -1881,49 +1914,211 @@
         }
 
         // BarberScore
-        function calculateBarberScore() {
-            const transactionPoints = transactions.length * 2;
-            const revenuePoints = Math.floor(transactions.reduce((sum, t) => sum + t.total, 0) / 100);
-            const customerPoints = transactions.filter(t => t.customerContact).length * 3;
+        // BarberScore Calculation - Accurate Algorithm (Max 850 points)
+        const SCORE_BENCHMARKS = {
+            rebookRate: { target: 55, good: 45 },
+            noShowRate: { target: 5, acceptable: 10 },
+            cancelRate: { target: 10, acceptable: 15 },
+            avgTicket: { target: 45, good: 35 }
+        };
 
-            return transactionPoints + revenuePoints + customerPoints;
+        const SCORE_STAGES = [
+            { min: 0, max: 200, name: 'Beginning', tier: 0, color: '#FF5252' },
+            { min: 201, max: 400, name: 'Building', tier: 1, color: '#FF9800' },
+            { min: 401, max: 600, name: 'Growing', tier: 2, color: '#FFB300' },
+            { min: 601, max: 750, name: 'Scaling', tier: 3, color: '#8BC34A' },
+            { min: 751, max: 850, name: 'Mastery', tier: 4, color: '#00C853' }
+        ];
+
+        function calculateMetrics() {
+            // Count transaction types
+            const completed = transactions.filter(t => !t.noShow && !t.cancelled).length;
+            const noShows = transactions.filter(t => t.noShow).length;
+            const cancelled = transactions.filter(t => t.cancelled).length;
+            const totalScheduled = completed + noShows + cancelled;
+
+            // Calculate revenue
+            const revenue = transactions
+                .filter(t => !t.noShow && !t.cancelled)
+                .reduce((sum, t) => sum + t.total, 0);
+
+            const avgTicket = completed > 0 ? revenue / completed : 0;
+
+            // Calculate rates
+            const noShowRate = totalScheduled > 0 ? (noShows / totalScheduled) * 100 : null;
+            const cancelRate = totalScheduled > 0 ? (cancelled / totalScheduled) * 100 : null;
+            const completionRate = totalScheduled > 0 ? (completed / totalScheduled) * 100 : null;
+
+            // Client behavior (from last 30 transactions)
+            const recent = transactions.slice(-30);
+            const rebooked = recent.filter(t => t.rebooked).length;
+            const withRetail = recent.filter(t => t.hadRetail).length;
+            const withAddons = recent.filter(t => t.hadAddons).length;
+
+            const rebookRate = recent.length > 0 ? (rebooked / recent.length) * 100 : null;
+            const retailRate = recent.length > 0 ? (withRetail / recent.length) * 100 : null;
+            const addonRate = recent.length > 0 ? (withAddons / recent.length) * 100 : null;
+
+            // Client retention
+            const clientContacts = transactions
+                .filter(t => t.customerContact)
+                .map(t => t.customerContact.toLowerCase());
+            const uniqueClients = [...new Set(clientContacts)];
+            const clientFrequency = {};
+            clientContacts.forEach(contact => {
+                clientFrequency[contact] = (clientFrequency[contact] || 0) + 1;
+            });
+            const returningClients = Object.values(clientFrequency).filter(count => count > 1).length;
+            const retentionRate = uniqueClients.length > 0 ? (returningClients / uniqueClients.length) * 100 : null;
+
+            return {
+                completed,
+                noShows,
+                cancelled,
+                totalScheduled,
+                revenue,
+                avgTicket,
+                noShowRate,
+                cancelRate,
+                completionRate,
+                rebookRate,
+                retailRate,
+                addonRate,
+                retentionRate,
+                totalClients: uniqueClients.length,
+                returningClients
+            };
+        }
+
+        function calculateBarberScore() {
+            const metrics = calculateMetrics();
+            let points = 100; // Base points
+
+            // Completion Rate (max 150 pts)
+            if (metrics.completionRate !== null) {
+                points += Math.min(150, metrics.completionRate * 1.5);
+            }
+
+            // No-Show Rate (max 100 pts) - inverse scoring
+            if (metrics.noShowRate !== null) {
+                points += Math.max(0, 100 - metrics.noShowRate * 10);
+            }
+
+            // Rebook Rate (max 200 pts) - MOST IMPORTANT
+            if (metrics.rebookRate !== null) {
+                points += Math.min(200, metrics.rebookRate * 3.6);
+            }
+
+            // Retail Rate (max 75 pts)
+            if (metrics.retailRate !== null) {
+                points += Math.min(75, metrics.retailRate * 3);
+            }
+
+            // Add-on Rate (max 50 pts)
+            if (metrics.addonRate !== null) {
+                points += Math.min(50, metrics.addonRate * 2.5);
+            }
+
+            // Average Ticket (max 75 pts)
+            if (metrics.avgTicket > 0) {
+                const ticketMultiplier = metrics.avgTicket / SCORE_BENCHMARKS.avgTicket.target;
+                points += Math.min(75, ticketMultiplier * 40);
+            }
+
+            // Client Retention (max 100 pts)
+            if (metrics.retentionRate !== null) {
+                points += Math.min(100, metrics.retentionRate * 1.5);
+            }
+
+            // Cap at 850
+            const finalScore = Math.max(0, Math.min(850, Math.round(points)));
+
+            return {
+                score: finalScore,
+                metrics
+            };
+        }
+
+        function getScoreStage(score) {
+            return SCORE_STAGES.find(s => score >= s.min && score <= s.max) || SCORE_STAGES[0];
         }
 
         function getTier(score) {
-            if (score >= 1000) return 'Tier 4 - Platinum';
-            if (score >= 600) return 'Tier 3 - Gold';
-            if (score >= 300) return 'Tier 2 - Silver';
-            if (score >= 100) return 'Tier 1 - Bronze';
-            return 'Tier 0 - Getting Started';
+            const stage = getScoreStage(score);
+            return `Level ${stage.tier} - ${stage.name}`;
         }
 
         function updateBarberScore() {
-            const score = calculateBarberScore();
-            const tier = getTier(score);
-
-            const transactionPoints = transactions.length * 2;
-            const revenuePoints = Math.floor(transactions.reduce((sum, t) => sum + t.total, 0) / 100);
-            const customerPoints = transactions.filter(t => t.customerContact).length * 3;
+            const result = calculateBarberScore();
+            const score = result.score;
+            const metrics = result.metrics;
+            const stage = getScoreStage(score);
 
             document.getElementById('barberscoreValue').textContent = score;
-            document.getElementById('barberscoreTier').textContent = tier;
+            document.getElementById('barberscoreTier').textContent = stage.name;
 
-            document.getElementById('scoreTransactions').textContent = `${transactionPoints} pts`;
-            document.getElementById('scoreRevenue').textContent = `${revenuePoints} pts`;
-            document.getElementById('scoreCustomers').textContent = `${customerPoints} pts`;
+            // Update score breakdown
+            const breakdownHTML = `
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 13px; font-weight: 600;">Completion Rate</span>
+                            <span style="font-size: 13px; font-weight: 700; color: ${stage.color};">${metrics.completionRate ? metrics.completionRate.toFixed(1) + '%' : 'N/A'}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">Target: 95%+ completion</div>
+                    </div>
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 13px; font-weight: 600;">Rebook Rate</span>
+                            <span style="font-size: 13px; font-weight: 700; color: ${stage.color};">${metrics.rebookRate ? metrics.rebookRate.toFixed(1) + '%' : 'N/A'}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">Target: 55%+ rebook at checkout</div>
+                    </div>
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 13px; font-weight: 600;">Average Ticket</span>
+                            <span style="font-size: 13px; font-weight: 700; color: ${stage.color};">$${metrics.avgTicket ? metrics.avgTicket.toFixed(2) : '0.00'}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">Target: $45+ per service</div>
+                    </div>
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 13px; font-weight: 600;">Client Retention</span>
+                            <span style="font-size: 13px; font-weight: 700; color: ${stage.color};">${metrics.retentionRate ? metrics.retentionRate.toFixed(1) + '%' : 'N/A'}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">${metrics.returningClients} of ${metrics.totalClients} clients return</div>
+                    </div>
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 13px; font-weight: 600;">No-Show Rate</span>
+                            <span style="font-size: 13px; font-weight: 700; color: ${metrics.noShowRate && metrics.noShowRate > 10 ? '#FF5252' : stage.color};">${metrics.noShowRate ? metrics.noShowRate.toFixed(1) + '%' : 'N/A'}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">Target: Under 5%</div>
+                    </div>
+                </div>
+            `;
+
+            const scoreBreakdownEl = document.getElementById('scoreBreakdown');
+            if (scoreBreakdownEl) {
+                scoreBreakdownEl.innerHTML = breakdownHTML;
+            }
+
+            // Update userProfile with score
+            if (userProfile) {
+                userProfile.barberScore = score;
+                userProfile.tier = stage.tier;
+                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            }
         }
 
         // Procurement
         function updateProcurement() {
-            const score = calculateBarberScore();
-            let currentTierNum = 0;
+            const result = calculateBarberScore();
+            const score = result.score;
+            const stage = getScoreStage(score);
+            const currentTierNum = stage.tier;
 
-            if (score >= 1000) currentTierNum = 4;
-            else if (score >= 600) currentTierNum = 3;
-            else if (score >= 300) currentTierNum = 2;
-            else if (score >= 100) currentTierNum = 1;
-
-            document.getElementById('currentTier').textContent = `Tier ${currentTierNum}`;
+            document.getElementById('currentTier').textContent = `Level ${currentTierNum} - ${stage.name}`;
 
             // Highlight current tier
             for (let i = 0; i <= 4; i++) {
