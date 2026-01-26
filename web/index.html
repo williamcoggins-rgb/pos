@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarberScore POS</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Square meets Footlocker Color Palette */
+            --black: #1a1a1a;
+            --charcoal: #2d2d2d;
+            --gray: #6b7280;
+            --gray-light: #9ca3af;
+            --white: #ffffff;
+
+            /* Streetwear Accents */
+            --purple: #8b5cf6;
+            --purple-dark: #7c3aed;
+            --neon-green: #10b981;
+            --electric-blue: #3b82f6;
+
+            /* Status Colors */
+            --success: #34d399;
+            --warning: #fbbf24;
+            --error: #ef4444;
+
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+            --gradient-success: linear-gradient(135deg, var(--neon-green) 0%, #059669 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+            background: var(--black);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Main Container */
+        .pos-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            height: 100vh;
+            background: var(--black);
+        }
+
+        /* Left Panel - Services */
+        .services-panel {
+            background: var(--charcoal);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 900;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .logo-subtitle {
+            color: var(--gray);
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        /* Service Buttons Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .service-card {
+            background: linear-gradient(145deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--purple);
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3);
+        }
+
+        .service-card:active {
+            transform: translateY(-2px);
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .service-card:hover::before {
+            opacity: 1;
+        }
+
+        .service-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .service-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--white);
+        }
+
+        .service-price {
+            font-size: 28px;
+            font-weight: 900;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Right Panel - Cart */
+        .cart-panel {
+            background: var(--black);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cart-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .cart-subtitle {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        /* Cart Items */
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .cart-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .cart-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(-4px);
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .cart-item-qty {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .cart-item-price {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--neon-green);
+        }
+
+        .cart-item-remove {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--error);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-left: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .cart-item-remove:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--error);
+        }
+
+        /* Empty Cart */
+        .cart-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray);
+        }
+
+        .cart-empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .cart-empty-text {
+            font-size: 16px;
+        }
+
+        /* Cart Summary */
+        .cart-summary {
+            padding: 24px;
+            border-top: 2px solid rgba(139, 92, 246, 0.2);
+            background: linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.05) 100%);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .summary-row.total {
+            font-size: 32px;
+            font-weight: 900;
+            padding-top: 16px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            margin-top: 16px;
+        }
+
+        .summary-label {
+            color: var(--gray);
+        }
+
+        .summary-value {
+            font-weight: 700;
+        }
+
+        .summary-value.total {
+            background: var(--gradient-success);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Charge Button */
+        .charge-button {
+            width: 100%;
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--gradient-primary);
+            color: var(--white);
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3);
+            margin-top: 16px;
+        }
+
+        .charge-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.5);
+        }
+
+        .charge-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .charge-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Payment Processing Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--charcoal);
+            border: 2px solid var(--purple);
+            border-radius: 24px;
+            padding: 48px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(139, 92, 246, 0.4);
+        }
+
+        .modal-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .modal-title {
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 16px;
+        }
+
+        .modal-subtitle {
+            color: var(--gray);
+            font-size: 18px;
+            margin-bottom: 32px;
+        }
+
+        .modal-amount {
+            font-size: 48px;
+            font-weight: 900;
+            background: var(--gradient-success);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 24px 0;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(139, 92, 246, 0.2);
+            border-top-color: var(--purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 24px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Success Animation */
+        .success-checkmark {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+        }
+
+        .success-checkmark svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .checkmark-circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+
+        .checkmark-check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+        }
+
+        @keyframes stroke {
+            100% { stroke-dashoffset: 0; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .pos-container {
+                grid-template-columns: 1fr;
+            }
+
+            .cart-panel {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: auto;
+                max-height: 60vh;
+                border-left: none;
+                border-top: 2px solid var(--purple);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Services data
+        const SERVICES = [
+            { id: 1, name: 'Haircut', price: 35, icon: '✂️' },
+            { id: 2, name: 'Shave', price: 25, icon: '🪒' },
+            { id: 3, name: 'Beard Trim', price: 20, icon: '🧔' },
+            { id: 4, name: 'Line Up', price: 15, icon: '💈' },
+            { id: 5, name: 'Hot Towel', price: 10, icon: '🔥' },
+            { id: 6, name: 'Facial', price: 45, icon: '✨' },
+            { id: 7, name: 'Hair Color', price: 65, icon: '🎨' },
+            { id: 8, name: 'Scalp Treatment', price: 30, icon: '💆' },
+        ];
+
+        function POSCheckout() {
+            const [cart, setCart] = useState([]);
+            const [processing, setProcessing] = useState(false);
+            const [success, setSuccess] = useState(false);
+
+            const addToCart = (service) => {
+                const existing = cart.find(item => item.id === service.id);
+                if (existing) {
+                    setCart(cart.map(item =>
+                        item.id === service.id
+                            ? { ...item, quantity: item.quantity + 1 }
+                            : item
+                    ));
+                } else {
+                    setCart([...cart, { ...service, quantity: 1 }]);
+                }
+            };
+
+            const removeFromCart = (serviceId) => {
+                setCart(cart.filter(item => item.id !== serviceId));
+            };
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.08;
+            const total = subtotal + tax;
+
+            const handleCharge = async () => {
+                setProcessing(true);
+
+                // Simulate payment processing
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                setProcessing(false);
+                setSuccess(true);
+
+                // Reset after 3 seconds
+                setTimeout(() => {
+                    setSuccess(false);
+                    setCart([]);
+                }, 3000);
+            };
+
+            return (
+                <div className="pos-container">
+                    {/* Left Panel - Services */}
+                    <div className="services-panel">
+                        <div className="panel-header">
+                            <div className="logo">BARBERSCORE</div>
+                            <div className="logo-subtitle">Point of Sale</div>
+                        </div>
+
+                        <div className="services-grid">
+                            {SERVICES.map(service => (
+                                <div
+                                    key={service.id}
+                                    className="service-card"
+                                    onClick={() => addToCart(service)}
+                                >
+                                    <span className="service-icon">{service.icon}</span>
+                                    <div className="service-name">{service.name}</div>
+                                    <div className="service-price">${service.price}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Right Panel - Cart */}
+                    <div className="cart-panel">
+                        <div className="cart-header">
+                            <div className="cart-title">Current Sale</div>
+                            <div className="cart-subtitle">
+                                {cart.length} {cart.length === 1 ? 'item' : 'items'}
+                            </div>
+                        </div>
+
+                        <div className="cart-items">
+                            {cart.length === 0 ? (
+                                <div className="cart-empty">
+                                    <div className="cart-empty-icon">🛒</div>
+                                    <div className="cart-empty-text">
+                                        Select services to get started
+                                    </div>
+                                </div>
+                            ) : (
+                                cart.map(item => (
+                                    <div key={item.id} className="cart-item">
+                                        <div className="cart-item-info">
+                                            <div className="cart-item-name">
+                                                {item.icon} {item.name}
+                                            </div>
+                                            <div className="cart-item-qty">
+                                                Qty: {item.quantity}
+                                            </div>
+                                        </div>
+                                        <div className="cart-item-price">
+                                            ${item.price * item.quantity}
+                                        </div>
+                                        <button
+                                            className="cart-item-remove"
+                                            onClick={() => removeFromCart(item.id)}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {cart.length > 0 && (
+                            <div className="cart-summary">
+                                <div className="summary-row">
+                                    <span className="summary-label">Subtotal</span>
+                                    <span className="summary-value">${subtotal.toFixed(2)}</span>
+                                </div>
+                                <div className="summary-row">
+                                    <span className="summary-label">Tax (8%)</span>
+                                    <span className="summary-value">${tax.toFixed(2)}</span>
+                                </div>
+                                <div className="summary-row total">
+                                    <span className="summary-label">Total</span>
+                                    <span className="summary-value total">${total.toFixed(2)}</span>
+                                </div>
+
+                                <button
+                                    className="charge-button"
+                                    onClick={handleCharge}
+                                    disabled={cart.length === 0}
+                                >
+                                    💳 Charge ${total.toFixed(2)}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Payment Processing Modal */}
+                    {processing && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <div className="modal-icon">💳</div>
+                                <div className="modal-title">Processing Payment</div>
+                                <div className="modal-subtitle">Please wait...</div>
+                                <div className="modal-amount">${total.toFixed(2)}</div>
+                                <div className="spinner"></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Success Modal */}
+                    {success && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <div className="success-checkmark">
+                                    <svg viewBox="0 0 52 52">
+                                        <circle
+                                            className="checkmark-circle"
+                                            cx="26"
+                                            cy="26"
+                                            r="25"
+                                            fill="none"
+                                            stroke="#34d399"
+                                            strokeWidth="2"
+                                        />
+                                        <path
+                                            className="checkmark-check"
+                                            fill="none"
+                                            stroke="#34d399"
+                                            strokeWidth="3"
+                                            d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                                        />
+                                    </svg>
+                                </div>
+                                <div className="modal-title">Payment Successful!</div>
+                                <div className="modal-amount">${total.toFixed(2)}</div>
+                                <div className="modal-subtitle">Receipt sent to customer</div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<POSCheckout />, document.getElementById('root'));
+    </script>
+</body>
+</html>
