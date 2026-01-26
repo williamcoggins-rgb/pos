@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarberScore POS</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="./api-client.js"></script>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Services data
+        const SERVICES = [
+            { id: 1, name: 'Haircut', price: 35, priceCents: 3500, icon: '✂️' },
+            { id: 2, name: 'Shave', price: 25, priceCents: 2500, icon: '🪒' },
+            { id: 3, name: 'Beard Trim', price: 20, priceCents: 2000, icon: '🧔' },
+            { id: 4, name: 'Line Up', price: 15, priceCents: 1500, icon: '💈' },
+            { id: 5, name: 'Hot Towel', price: 10, priceCents: 1000, icon: '🔥' },
+            { id: 6, name: 'Facial', price: 45, priceCents: 4500, icon: '✨' },
+            { id: 7, name: 'Hair Color', price: 65, priceCents: 6500, icon: '🎨' },
+            { id: 8, name: 'Scalp Treatment', price: 30, priceCents: 3000, icon: '💆' },
+        ];
+
+        // Login/Register Component
+        function AuthScreen({ onLogin }) {
+            const [isLogin, setIsLogin] = useState(true);
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [shopName, setShopName] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState('');
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError('');
+
+                const api = new APIClient();
+
+                try {
+                    if (isLogin) {
+                        await api.login(email, password);
+                    } else {
+                        await api.register(email, password, shopName);
+                    }
+                    onLogin();
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="auth-screen">
+                    <div className="auth-container">
+                        <div className="logo-large">BARBERSCORE</div>
+                        <div className="logo-subtitle">Point of Sale</div>
+
+                        <form onSubmit={handleSubmit} className="auth-form">
+                            {error && (
+                                <div className="error-message">{error}</div>
+                            )}
+
+                            <input
+                                type="email"
+                                placeholder="Email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="auth-input"
+                            />
+
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className="auth-input"
+                            />
+
+                            {!isLogin && (
+                                <input
+                                    type="text"
+                                    placeholder="Shop Name"
+                                    value={shopName}
+                                    onChange={(e) => setShopName(e.target.value)}
+                                    required
+                                    className="auth-input"
+                                />
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="auth-button"
+                            >
+                                {loading ? 'Loading...' : (isLogin ? 'Login' : 'Register')}
+                            </button>
+
+                            <div className="auth-toggle">
+                                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsLogin(!isLogin)}
+                                    className="auth-toggle-button"
+                                >
+                                    {isLogin ? 'Register' : 'Login'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // Main POS Component
+        function POSCheckout({ api, onLogout }) {
+            const [cart, setCart] = useState([]);
+            const [saleId, setSaleId] = useState(null);
+            const [processing, setProcessing] = useState(false);
+            const [success, setSuccess] = useState(false);
+            const [error, setError] = useState('');
+
+            useEffect(() => {
+                // Create a new sale when component mounts
+                createNewSale();
+            }, []);
+
+            const createNewSale = async () => {
+                try {
+                    const data = await api.createSale();
+                    setSaleId(data.sale_id);
+                    setCart([]);
+                } catch (err) {
+                    setError('Failed to create sale: ' + err.message);
+                }
+            };
+
+            const addToCart = async (service) => {
+                if (!saleId) return;
+
+                try {
+                    await api.addLineItem(saleId, service.name, 1, service.priceCents);
+
+                    const existing = cart.find(item => item.id === service.id);
+                    if (existing) {
+                        setCart(cart.map(item =>
+                            item.id === service.id
+                                ? { ...item, quantity: item.quantity + 1 }
+                                : item
+                        ));
+                    } else {
+                        setCart([...cart, { ...service, quantity: 1 }]);
+                    }
+                } catch (err) {
+                    setError('Failed to add item: ' + err.message);
+                }
+            };
+
+            const removeFromCart = (serviceId) => {
+                setCart(cart.filter(item => item.id !== serviceId));
+                // Note: In a full implementation, you'd also remove from the sale via API
+            };
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.08;
+            const total = subtotal + tax;
+
+            const handleCharge = async () => {
+                if (!saleId) return;
+
+                setProcessing(true);
+                setError('');
+
+                try {
+                    // Calculate tax
+                    await api.calculateTax(saleId);
+
+                    // Process payment (using CASH for demo - change to CARD_PRESENT when reader is connected)
+                    await api.processPayment(saleId, 'CASH');
+
+                    // Update BarberScore
+                    try {
+                        await api.updateScore();
+                    } catch (err) {
+                        console.log('Score update will happen automatically');
+                    }
+
+                    setProcessing(false);
+                    setSuccess(true);
+
+                    // Reset after 3 seconds
+                    setTimeout(() => {
+                        setSuccess(false);
+                        createNewSale();
+                    }, 3000);
+
+                } catch (err) {
+                    setProcessing(false);
+                    setError('Payment failed: ' + err.message);
+                }
+            };
+
+            return (
+                <div className="pos-container">
+                    {/* Top Bar */}
+                    <div className="top-bar">
+                        <div className="top-bar-left">
+                            <div className="logo">BARBERSCORE</div>
+                            <div className="shop-name">{api.shopName}</div>
+                        </div>
+                        <button onClick={onLogout} className="logout-button">
+                            Logout
+                        </button>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="main-content">
+                        {/* Left Panel - Services */}
+                        <div className="services-panel">
+                            {error && (
+                                <div className="error-banner">
+                                    {error}
+                                    <button onClick={() => setError('')} className="error-close">×</button>
+                                </div>
+                            )}
+
+                            <div className="services-grid">
+                                {SERVICES.map(service => (
+                                    <div
+                                        key={service.id}
+                                        className="service-card"
+                                        onClick={() => addToCart(service)}
+                                    >
+                                        <span className="service-icon">{service.icon}</span>
+                                        <div className="service-name">{service.name}</div>
+                                        <div className="service-price">${service.price}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Right Panel - Cart */}
+                        <div className="cart-panel">
+                            <div className="cart-header">
+                                <div className="cart-title">Current Sale</div>
+                                <div className="cart-subtitle">
+                                    {cart.length} {cart.length === 1 ? 'item' : 'items'}
+                                </div>
+                            </div>
+
+                            <div className="cart-items">
+                                {cart.length === 0 ? (
+                                    <div className="cart-empty">
+                                        <div className="cart-empty-icon">🛒</div>
+                                        <div className="cart-empty-text">
+                                            Select services to get started
+                                        </div>
+                                    </div>
+                                ) : (
+                                    cart.map(item => (
+                                        <div key={item.id} className="cart-item">
+                                            <div className="cart-item-info">
+                                                <div className="cart-item-name">
+                                                    {item.icon} {item.name}
+                                                </div>
+                                                <div className="cart-item-qty">
+                                                    Qty: {item.quantity}
+                                                </div>
+                                            </div>
+                                            <div className="cart-item-price">
+                                                ${item.price * item.quantity}
+                                            </div>
+                                            <button
+                                                className="cart-item-remove"
+                                                onClick={() => removeFromCart(item.id)}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {cart.length > 0 && (
+                                <div className="cart-summary">
+                                    <div className="summary-row">
+                                        <span className="summary-label">Subtotal</span>
+                                        <span className="summary-value">${subtotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="summary-row">
+                                        <span className="summary-label">Tax (8%)</span>
+                                        <span className="summary-value">${tax.toFixed(2)}</span>
+                                    </div>
+                                    <div className="summary-row total">
+                                        <span className="summary-label">Total</span>
+                                        <span className="summary-value total">${total.toFixed(2)}</span>
+                                    </div>
+
+                                    <button
+                                        className="charge-button"
+                                        onClick={handleCharge}
+                                        disabled={cart.length === 0 || processing}
+                                    >
+                                        {processing ? '💳 Processing...' : `💳 Charge $${total.toFixed(2)}`}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Payment Processing Modal */}
+                    {processing && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <div className="modal-icon">💳</div>
+                                <div className="modal-title">Processing Payment</div>
+                                <div className="modal-subtitle">Please wait...</div>
+                                <div className="modal-amount">${total.toFixed(2)}</div>
+                                <div className="spinner"></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Success Modal */}
+                    {success && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <div className="success-checkmark">
+                                    <svg viewBox="0 0 52 52">
+                                        <circle
+                                            className="checkmark-circle"
+                                            cx="26"
+                                            cy="26"
+                                            r="25"
+                                            fill="none"
+                                            stroke="#34d399"
+                                            strokeWidth="2"
+                                        />
+                                        <path
+                                            className="checkmark-check"
+                                            fill="none"
+                                            stroke="#34d399"
+                                            strokeWidth="3"
+                                            d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                                        />
+                                    </svg>
+                                </div>
+                                <div className="modal-title">Payment Successful!</div>
+                                <div className="modal-amount">${total.toFixed(2)}</div>
+                                <div className="modal-subtitle">Starting new sale...</div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Main App
+        function App() {
+            const [authenticated, setAuthenticated] = useState(false);
+            const [api, setApi] = useState(null);
+
+            useEffect(() => {
+                const client = new APIClient();
+                setApi(client);
+                setAuthenticated(client.isAuthenticated());
+            }, []);
+
+            const handleLogin = () => {
+                const client = new APIClient();
+                setApi(client);
+                setAuthenticated(true);
+            };
+
+            const handleLogout = () => {
+                if (api) {
+                    api.logout();
+                }
+                setAuthenticated(false);
+            };
+
+            if (!api) {
+                return <div className="loading-screen">Loading...</div>;
+            }
+
+            return authenticated ? (
+                <POSCheckout api={api} onLogout={handleLogout} />
+            ) : (
+                <AuthScreen onLogin={handleLogin} />
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
