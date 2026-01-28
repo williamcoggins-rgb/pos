@@ -2427,65 +2427,140 @@
         function calculateBarberScore() {
             const metrics = calculateMetrics();
             const transactionCount = transactions.length;
-            let points = 100; // Base points
 
-            // Sample size multiplier - scale points based on how many transactions you have
-            // With 1-5 transactions: 20% of possible points
-            // With 6-15 transactions: 50% of possible points
-            // With 16-30 transactions: 75% of possible points
-            // With 31+ transactions: 100% of possible points
-            let sampleMultiplier = 1.0;
-            if (transactionCount <= 5) {
-                sampleMultiplier = 0.2;
-            } else if (transactionCount <= 15) {
-                sampleMultiplier = 0.5;
-            } else if (transactionCount <= 30) {
-                sampleMultiplier = 0.75;
+            // If no transactions, return base score
+            if (transactionCount === 0) {
+                return { score: 100, metrics };
             }
 
+            let points = 100; // Base points
+
+            // ======= TIME-BASED CONSISTENCY SCORING (Like Square) =======
+            // Calculate days of activity and consistency patterns
+            const transactionDates = transactions.map(t => new Date(t.date));
+            const firstTransactionDate = new Date(Math.min(...transactionDates));
+            const lastTransactionDate = new Date(Math.max(...transactionDates));
+            const daysSinceFirstTransaction = Math.floor((lastTransactionDate - firstTransactionDate) / (1000 * 60 * 60 * 24)) + 1;
+
+            // Count unique days with transactions
+            const uniqueDays = new Set(transactions.map(t => new Date(t.date).toDateString())).size;
+            const consistencyRate = uniqueDays / daysSinceFirstTransaction;
+
+            // Calculate transactions per day to detect gaming
+            const transactionsPerDay = {};
+            transactions.forEach(t => {
+                const dayKey = new Date(t.date).toDateString();
+                transactionsPerDay[dayKey] = (transactionsPerDay[dayKey] || 0) + 1;
+            });
+            const avgTransactionsPerActiveDay = transactionCount / uniqueDays;
+
+            // ======= TIME-BASED MULTIPLIER (Like Square's history requirement) =======
+            // Square requires consistent history over time, not just volume
+            // This makes it take WEEKS to build score, not hours
+            let timeMultiplier = 0.05; // Start very low (5%)
+            if (daysSinceFirstTransaction >= 60) {
+                timeMultiplier = 1.0; // 100% after 60+ days
+            } else if (daysSinceFirstTransaction >= 30) {
+                timeMultiplier = 0.65; // 65% after 30-59 days
+            } else if (daysSinceFirstTransaction >= 14) {
+                timeMultiplier = 0.35; // 35% after 14-29 days
+            } else if (daysSinceFirstTransaction >= 7) {
+                timeMultiplier = 0.15; // 15% after 7-13 days
+            }
+
+            // ======= CONSISTENCY BONUS =======
+            // Reward regular activity across multiple days
+            let consistencyBonus = 1.0;
+            if (uniqueDays >= 30 && consistencyRate >= 0.5) {
+                consistencyBonus = 1.3; // 30% bonus for 30+ days at 50%+ frequency
+            } else if (uniqueDays >= 14 && consistencyRate >= 0.4) {
+                consistencyBonus = 1.15; // 15% bonus for 14+ days at 40%+ frequency
+            } else if (uniqueDays >= 7 && consistencyRate >= 0.3) {
+                consistencyBonus = 1.05; // 5% bonus for 7+ days at 30%+ frequency
+            }
+
+            // ======= GAMING PENALTY =======
+            // Heavily penalize multiple transactions on same day (prevents gaming)
+            let gamingPenalty = 1.0;
+            if (avgTransactionsPerActiveDay > 10) {
+                gamingPenalty = 0.3; // 70% penalty if averaging 10+ per day
+            } else if (avgTransactionsPerActiveDay > 5) {
+                gamingPenalty = 0.5; // 50% penalty if averaging 5+ per day
+            } else if (avgTransactionsPerActiveDay > 3) {
+                gamingPenalty = 0.75; // 25% penalty if averaging 3+ per day
+            }
+
+            // ======= CALCULATE FINAL MULTIPLIER =======
+            const finalMultiplier = timeMultiplier * consistencyBonus * gamingPenalty;
+
+            // ======= METRIC-BASED POINTS (Same categories, but heavily scaled by time) =======
+
             // Completion Rate (max 150 pts)
-            if (metrics.completionRate !== null) {
-                points += Math.min(150, metrics.completionRate * 1.5) * sampleMultiplier;
+            if (metrics.completionRate !== null && transactionCount >= 5) {
+                points += Math.min(150, metrics.completionRate * 1.5) * finalMultiplier;
             }
 
             // No-Show Rate (max 100 pts) - inverse scoring
-            if (metrics.noShowRate !== null) {
-                points += Math.max(0, 100 - metrics.noShowRate * 10) * sampleMultiplier;
+            if (metrics.noShowRate !== null && transactionCount >= 5) {
+                points += Math.max(0, 100 - metrics.noShowRate * 10) * finalMultiplier;
             }
 
             // Rebook Rate (max 200 pts) - MOST IMPORTANT
-            // Require at least 3 transactions before giving rebook points
-            if (metrics.rebookRate !== null && transactionCount >= 3) {
-                points += Math.min(200, metrics.rebookRate * 3.6) * sampleMultiplier;
+            // Require at least 10 transactions AND 7 days before giving rebook points
+            if (metrics.rebookRate !== null && transactionCount >= 10 && daysSinceFirstTransaction >= 7) {
+                points += Math.min(200, metrics.rebookRate * 3.6) * finalMultiplier;
             }
 
             // Retail Rate (max 75 pts)
-            if (metrics.retailRate !== null && transactionCount >= 3) {
-                points += Math.min(75, metrics.retailRate * 3) * sampleMultiplier;
+            if (metrics.retailRate !== null && transactionCount >= 10 && daysSinceFirstTransaction >= 7) {
+                points += Math.min(75, metrics.retailRate * 3) * finalMultiplier;
             }
 
             // Add-on Rate (max 50 pts)
-            if (metrics.addonRate !== null && transactionCount >= 3) {
-                points += Math.min(50, metrics.addonRate * 2.5) * sampleMultiplier;
+            if (metrics.addonRate !== null && transactionCount >= 10 && daysSinceFirstTransaction >= 7) {
+                points += Math.min(50, metrics.addonRate * 2.5) * finalMultiplier;
             }
 
             // Average Ticket (max 75 pts)
-            if (metrics.avgTicket > 0) {
+            if (metrics.avgTicket > 0 && transactionCount >= 5) {
                 const ticketMultiplier = metrics.avgTicket / SCORE_BENCHMARKS.avgTicket.target;
-                points += Math.min(75, ticketMultiplier * 40) * sampleMultiplier;
+                points += Math.min(75, ticketMultiplier * 40) * finalMultiplier;
             }
 
-            // Client Retention (max 100 pts) - require at least 10 transactions
-            if (metrics.retentionRate !== null && transactionCount >= 10) {
-                points += Math.min(100, metrics.retentionRate * 1.5) * sampleMultiplier;
+            // Client Retention (max 100 pts) - require at least 20 transactions AND 14 days
+            if (metrics.retentionRate !== null && transactionCount >= 20 && daysSinceFirstTransaction >= 14) {
+                points += Math.min(100, metrics.retentionRate * 1.5) * finalMultiplier;
+            }
+
+            // ======= HARD TIER CAPS BASED ON TIME =======
+            // Can't reach certain tiers without minimum time investment
+            const finalScore = Math.round(points);
+            let cappedScore = finalScore;
+
+            if (daysSinceFirstTransaction < 7) {
+                cappedScore = Math.min(finalScore, 200); // Can't exceed Level 0 in first week
+            } else if (daysSinceFirstTransaction < 14) {
+                cappedScore = Math.min(finalScore, 350); // Can't exceed Level 1 in first 2 weeks
+            } else if (daysSinceFirstTransaction < 30) {
+                cappedScore = Math.min(finalScore, 550); // Can't exceed Level 2 in first month
+            } else if (daysSinceFirstTransaction < 60) {
+                cappedScore = Math.min(finalScore, 700); // Can't reach Mastery in first 2 months
             }
 
             // Cap at 850
-            const finalScore = Math.max(0, Math.min(850, Math.round(points)));
+            const absoluteFinalScore = Math.max(100, Math.min(850, cappedScore));
 
             return {
-                score: finalScore,
-                metrics
+                score: absoluteFinalScore,
+                metrics,
+                // Debug info
+                timeInfo: {
+                    daysSinceFirst: daysSinceFirstTransaction,
+                    uniqueDays: uniqueDays,
+                    consistencyRate: (consistencyRate * 100).toFixed(1) + '%',
+                    timeMultiplier: (timeMultiplier * 100).toFixed(1) + '%',
+                    finalMultiplier: (finalMultiplier * 100).toFixed(1) + '%'
+                }
             };
         }
 
