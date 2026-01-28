@@ -8,6 +8,52 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Design Tokens - 8-Point Spacing System */
+        :root {
+            /* Colors */
+            --color-bg-primary: #FFFFFF;
+            --color-bg-secondary: #F5F5F5;
+            --color-surface: #FFFFFF;
+            --color-border: #E5E5E5;
+            --color-text-primary: #1A1A1A;
+            --color-text-secondary: #666666;
+            --color-text-muted: #999999;
+            --color-brand-primary: #DC2626;
+            --color-brand-hover: #B91C1C;
+            --color-success: #00C853;
+            --color-warning: #FFB300;
+            --color-danger: #FF5252;
+
+            /* Spacing (8-point system) */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 24px;
+            --space-6: 32px;
+            --space-8: 64px;
+
+            /* Typography */
+            --text-caption: 11px;
+            --text-body: 14px;
+            --text-body-strong: 14px;
+            --text-h3: 16px;
+            --text-h2: 20px;
+            --text-h1: 28px;
+            --text-display: 48px;
+
+            /* Motion */
+            --duration-fast: 150ms;
+            --duration-normal: 200ms;
+            --duration-slow: 300ms;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,19 +62,168 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #F5F5F5;
-            color: #1A1A1A;
+            background: var(--color-bg-secondary);
+            color: var(--color-text-primary);
             padding-bottom: 72px;
             -webkit-font-smoothing: antialiased;
+            font-size: var(--text-body);
         }
 
         .container {
             max-width: 600px;
             margin: 0 auto;
-            background: white;
+            background: var(--color-surface);
             min-height: 100vh;
             position: relative;
             padding-bottom: 72px;
+        }
+
+        /* Toast Notification System */
+        .toast-container {
+            position: fixed;
+            top: var(--space-4);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            max-width: 500px;
+            width: calc(100% - var(--space-6));
+        }
+
+        .toast {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: var(--space-4);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            animation: slideDown var(--duration-normal) var(--ease);
+            border-left: 4px solid;
+        }
+
+        .toast.success { border-left-color: var(--color-success); }
+        .toast.error { border-left-color: var(--color-danger); }
+        .toast.warning { border-left-color: var(--color-warning); }
+        .toast.info { border-left-color: var(--color-brand-primary); }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .toast-icon.success { color: var(--color-success); }
+        .toast-icon.error { color: var(--color-danger); }
+        .toast-icon.warning { color: var(--color-warning); }
+        .toast-icon.info { color: var(--color-brand-primary); }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: var(--text-body-strong);
+            margin-bottom: var(--space-1);
+        }
+
+        .toast-message {
+            font-size: var(--text-caption);
+            color: var(--color-text-secondary);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Empty States */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-8) var(--space-4);
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: var(--space-4);
+            opacity: 0.3;
+            color: var(--color-text-muted);
+        }
+
+        .empty-state-title {
+            font-size: var(--text-h3);
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+            color: var(--color-text-primary);
+        }
+
+        .empty-state-message {
+            font-size: var(--text-body);
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-5);
+            max-width: 320px;
+            line-height: 1.5;
+        }
+
+        .empty-state-action {
+            padding: var(--space-3) var(--space-5);
+            background: var(--color-brand-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--duration-fast) var(--ease);
+        }
+
+        .empty-state-action:hover {
+            background: var(--color-brand-hover);
+        }
+
+        .empty-state-action:active {
+            transform: scale(0.98);
+        }
+
+        /* Skeleton Loaders */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        .skeleton-text {
+            height: 16px;
+            margin-bottom: var(--space-2);
+        }
+
+        .skeleton-text.large {
+            height: 24px;
+        }
+
+        .skeleton-card {
+            height: 120px;
+            margin-bottom: var(--space-4);
+            border-radius: 12px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         /* Header */
@@ -818,6 +1013,9 @@
     </style>
 </head>
 <body>
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <div class="container">
         <!-- Welcome Screen -->
         <div class="onboarding-screen hidden" id="welcomeScreen">
@@ -1320,6 +1518,35 @@
 
         let userProfile = JSON.parse(localStorage.getItem('userProfile')) || null;
 
+        // Toast Notification System
+        function showToast(type, title, message, duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '<svg class="toast-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+                error: '<svg class="toast-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+                warning: '<svg class="toast-icon warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                info: '<svg class="toast-icon info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            };
+
+            toast.innerHTML = `
+                ${icons[type]}
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    ${message ? `<div class="toast-message">${message}</div>` : ''}
+                </div>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideDown var(--duration-normal) var(--ease) reverse';
+                setTimeout(() => toast.remove(), 200);
+            }, duration);
+        }
+
         // Initialize
         function init() {
             // Check if user has completed setup
@@ -1705,7 +1932,7 @@
             const price = parseFloat(document.getElementById('servicePrice').value);
 
             if (!name || isNaN(price) || price < 0) {
-                alert('Please enter valid service details');
+                showToast('error', 'Invalid service', 'Please enter a name and valid price');
                 return;
             }
 
@@ -1786,7 +2013,7 @@
 
         function completeSale() {
             if (cart.length === 0) {
-                alert('Cart is empty');
+                showToast('error', 'Cart is empty', 'Add services to cart before completing sale');
                 return;
             }
 
@@ -1797,14 +2024,18 @@
             const phoneRegex = /^[\d\s\-\(\)]+$/;
 
             if (!customerContact) {
-                alert('Customer email or phone is required');
+                showToast('error', 'Customer info required', 'Enter email or phone to complete sale');
                 return;
             }
 
             if (!emailRegex.test(customerContact) && !phoneRegex.test(customerContact)) {
-                alert('Please enter a valid email or phone number');
+                showToast('error', 'Invalid contact info', 'Please enter a valid email or phone number');
                 return;
             }
+
+            // Calculate old score before transaction
+            const oldScoreResult = calculateBarberScore();
+            const oldScore = oldScoreResult.score;
 
             // Get tracking checkboxes
             const rebooked = document.getElementById('trackRebook').checked;
@@ -1828,6 +2059,23 @@
             transactions.push(transaction);
             localStorage.setItem('transactions', JSON.stringify(transactions));
 
+            // Calculate new score after transaction
+            const newScoreResult = calculateBarberScore();
+            const newScore = newScoreResult.score;
+            const scoreDiff = newScore - oldScore;
+            const newStage = getScoreStage(newScore);
+
+            // Build success message
+            let trackingMsg = [];
+            if (rebooked) trackingMsg.push('rebooked');
+            if (hadRetail) trackingMsg.push('retail');
+            if (hadAddons) trackingMsg.push('add-on');
+
+            const trackingText = trackingMsg.length > 0
+                ? `Tracked: ${trackingMsg.join(', ')}`
+                : 'Track rebook/retail/add-ons next time to boost your score!';
+
+            // Clear form
             cart = [];
             document.getElementById('customerContact').value = '';
             document.getElementById('trackRebook').checked = false;
@@ -1837,7 +2085,14 @@
             updateDashboard();
             updateBarberScore();
 
-            alert('Sale completed successfully!');
+            // Show success toast with score info
+            showToast(
+                'success',
+                `$${total.toFixed(2)} Sale Complete!`,
+                `Score: ${newScore} (+${scoreDiff}) • ${newStage.name} • ${trackingText}`,
+                6000
+            );
+
             navigateTo('dashboard');
         }
 
@@ -2179,7 +2434,7 @@
                 userProfile.email = document.getElementById('ownerEmail').value;
                 userProfile.phone = document.getElementById('ownerPhone').value;
                 localStorage.setItem('userProfile', JSON.stringify(userProfile));
-                alert('Profile saved successfully!');
+                showToast('success', 'Profile updated', 'Your business information has been saved');
             }
         }
 
