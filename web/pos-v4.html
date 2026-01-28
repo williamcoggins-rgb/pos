@@ -1232,7 +1232,8 @@
                 <button class="btn btn-secondary" onclick="clearAllData()" style="margin-bottom: 12px;">Clear All Data</button>
 
                 <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Security</h2>
-                <button class="btn btn-secondary" onclick="changePasscode()">Change Passcode</button>
+                <button class="btn btn-secondary" onclick="changePasscode()" style="margin-bottom: 12px;">Change Passcode</button>
+                <button class="btn btn-secondary" onclick="logout()" style="background: #DC2626; color: white;">Logout</button>
 
                 <div style="text-align: center; margin-top: 40px; padding: 20px; color: #999; font-size: 12px;">
                     POS System v4.0
@@ -1595,6 +1596,22 @@
             } else {
                 alert('Incorrect passcode');
             }
+        }
+
+        function logout() {
+            // Hide all main sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+            // Show passcode screen
+            document.getElementById('passcodeScreen').classList.remove('hidden');
+
+            // Reset passcode input
+            passcodeInput = '';
+            updatePasscodeDots();
+            document.getElementById('passcodeError').textContent = '';
+
+            // Note: We don't clear userProfile or passcode from localStorage
+            // This is logout, not account deletion
         }
 
         // Navigation
