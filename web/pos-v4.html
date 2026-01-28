@@ -1520,7 +1520,14 @@
 
         // Toast Notification System
         function showToast(type, title, message, duration = 4000) {
+            console.log('🔔 Toast called:', type, title, message);
             const container = document.getElementById('toastContainer');
+            if (!container) {
+                console.error('❌ Toast container not found!');
+                alert(`${title}\n${message}`);
+                return;
+            }
+            console.log('✅ Toast container found');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
 
@@ -1540,6 +1547,7 @@
             `;
 
             container.appendChild(toast);
+            console.log('✅ Toast added to DOM');
 
             setTimeout(() => {
                 toast.style.animation = 'slideDown var(--duration-normal) var(--ease) reverse';
