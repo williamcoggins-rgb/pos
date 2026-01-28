@@ -8,6 +8,52 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Design Tokens - 8-Point Spacing System */
+        :root {
+            /* Colors */
+            --color-bg-primary: #FFFFFF;
+            --color-bg-secondary: #F5F5F5;
+            --color-surface: #FFFFFF;
+            --color-border: #E5E5E5;
+            --color-text-primary: #1A1A1A;
+            --color-text-secondary: #666666;
+            --color-text-muted: #999999;
+            --color-brand-primary: #DC2626;
+            --color-brand-hover: #B91C1C;
+            --color-success: #00C853;
+            --color-warning: #FFB300;
+            --color-danger: #FF5252;
+
+            /* Spacing (8-point system) */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 24px;
+            --space-6: 32px;
+            --space-8: 64px;
+
+            /* Typography */
+            --text-caption: 11px;
+            --text-body: 14px;
+            --text-body-strong: 14px;
+            --text-h3: 16px;
+            --text-h2: 20px;
+            --text-h1: 28px;
+            --text-display: 48px;
+
+            /* Motion */
+            --duration-fast: 150ms;
+            --duration-normal: 200ms;
+            --duration-slow: 300ms;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,19 +62,168 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #F5F5F5;
-            color: #1A1A1A;
+            background: var(--color-bg-secondary);
+            color: var(--color-text-primary);
             padding-bottom: 72px;
             -webkit-font-smoothing: antialiased;
+            font-size: var(--text-body);
         }
 
         .container {
             max-width: 600px;
             margin: 0 auto;
-            background: white;
+            background: var(--color-surface);
             min-height: 100vh;
             position: relative;
             padding-bottom: 72px;
+        }
+
+        /* Toast Notification System */
+        .toast-container {
+            position: fixed;
+            top: var(--space-4);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            max-width: 500px;
+            width: calc(100% - var(--space-6));
+        }
+
+        .toast {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: var(--space-4);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            animation: slideDown var(--duration-normal) var(--ease);
+            border-left: 4px solid;
+        }
+
+        .toast.success { border-left-color: var(--color-success); }
+        .toast.error { border-left-color: var(--color-danger); }
+        .toast.warning { border-left-color: var(--color-warning); }
+        .toast.info { border-left-color: var(--color-brand-primary); }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .toast-icon.success { color: var(--color-success); }
+        .toast-icon.error { color: var(--color-danger); }
+        .toast-icon.warning { color: var(--color-warning); }
+        .toast-icon.info { color: var(--color-brand-primary); }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: var(--text-body-strong);
+            margin-bottom: var(--space-1);
+        }
+
+        .toast-message {
+            font-size: var(--text-caption);
+            color: var(--color-text-secondary);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Empty States */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-8) var(--space-4);
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: var(--space-4);
+            opacity: 0.3;
+            color: var(--color-text-muted);
+        }
+
+        .empty-state-title {
+            font-size: var(--text-h3);
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+            color: var(--color-text-primary);
+        }
+
+        .empty-state-message {
+            font-size: var(--text-body);
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-5);
+            max-width: 320px;
+            line-height: 1.5;
+        }
+
+        .empty-state-action {
+            padding: var(--space-3) var(--space-5);
+            background: var(--color-brand-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--duration-fast) var(--ease);
+        }
+
+        .empty-state-action:hover {
+            background: var(--color-brand-hover);
+        }
+
+        .empty-state-action:active {
+            transform: scale(0.98);
+        }
+
+        /* Skeleton Loaders */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        .skeleton-text {
+            height: 16px;
+            margin-bottom: var(--space-2);
+        }
+
+        .skeleton-text.large {
+            height: 24px;
+        }
+
+        .skeleton-card {
+            height: 120px;
+            margin-bottom: var(--space-4);
+            border-radius: 12px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         /* Header */
@@ -734,12 +929,171 @@
             font-weight: 600;
             margin-left: 4px;
         }
+
+        /* Onboarding Screens */
+        .onboarding-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .onboarding-screen.hidden {
+            display: none;
+        }
+
+        .welcome-logo {
+            width: 80px;
+            height: 80px;
+            background: #DC2626;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .welcome-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .setup-form {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .form-subtitle {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .input-error {
+            border-color: #DC2626 !important;
+        }
+
+        .error-text {
+            color: #DC2626;
+            font-size: 12px;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <div class="container">
-        <!-- Passcode Screen -->
-        <div class="passcode-screen" id="passcodeScreen">
+        <!-- Welcome Screen -->
+        <div class="onboarding-screen hidden" id="welcomeScreen">
+            <div class="welcome-logo">BS</div>
+            <h1 class="welcome-title">Welcome to BarberScore POS</h1>
+            <p class="welcome-subtitle">Your complete point of sale system with built-in credit scoring for warehouse access</p>
+            <button class="btn-primary" onclick="showBusinessSetup()">Get Started</button>
+        </div>
+
+        <!-- Business Setup Screen -->
+        <div class="onboarding-screen hidden" id="businessSetupScreen">
+            <form class="setup-form" onsubmit="submitBusinessSetup(event)">
+                <h2 class="form-title">Business Setup</h2>
+                <p class="form-subtitle">Tell us about your business</p>
+
+                <div class="form-group">
+                    <label class="form-label">Shop Name <span class="required-badge">*</span></label>
+                    <input type="text" class="form-input" id="setupShopName" placeholder="e.g., Elite Cuts Barbershop" required>
+                    <div class="error-text" id="shopNameError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Owner Name <span class="required-badge">*</span></label>
+                    <input type="text" class="form-input" id="setupOwnerName" placeholder="e.g., John Smith" required>
+                    <div class="error-text" id="ownerNameError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email <span class="required-badge">*</span></label>
+                    <input type="email" class="form-input" id="setupEmail" placeholder="e.g., john@elitecuts.com" required>
+                    <div class="error-text" id="emailError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Phone Number <span class="required-badge">*</span></label>
+                    <input type="tel" class="form-input" id="setupPhone" placeholder="e.g., (555) 123-4567" required>
+                    <div class="error-text" id="phoneError"></div>
+                </div>
+
+                <button type="submit" class="btn-primary">Continue</button>
+                <button type="button" class="btn-secondary" onclick="showWelcomeScreen()">Back</button>
+            </form>
+        </div>
+
+        <!-- Passcode Setup Screen -->
+        <div class="onboarding-screen hidden" id="passcodeSetupScreen">
+            <h1 class="passcode-title" id="passcodeSetupTitle">Create Your Passcode</h1>
+            <p class="passcode-subtitle" id="passcodeSetupSubtitle">Enter a 4-digit passcode to secure your POS</p>
+            <div class="passcode-dots">
+                <div class="passcode-dot" id="setupDot1"></div>
+                <div class="passcode-dot" id="setupDot2"></div>
+                <div class="passcode-dot" id="setupDot3"></div>
+                <div class="passcode-dot" id="setupDot4"></div>
+            </div>
+            <div class="passcode-keypad">
+                <button class="passcode-key" onclick="enterSetupPasscode('1')">1</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('2')">2</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('3')">3</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('4')">4</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('5')">5</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('6')">6</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('7')">7</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('8')">8</button>
+                <button class="passcode-key" onclick="enterSetupPasscode('9')">9</button>
+                <button class="passcode-key"></button>
+                <button class="passcode-key" onclick="enterSetupPasscode('0')">0</button>
+                <button class="passcode-key" onclick="clearSetupPasscode()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="error-message" id="passcodeSetupError"></div>
+            <button class="btn-secondary" style="margin-top: 20px;" onclick="showBusinessSetup()">Back</button>
+        </div>
+
+        <!-- Passcode Screen (Login) -->
+        <div class="passcode-screen hidden" id="passcodeScreen">
             <h1 class="passcode-title">Enter Passcode</h1>
             <p class="passcode-subtitle">Enter your 4-digit passcode</p>
             <div class="passcode-dots">
@@ -824,6 +1178,24 @@
                             </label>
                             <input type="text" class="form-input" id="customerContact" placeholder="customer@email.com or (555) 123-4567">
                         </div>
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #E5E5E5;">
+                            <label class="form-label" style="margin-bottom: 12px; display: block;">BarberScore Tracking</label>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                                    <input type="checkbox" id="trackRebook" style="width: 18px; height: 18px; cursor: pointer;">
+                                    <span>Client rebooked next appointment</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                                    <input type="checkbox" id="trackRetail" style="width: 18px; height: 18px; cursor: pointer;">
+                                    <span>Client purchased retail product</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                                    <input type="checkbox" id="trackAddons" style="width: 18px; height: 18px; cursor: pointer;">
+                                    <span>Client added service upgrade</span>
+                                </label>
+                            </div>
+                            <p style="font-size: 11px; color: #666; margin-top: 8px;">Track these to improve your BarberScore</p>
+                        </div>
                     </div>
                     <div class="cart-list" id="cartList"></div>
                     <div class="cart-total">
@@ -892,37 +1264,39 @@
                 </div>
 
                 <h2 style="font-size: 18px; font-weight: 600; margin: 24px 0 16px;">Score Breakdown</h2>
-                <div class="score-breakdown">
-                    <div class="score-item">
-                        <div class="score-item-header">
-                            <span class="score-item-label">Transaction Volume</span>
-                            <span class="score-item-value" id="scoreTransactions">0 pts</span>
-                        </div>
-                        <div class="score-item-desc">Points from total number of transactions</div>
-                    </div>
-
-                    <div class="score-item">
-                        <div class="score-item-header">
-                            <span class="score-item-label">Revenue Generated</span>
-                            <span class="score-item-value" id="scoreRevenue">0 pts</span>
-                        </div>
-                        <div class="score-item-desc">Points from total revenue (1 point per $100)</div>
-                    </div>
-
-                    <div class="score-item">
-                        <div class="score-item-header">
-                            <span class="score-item-label">Customer Data Collection</span>
-                            <span class="score-item-value" id="scoreCustomers">0 pts</span>
-                        </div>
-                        <div class="score-item-desc">Bonus points for collecting customer contact info</div>
+                <div id="scoreBreakdown">
+                    <!-- Populated by updateBarberScore() -->
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <p>Complete transactions to see your detailed score breakdown</p>
                     </div>
                 </div>
 
-                <h2 style="font-size: 18px; font-weight: 600; margin: 24px 0 16px;">How to Improve</h2>
+                <h2 style="font-size: 18px; font-weight: 600; margin: 24px 0 16px;">How to Improve Your Score</h2>
                 <div class="stat-card">
-                    <p style="color: #666; line-height: 1.6;">
-                        Increase your BarberScore by completing more transactions, growing your revenue, and collecting customer contact information. Higher scores unlock better procurement tiers with exclusive benefits.
-                    </p>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ Rebook Clients (200 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Always ask to schedule the next appointment at checkout. Target: 55%+ rebook rate</p>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ Completion Rate (150 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Reduce no-shows with reminders. Minimize cancellations. Target: 95%+ completion</p>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ Client Retention (100 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Track customer info to identify returning clients. Build relationships for repeat business.</p>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ No-Show Control (100 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Send reminders, collect deposits, follow up with clients. Target: Under 5%</p>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ Average Ticket (75 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Upsell add-ons and retail products. Increase service prices. Target: $45+ average</p>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #00C853;">✓ Retail & Add-ons (125 pts max)</h3>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5;">Recommend products and service upgrades. Track what clients buy beyond the base service.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -942,71 +1316,71 @@
                 <div class="tier-list">
                     <div class="tier-card" id="tier0">
                         <div class="tier-header">
-                            <span class="tier-name">Tier 0 - Getting Started</span>
-                            <span class="tier-range">0-99 pts</span>
+                            <span class="tier-name">Level 0 - Beginning</span>
+                            <span class="tier-range">0-200 pts</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>Basic POS access</li>
-                            <li>Transaction tracking</li>
-                            <li>Standard analytics</li>
+                            <li>POS access only</li>
+                            <li>No procurement access</li>
+                            <li>Focus on building your foundation</li>
                         </ul>
                     </div>
 
                     <div class="tier-card" id="tier1">
                         <div class="tier-header">
-                            <span class="tier-name">Tier 1 - Bronze</span>
-                            <span class="tier-range">100-299 pts</span>
+                            <span class="tier-name">Level 1 - Building</span>
+                            <span class="tier-range">201-400 pts</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>5% discount on supplies</li>
-                            <li>Priority customer support</li>
-                            <li>Advanced analytics</li>
-                            <li>Monthly product samples</li>
+                            <li>Prepaid warehouse orders</li>
+                            <li>Up to $500 per order</li>
+                            <li>Standard pricing</li>
+                            <li>Email support</li>
                         </ul>
                     </div>
 
                     <div class="tier-card" id="tier2">
                         <div class="tier-header">
-                            <span class="tier-name">Tier 2 - Silver</span>
-                            <span class="tier-range">300-599 pts</span>
+                            <span class="tier-name">Level 2 - Growing</span>
+                            <span class="tier-range">401-600 pts</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>10% discount on supplies</li>
-                            <li>Free shipping on orders</li>
-                            <li>Quarterly business consultation</li>
-                            <li>Exclusive product access</li>
-                            <li>Marketing materials</li>
+                            <li>5-10% discount on products</li>
+                            <li>Up to $1,500 per order</li>
+                            <li>Faster order processing</li>
+                            <li>Priority support</li>
+                            <li>Free shipping</li>
                         </ul>
                     </div>
 
                     <div class="tier-card" id="tier3">
                         <div class="tier-header">
-                            <span class="tier-name">Tier 3 - Gold</span>
-                            <span class="tier-range">600-999 pts</span>
+                            <span class="tier-name">Level 3 - Scaling</span>
+                            <span class="tier-range">601-750 pts</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>15% discount on supplies</li>
-                            <li>Free premium shipping</li>
-                            <li>Monthly business consultation</li>
-                            <li>VIP product launches</li>
-                            <li>Custom marketing campaigns</li>
-                            <li>Staff training resources</li>
+                            <li>Net-30 payment terms</li>
+                            <li>Up to $3,000 per order</li>
+                            <li>$1,000 credit line</li>
+                            <li>10-15% discount</li>
+                            <li>Quarterly business review</li>
+                            <li>Exclusive product access</li>
                         </ul>
                     </div>
 
                     <div class="tier-card" id="tier4">
                         <div class="tier-header">
-                            <span class="tier-name">Tier 4 - Platinum</span>
-                            <span class="tier-range">1000+ pts</span>
+                            <span class="tier-name">Level 4 - Mastery</span>
+                            <span class="tier-range">751-850 pts</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>20% discount on supplies</li>
-                            <li>Free overnight shipping</li>
+                            <li>15% discount on all products</li>
+                            <li>Up to $10,000 per order</li>
+                            <li>$5,000 credit line</li>
+                            <li>Net-60 payment terms</li>
+                            <li>Priority fulfillment</li>
                             <li>Dedicated account manager</li>
-                            <li>Exclusive partnership opportunities</li>
-                            <li>Featured in marketing campaigns</li>
-                            <li>Premium staff training</li>
-                            <li>Annual business retreat invitation</li>
+                            <li>VIP partnership opportunities</li>
                         </ul>
                     </div>
                 </div>
@@ -1056,7 +1430,8 @@
                 <button class="btn btn-secondary" onclick="clearAllData()" style="margin-bottom: 12px;">Clear All Data</button>
 
                 <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Security</h2>
-                <button class="btn btn-secondary" onclick="changePasscode()">Change Passcode</button>
+                <button class="btn btn-secondary" onclick="changePasscode()" style="margin-bottom: 12px;">Change Passcode</button>
+                <button class="btn btn-secondary" onclick="logout()" style="background: #DC2626; color: white;">Logout</button>
 
                 <div style="text-align: center; margin-top: 40px; padding: 20px; color: #999; font-size: 12px;">
                     POS System v4.0
@@ -1141,21 +1516,248 @@
             ownerPhone: ''
         };
 
+        let userProfile = JSON.parse(localStorage.getItem('userProfile')) || null;
+
+        // Toast Notification System
+        function showToast(type, title, message, duration = 4000) {
+            console.log('🔔 Toast called:', type, title, message);
+            const container = document.getElementById('toastContainer');
+            if (!container) {
+                console.error('❌ Toast container not found!');
+                alert(`${title}\n${message}`);
+                return;
+            }
+            console.log('✅ Toast container found');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '<svg class="toast-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+                error: '<svg class="toast-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+                warning: '<svg class="toast-icon warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                info: '<svg class="toast-icon info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            };
+
+            toast.innerHTML = `
+                ${icons[type]}
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    ${message ? `<div class="toast-message">${message}</div>` : ''}
+                </div>
+            `;
+
+            container.appendChild(toast);
+            console.log('✅ Toast added to DOM');
+
+            setTimeout(() => {
+                toast.style.animation = 'slideDown var(--duration-normal) var(--ease) reverse';
+                setTimeout(() => toast.remove(), 200);
+            }, duration);
+        }
+
         // Initialize
         function init() {
-            if (!currentPasscode) {
-                promptNewPasscode();
-            } else {
-                showPasscodeScreen();
+            // Check if user has completed setup
+            if (!userProfile || !userProfile.shopName) {
+                showWelcomeScreen();
+                return;
             }
-            loadProfile();
+
+            // If setup complete but no passcode, shouldn't happen but handle it
+            if (!currentPasscode) {
+                showPasscodeSetupScreen();
+                return;
+            }
+
+            // Normal login flow - show passcode screen
+            // Don't update dashboard/analytics/score until passcode is entered
+            showPasscodeScreen();
+        }
+
+        // Onboarding Flow
+        function showWelcomeScreen() {
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+            document.getElementById('businessSetupScreen').classList.add('hidden');
+            document.getElementById('passcodeSetupScreen').classList.add('hidden');
+        }
+
+        function showBusinessSetup() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('businessSetupScreen').classList.remove('hidden');
+            document.getElementById('passcodeSetupScreen').classList.add('hidden');
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validatePhone(phone) {
+            const re = /^[\d\s\-\(\)]+$/;
+            return re.test(phone) && phone.replace(/\D/g, '').length >= 10;
+        }
+
+        function submitBusinessSetup(event) {
+            event.preventDefault();
+
+            // Clear previous errors
+            document.querySelectorAll('.error-text').forEach(el => el.textContent = '');
+            document.querySelectorAll('.form-input').forEach(el => el.classList.remove('input-error'));
+
+            const shopName = document.getElementById('setupShopName').value.trim();
+            const ownerName = document.getElementById('setupOwnerName').value.trim();
+            const email = document.getElementById('setupEmail').value.trim();
+            const phone = document.getElementById('setupPhone').value.trim();
+
+            let hasError = false;
+
+            if (!shopName) {
+                document.getElementById('shopNameError').textContent = 'Shop name is required';
+                document.getElementById('setupShopName').classList.add('input-error');
+                hasError = true;
+            }
+
+            if (!ownerName) {
+                document.getElementById('ownerNameError').textContent = 'Owner name is required';
+                document.getElementById('setupOwnerName').classList.add('input-error');
+                hasError = true;
+            }
+
+            if (!email) {
+                document.getElementById('emailError').textContent = 'Email is required';
+                document.getElementById('setupEmail').classList.add('input-error');
+                hasError = true;
+            } else if (!validateEmail(email)) {
+                document.getElementById('emailError').textContent = 'Please enter a valid email address';
+                document.getElementById('setupEmail').classList.add('input-error');
+                hasError = true;
+            }
+
+            if (!phone) {
+                document.getElementById('phoneError').textContent = 'Phone number is required';
+                document.getElementById('setupPhone').classList.add('input-error');
+                hasError = true;
+            } else if (!validatePhone(phone)) {
+                document.getElementById('phoneError').textContent = 'Please enter a valid phone number';
+                document.getElementById('setupPhone').classList.add('input-error');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Save profile data (will be completed after passcode setup)
+            tempProfile = {
+                shopName,
+                ownerName,
+                email,
+                phone
+            };
+
+            showPasscodeSetupScreen();
+        }
+
+        let setupPasscodeInput = '';
+        let setupPasscodeConfirm = '';
+        let isConfirmingPasscode = false;
+        let tempProfile = null;
+
+        function showPasscodeSetupScreen() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('businessSetupScreen').classList.add('hidden');
+            document.getElementById('passcodeSetupScreen').classList.remove('hidden');
+            setupPasscodeInput = '';
+            setupPasscodeConfirm = '';
+            isConfirmingPasscode = false;
+            updateSetupPasscodeDots();
+            document.getElementById('passcodeSetupTitle').textContent = 'Create Your Passcode';
+            document.getElementById('passcodeSetupSubtitle').textContent = 'Enter a 4-digit passcode to secure your POS';
+        }
+
+        function enterSetupPasscode(digit) {
+            if (!isConfirmingPasscode && setupPasscodeInput.length < 4) {
+                setupPasscodeInput += digit;
+                updateSetupPasscodeDots();
+
+                if (setupPasscodeInput.length === 4) {
+                    // Move to confirmation
+                    setTimeout(() => {
+                        isConfirmingPasscode = true;
+                        document.getElementById('passcodeSetupTitle').textContent = 'Confirm Your Passcode';
+                        document.getElementById('passcodeSetupSubtitle').textContent = 'Re-enter your passcode to confirm';
+                        updateSetupPasscodeDots();
+                    }, 300);
+                }
+            } else if (isConfirmingPasscode && setupPasscodeConfirm.length < 4) {
+                setupPasscodeConfirm += digit;
+                updateSetupPasscodeDots();
+
+                if (setupPasscodeConfirm.length === 4) {
+                    if (setupPasscodeInput === setupPasscodeConfirm) {
+                        // Success! Complete setup
+                        completeSetup();
+                    } else {
+                        document.getElementById('passcodeSetupError').textContent = 'Passcodes do not match. Try again.';
+                        setTimeout(() => {
+                            setupPasscodeInput = '';
+                            setupPasscodeConfirm = '';
+                            isConfirmingPasscode = false;
+                            document.getElementById('passcodeSetupTitle').textContent = 'Create Your Passcode';
+                            document.getElementById('passcodeSetupSubtitle').textContent = 'Enter a 4-digit passcode to secure your POS';
+                            document.getElementById('passcodeSetupError').textContent = '';
+                            updateSetupPasscodeDots();
+                        }, 2000);
+                    }
+                }
+            }
+        }
+
+        function clearSetupPasscode() {
+            if (isConfirmingPasscode) {
+                setupPasscodeConfirm = '';
+            } else {
+                setupPasscodeInput = '';
+            }
+            updateSetupPasscodeDots();
+            document.getElementById('passcodeSetupError').textContent = '';
+        }
+
+        function updateSetupPasscodeDots() {
+            const currentInput = isConfirmingPasscode ? setupPasscodeConfirm : setupPasscodeInput;
+            ['setupDot1', 'setupDot2', 'setupDot3', 'setupDot4'].forEach((id, index) => {
+                const dot = document.getElementById(id);
+                if (index < currentInput.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        }
+
+        function completeSetup() {
+            // Save passcode
+            currentPasscode = setupPasscodeInput;
+            localStorage.setItem('passcode', currentPasscode);
+
+            // Save profile
+            userProfile = {
+                id: Date.now().toString(),
+                ...tempProfile,
+                barberScore: 0,
+                tier: 0,
+                createdAt: new Date().toISOString()
+            };
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+
+            // Hide onboarding and start app
+            document.getElementById('passcodeSetupScreen').classList.add('hidden');
             renderServices();
             updateDashboard();
             updateAnalytics();
             updateBarberScore();
+            updateProcurement();
         }
 
-        // Passcode Management
+        // Passcode Management (Login)
         function showPasscodeScreen() {
             document.getElementById('passcodeScreen').classList.remove('hidden');
             passcodeInput = '';
@@ -1185,6 +1787,14 @@
                         document.getElementById('passcodeError').textContent = '';
                         passcodeInput = '';
                         updatePasscodeDots();
+
+                        // Load app after successful login
+                        loadProfile();
+                        renderServices();
+                        updateDashboard();
+                        updateAnalytics();
+                        updateBarberScore();
+                        updateProcurement();
                     } else {
                         document.getElementById('passcodeError').textContent = 'Incorrect passcode';
                         setTimeout(() => {
@@ -1221,6 +1831,22 @@
             } else {
                 alert('Incorrect passcode');
             }
+        }
+
+        function logout() {
+            // Hide all main sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+            // Show passcode screen
+            document.getElementById('passcodeScreen').classList.remove('hidden');
+
+            // Reset passcode input
+            passcodeInput = '';
+            updatePasscodeDots();
+            document.getElementById('passcodeError').textContent = '';
+
+            // Note: We don't clear userProfile or passcode from localStorage
+            // This is logout, not account deletion
         }
 
         // Navigation
@@ -1314,7 +1940,7 @@
             const price = parseFloat(document.getElementById('servicePrice').value);
 
             if (!name || isNaN(price) || price < 0) {
-                alert('Please enter valid service details');
+                showToast('error', 'Invalid service', 'Please enter a name and valid price');
                 return;
             }
 
@@ -1395,7 +2021,7 @@
 
         function completeSale() {
             if (cart.length === 0) {
-                alert('Cart is empty');
+                showToast('error', 'Cart is empty', 'Add services to cart before completing sale');
                 return;
             }
 
@@ -1406,14 +2032,23 @@
             const phoneRegex = /^[\d\s\-\(\)]+$/;
 
             if (!customerContact) {
-                alert('Customer email or phone is required');
+                showToast('error', 'Customer info required', 'Enter email or phone to complete sale');
                 return;
             }
 
             if (!emailRegex.test(customerContact) && !phoneRegex.test(customerContact)) {
-                alert('Please enter a valid email or phone number');
+                showToast('error', 'Invalid contact info', 'Please enter a valid email or phone number');
                 return;
             }
+
+            // Calculate old score before transaction
+            const oldScoreResult = calculateBarberScore();
+            const oldScore = oldScoreResult.score;
+
+            // Get tracking checkboxes
+            const rebooked = document.getElementById('trackRebook').checked;
+            const hadRetail = document.getElementById('trackRetail').checked;
+            const hadAddons = document.getElementById('trackAddons').checked;
 
             const total = cart.reduce((sum, item) => sum + item.price, 0);
             const transaction = {
@@ -1421,19 +2056,51 @@
                 date: new Date().toISOString(),
                 services: [...cart],
                 total: total,
-                customerContact: customerContact
+                customerContact: customerContact,
+                rebooked: rebooked,
+                hadRetail: hadRetail,
+                hadAddons: hadAddons,
+                noShow: false,
+                cancelled: false
             };
 
             transactions.push(transaction);
             localStorage.setItem('transactions', JSON.stringify(transactions));
 
+            // Calculate new score after transaction
+            const newScoreResult = calculateBarberScore();
+            const newScore = newScoreResult.score;
+            const scoreDiff = newScore - oldScore;
+            const newStage = getScoreStage(newScore);
+
+            // Build success message
+            let trackingMsg = [];
+            if (rebooked) trackingMsg.push('rebooked');
+            if (hadRetail) trackingMsg.push('retail');
+            if (hadAddons) trackingMsg.push('add-on');
+
+            const trackingText = trackingMsg.length > 0
+                ? `Tracked: ${trackingMsg.join(', ')}`
+                : 'Track rebook/retail/add-ons next time to boost your score!';
+
+            // Clear form
             cart = [];
             document.getElementById('customerContact').value = '';
+            document.getElementById('trackRebook').checked = false;
+            document.getElementById('trackRetail').checked = false;
+            document.getElementById('trackAddons').checked = false;
             renderCart();
             updateDashboard();
             updateBarberScore();
 
-            alert('Sale completed successfully!');
+            // Show success toast with score info
+            showToast(
+                'success',
+                `$${total.toFixed(2)} Sale Complete!`,
+                `Score: ${newScore} (+${scoreDiff}) • ${newStage.name} • ${trackingText}`,
+                6000
+            );
+
             navigateTo('dashboard');
         }
 
@@ -1443,13 +2110,19 @@
             const todayTransactions = transactions.filter(t => new Date(t.date).toDateString() === today);
             const todayRevenue = todayTransactions.reduce((sum, t) => sum + t.total, 0);
 
-            document.getElementById('todayRevenue').textContent = `$${todayRevenue.toFixed(2)}`;
-            document.getElementById('todayTransactions').textContent = todayTransactions.length;
+            const todayRevenueEl = document.getElementById('todayRevenue');
+            const todayTransactionsEl = document.getElementById('todayTransactions');
+            if (todayRevenueEl) todayRevenueEl.textContent = `$${todayRevenue.toFixed(2)}`;
+            if (todayTransactionsEl) todayTransactionsEl.textContent = todayTransactions.length;
 
-            const score = calculateBarberScore();
+            const result = calculateBarberScore();
+            const score = result.score;
             const tier = getTier(score);
-            document.getElementById('dashboardScore').textContent = score;
-            document.getElementById('dashboardTier').textContent = tier;
+
+            const dashboardScoreEl = document.getElementById('dashboardScore');
+            const dashboardTierEl = document.getElementById('dashboardTier');
+            if (dashboardScoreEl) dashboardScoreEl.textContent = score;
+            if (dashboardTierEl) dashboardTierEl.textContent = tier;
         }
 
         // Analytics
@@ -1531,49 +2204,215 @@
         }
 
         // BarberScore
-        function calculateBarberScore() {
-            const transactionPoints = transactions.length * 2;
-            const revenuePoints = Math.floor(transactions.reduce((sum, t) => sum + t.total, 0) / 100);
-            const customerPoints = transactions.filter(t => t.customerContact).length * 3;
+        // BarberScore Calculation - Accurate Algorithm (Max 850 points)
+        const SCORE_BENCHMARKS = {
+            rebookRate: { target: 55, good: 45 },
+            noShowRate: { target: 5, acceptable: 10 },
+            cancelRate: { target: 10, acceptable: 15 },
+            avgTicket: { target: 45, good: 35 }
+        };
 
-            return transactionPoints + revenuePoints + customerPoints;
+        const SCORE_STAGES = [
+            { min: 0, max: 200, name: 'Beginning', tier: 0, color: '#FF5252' },
+            { min: 201, max: 400, name: 'Building', tier: 1, color: '#FF9800' },
+            { min: 401, max: 600, name: 'Growing', tier: 2, color: '#FFB300' },
+            { min: 601, max: 750, name: 'Scaling', tier: 3, color: '#8BC34A' },
+            { min: 751, max: 850, name: 'Mastery', tier: 4, color: '#00C853' }
+        ];
+
+        function calculateMetrics() {
+            // Count transaction types
+            const completed = transactions.filter(t => !t.noShow && !t.cancelled).length;
+            const noShows = transactions.filter(t => t.noShow).length;
+            const cancelled = transactions.filter(t => t.cancelled).length;
+            const totalScheduled = completed + noShows + cancelled;
+
+            // Calculate revenue
+            const revenue = transactions
+                .filter(t => !t.noShow && !t.cancelled)
+                .reduce((sum, t) => sum + t.total, 0);
+
+            const avgTicket = completed > 0 ? revenue / completed : 0;
+
+            // Calculate rates
+            const noShowRate = totalScheduled > 0 ? (noShows / totalScheduled) * 100 : null;
+            const cancelRate = totalScheduled > 0 ? (cancelled / totalScheduled) * 100 : null;
+            const completionRate = totalScheduled > 0 ? (completed / totalScheduled) * 100 : null;
+
+            // Client behavior (from last 30 transactions)
+            const recent = transactions.slice(-30);
+            const rebooked = recent.filter(t => t.rebooked).length;
+            const withRetail = recent.filter(t => t.hadRetail).length;
+            const withAddons = recent.filter(t => t.hadAddons).length;
+
+            const rebookRate = recent.length > 0 ? (rebooked / recent.length) * 100 : null;
+            const retailRate = recent.length > 0 ? (withRetail / recent.length) * 100 : null;
+            const addonRate = recent.length > 0 ? (withAddons / recent.length) * 100 : null;
+
+            // Client retention
+            const clientContacts = transactions
+                .filter(t => t.customerContact)
+                .map(t => t.customerContact.toLowerCase());
+            const uniqueClients = [...new Set(clientContacts)];
+            const clientFrequency = {};
+            clientContacts.forEach(contact => {
+                clientFrequency[contact] = (clientFrequency[contact] || 0) + 1;
+            });
+            const returningClients = Object.values(clientFrequency).filter(count => count > 1).length;
+            const retentionRate = uniqueClients.length > 0 ? (returningClients / uniqueClients.length) * 100 : null;
+
+            return {
+                completed,
+                noShows,
+                cancelled,
+                totalScheduled,
+                revenue,
+                avgTicket,
+                noShowRate,
+                cancelRate,
+                completionRate,
+                rebookRate,
+                retailRate,
+                addonRate,
+                retentionRate,
+                totalClients: uniqueClients.length,
+                returningClients
+            };
+        }
+
+        function calculateBarberScore() {
+            const metrics = calculateMetrics();
+            let points = 100; // Base points
+
+            // Completion Rate (max 150 pts)
+            if (metrics.completionRate !== null) {
+                points += Math.min(150, metrics.completionRate * 1.5);
+            }
+
+            // No-Show Rate (max 100 pts) - inverse scoring
+            if (metrics.noShowRate !== null) {
+                points += Math.max(0, 100 - metrics.noShowRate * 10);
+            }
+
+            // Rebook Rate (max 200 pts) - MOST IMPORTANT
+            if (metrics.rebookRate !== null) {
+                points += Math.min(200, metrics.rebookRate * 3.6);
+            }
+
+            // Retail Rate (max 75 pts)
+            if (metrics.retailRate !== null) {
+                points += Math.min(75, metrics.retailRate * 3);
+            }
+
+            // Add-on Rate (max 50 pts)
+            if (metrics.addonRate !== null) {
+                points += Math.min(50, metrics.addonRate * 2.5);
+            }
+
+            // Average Ticket (max 75 pts)
+            if (metrics.avgTicket > 0) {
+                const ticketMultiplier = metrics.avgTicket / SCORE_BENCHMARKS.avgTicket.target;
+                points += Math.min(75, ticketMultiplier * 40);
+            }
+
+            // Client Retention (max 100 pts)
+            if (metrics.retentionRate !== null) {
+                points += Math.min(100, metrics.retentionRate * 1.5);
+            }
+
+            // Cap at 850
+            const finalScore = Math.max(0, Math.min(850, Math.round(points)));
+
+            return {
+                score: finalScore,
+                metrics
+            };
+        }
+
+        function getScoreStage(score) {
+            return SCORE_STAGES.find(s => score >= s.min && score <= s.max) || SCORE_STAGES[0];
         }
 
         function getTier(score) {
-            if (score >= 1000) return 'Tier 4 - Platinum';
-            if (score >= 600) return 'Tier 3 - Gold';
-            if (score >= 300) return 'Tier 2 - Silver';
-            if (score >= 100) return 'Tier 1 - Bronze';
-            return 'Tier 0 - Getting Started';
+            const stage = getScoreStage(score);
+            return `Level ${stage.tier} - ${stage.name}`;
         }
 
         function updateBarberScore() {
-            const score = calculateBarberScore();
-            const tier = getTier(score);
+            const result = calculateBarberScore();
+            const score = result.score;
+            const metrics = result.metrics;
+            const stage = getScoreStage(score);
 
-            const transactionPoints = transactions.length * 2;
-            const revenuePoints = Math.floor(transactions.reduce((sum, t) => sum + t.total, 0) / 100);
-            const customerPoints = transactions.filter(t => t.customerContact).length * 3;
+            const scoreValueEl = document.getElementById('barberscoreValue');
+            const scoreTierEl = document.getElementById('barberscoreTier');
 
-            document.getElementById('barberscoreValue').textContent = score;
-            document.getElementById('barberscoreTier').textContent = tier;
+            if (scoreValueEl) scoreValueEl.textContent = score;
+            if (scoreTierEl) scoreTierEl.textContent = stage.name;
 
-            document.getElementById('scoreTransactions').textContent = `${transactionPoints} pts`;
-            document.getElementById('scoreRevenue').textContent = `${revenuePoints} pts`;
-            document.getElementById('scoreCustomers').textContent = `${customerPoints} pts`;
+            // Update score breakdown
+            const breakdownHTML = `
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 13px; font-weight: 600;">Completion Rate</span>
+                            <span style="font-size: 13px; font-weight: 700; color: ${stage.color};">${metrics.completionRate ? metrics.completionRate.toFixed(1) + '%' : 'N/A'}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">Target: 95%+ completion</div>
+                    </div>
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 13px; font-weight: 600;">Rebook Rate</span>
+                            <span style="font-size: 13px; font-weight: 700; color: ${stage.color};">${metrics.rebookRate ? metrics.rebookRate.toFixed(1) + '%' : 'N/A'}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">Target: 55%+ rebook at checkout</div>
+                    </div>
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 13px; font-weight: 600;">Average Ticket</span>
+                            <span style="font-size: 13px; font-weight: 700; color: ${stage.color};">$${metrics.avgTicket ? metrics.avgTicket.toFixed(2) : '0.00'}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">Target: $45+ per service</div>
+                    </div>
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 13px; font-weight: 600;">Client Retention</span>
+                            <span style="font-size: 13px; font-weight: 700; color: ${stage.color};">${metrics.retentionRate ? metrics.retentionRate.toFixed(1) + '%' : 'N/A'}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">${metrics.returningClients} of ${metrics.totalClients} clients return</div>
+                    </div>
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 13px; font-weight: 600;">No-Show Rate</span>
+                            <span style="font-size: 13px; font-weight: 700; color: ${metrics.noShowRate && metrics.noShowRate > 10 ? '#FF5252' : stage.color};">${metrics.noShowRate ? metrics.noShowRate.toFixed(1) + '%' : 'N/A'}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">Target: Under 5%</div>
+                    </div>
+                </div>
+            `;
+
+            const scoreBreakdownEl = document.getElementById('scoreBreakdown');
+            if (scoreBreakdownEl) {
+                scoreBreakdownEl.innerHTML = breakdownHTML;
+            }
+
+            // Update userProfile with score
+            if (userProfile) {
+                userProfile.barberScore = score;
+                userProfile.tier = stage.tier;
+                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            }
         }
 
         // Procurement
         function updateProcurement() {
-            const score = calculateBarberScore();
-            let currentTierNum = 0;
+            const result = calculateBarberScore();
+            const score = result.score;
+            const stage = getScoreStage(score);
+            const currentTierNum = stage.tier;
 
-            if (score >= 1000) currentTierNum = 4;
-            else if (score >= 600) currentTierNum = 3;
-            else if (score >= 300) currentTierNum = 2;
-            else if (score >= 100) currentTierNum = 1;
-
-            document.getElementById('currentTier').textContent = `Tier ${currentTierNum}`;
+            const currentTierEl = document.getElementById('currentTier');
+            if (currentTierEl) currentTierEl.textContent = `Level ${currentTierNum} - ${stage.name}`;
 
             // Highlight current tier
             for (let i = 0; i <= 4; i++) {
@@ -1588,21 +2427,23 @@
 
         // Profile
         function loadProfile() {
-            document.getElementById('businessName').value = profile.businessName || '';
-            document.getElementById('ownerName').value = profile.ownerName || '';
-            document.getElementById('ownerEmail').value = profile.ownerEmail || '';
-            document.getElementById('ownerPhone').value = profile.ownerPhone || '';
+            if (userProfile) {
+                document.getElementById('businessName').value = userProfile.shopName || '';
+                document.getElementById('ownerName').value = userProfile.ownerName || '';
+                document.getElementById('ownerEmail').value = userProfile.email || '';
+                document.getElementById('ownerPhone').value = userProfile.phone || '';
+            }
         }
 
         function saveProfile() {
-            profile = {
-                businessName: document.getElementById('businessName').value,
-                ownerName: document.getElementById('ownerName').value,
-                ownerEmail: document.getElementById('ownerEmail').value,
-                ownerPhone: document.getElementById('ownerPhone').value
-            };
-            localStorage.setItem('profile', JSON.stringify(profile));
-            alert('Profile saved successfully!');
+            if (userProfile) {
+                userProfile.shopName = document.getElementById('businessName').value;
+                userProfile.ownerName = document.getElementById('ownerName').value;
+                userProfile.email = document.getElementById('ownerEmail').value;
+                userProfile.phone = document.getElementById('ownerPhone').value;
+                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+                showToast('success', 'Profile updated', 'Your business information has been saved');
+            }
         }
 
         // CSV Import
