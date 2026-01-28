@@ -444,6 +444,67 @@
             z-index: 1;
         }
 
+        /* Performance Feedback */
+        .feedback-section {
+            margin-bottom: var(--space-4);
+        }
+
+        .feedback-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-left: 3px solid;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .feedback-item.success {
+            border-color: #10B981;
+            background: #F0FDF4;
+        }
+
+        .feedback-item.warning {
+            border-color: #F59E0B;
+            background: #FFFBEB;
+        }
+
+        .feedback-item.info {
+            border-color: #3B82F6;
+            background: #EFF6FF;
+        }
+
+        .feedback-icon {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+        }
+
+        .feedback-icon.success {
+            color: #10B981;
+        }
+
+        .feedback-icon.warning {
+            color: #F59E0B;
+        }
+
+        .feedback-icon.info {
+            color: #3B82F6;
+        }
+
+        .feedback-text {
+            flex: 1;
+            color: var(--color-text-primary);
+        }
+
+        .feedback-text strong {
+            font-weight: 600;
+        }
+
         /* Buttons */
         .btn {
             width: 100%;
@@ -1221,6 +1282,11 @@
                         <div class="score-progress-bar" id="scoreProgressBar" style="width: 0%;"></div>
                     </div>
                     <div class="score-progress-label" id="scoreProgressLabel">0 points to next level</div>
+                </div>
+
+                <!-- Performance Feedback -->
+                <div class="feedback-section" id="scoreFeedback">
+                    <!-- Dynamically populated with personalized tips -->
                 </div>
 
                 <div class="stat-card">
@@ -2267,6 +2333,31 @@
                 if (progressBar) progressBar.style.width = '100%';
                 if (progressLabel) progressLabel.textContent = 'Maximum level achieved!';
             }
+
+            // Generate and display personalized feedback
+            const feedbackItems = generateScoreFeedback(result, transactions.length);
+            const feedbackSection = document.getElementById('scoreFeedback');
+            if (feedbackSection && feedbackItems.length > 0) {
+                feedbackSection.innerHTML = feedbackItems.map(item => {
+                    const icons = {
+                        check: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>',
+                        alert: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>',
+                        info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>',
+                        clock: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>',
+                        calendar: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>'
+                    };
+                    return `
+                        <div class="feedback-item ${item.type}">
+                            <svg class="feedback-icon ${item.type}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                ${icons[item.icon] || icons.info}
+                            </svg>
+                            <div class="feedback-text">${item.text}</div>
+                        </div>
+                    `;
+                }).join('');
+            } else if (feedbackSection) {
+                feedbackSection.innerHTML = '';
+            }
         }
 
         // Analytics
@@ -2571,6 +2662,163 @@
         function getTier(score) {
             const stage = getScoreStage(score);
             return `Level ${stage.tier} - ${stage.name}`;
+        }
+
+        function generateScoreFeedback(scoreResult, transactionCount) {
+            const feedback = [];
+            const { score, metrics, timeInfo } = scoreResult;
+
+            if (!timeInfo) {
+                return feedback;
+            }
+
+            const daysSinceFirst = timeInfo.daysSinceFirst;
+            const uniqueDays = timeInfo.uniqueDays;
+
+            // Time-based feedback (most important for understanding score)
+            if (daysSinceFirst < 7) {
+                feedback.push({
+                    type: 'info',
+                    icon: 'clock',
+                    text: `<strong>Keep building your history!</strong> Your score is currently limited to Level 0 in your first week. Keep taking consistent transactions to unlock higher tiers.`
+                });
+            } else if (daysSinceFirst < 14) {
+                feedback.push({
+                    type: 'info',
+                    icon: 'clock',
+                    text: `<strong>You're in week 2!</strong> You can now reach Level 1. Keep building consistency over the next 2 weeks to unlock Level 2.`
+                });
+            } else if (daysSinceFirst < 30) {
+                feedback.push({
+                    type: 'info',
+                    icon: 'clock',
+                    text: `<strong>Almost at 1 month!</strong> After 30 days of consistent history, you'll unlock access to Level 2 and beyond.`
+                });
+            }
+
+            // Consistency feedback
+            if (transactionCount >= 5) {
+                if (uniqueDays < 3) {
+                    feedback.push({
+                        type: 'warning',
+                        icon: 'calendar',
+                        text: `<strong>Spread out your transactions.</strong> You have ${transactionCount} transactions but only ${uniqueDays} unique days. Space transactions across more days to boost your score.`
+                    });
+                } else if (uniqueDays >= 14) {
+                    feedback.push({
+                        type: 'success',
+                        icon: 'check',
+                        text: `<strong>Great consistency!</strong> You've been active ${uniqueDays} different days. This consistency pattern is boosting your score.`
+                    });
+                } else if (uniqueDays >= 7) {
+                    feedback.push({
+                        type: 'success',
+                        icon: 'check',
+                        text: `<strong>Good pattern!</strong> You have ${uniqueDays} unique days of activity. Keep this up to earn consistency bonuses.`
+                    });
+                }
+            }
+
+            // Rebook rate feedback (most important metric)
+            if (metrics.rebookRate !== null && transactionCount >= 10) {
+                if (metrics.rebookRate >= 55) {
+                    feedback.push({
+                        type: 'success',
+                        icon: 'check',
+                        text: `<strong>Excellent rebooking!</strong> ${metrics.rebookRate.toFixed(0)}% of clients rebook. This is your biggest score driver.`
+                    });
+                } else if (metrics.rebookRate >= 35) {
+                    feedback.push({
+                        type: 'info',
+                        icon: 'info',
+                        text: `<strong>Rebook rate: ${metrics.rebookRate.toFixed(0)}%.</strong> Target is 55%+. Ask clients to book their next appointment before they leave.`
+                    });
+                } else {
+                    feedback.push({
+                        type: 'warning',
+                        icon: 'alert',
+                        text: `<strong>Improve rebooking.</strong> Only ${metrics.rebookRate.toFixed(0)}% rebook rate. Encourage clients to pre-book their next visit for big score gains.`
+                    });
+                }
+            } else if (transactionCount >= 3 && transactionCount < 10) {
+                feedback.push({
+                    type: 'info',
+                    icon: 'info',
+                    text: `<strong>Build your sample size.</strong> Complete ${10 - transactionCount} more transactions to unlock rebook rate scoring (worth up to 200 points).`
+                });
+            }
+
+            // Retail/Add-on feedback
+            if (transactionCount >= 10) {
+                const hasGoodRetail = metrics.retailRate !== null && metrics.retailRate >= 30;
+                const hasGoodAddons = metrics.addonRate !== null && metrics.addonRate >= 20;
+
+                if (hasGoodRetail && hasGoodAddons) {
+                    feedback.push({
+                        type: 'success',
+                        icon: 'check',
+                        text: `<strong>Great upselling!</strong> ${metrics.retailRate.toFixed(0)}% retail rate and ${metrics.addonRate.toFixed(0)}% add-on rate are excellent.`
+                    });
+                } else if (!hasGoodRetail && metrics.retailRate !== null && metrics.retailRate < 15) {
+                    feedback.push({
+                        type: 'info',
+                        icon: 'info',
+                        text: `<strong>Retail opportunity.</strong> Only ${metrics.retailRate.toFixed(0)}% of clients buy products. Recommend 1-2 products per visit to increase revenue.`
+                    });
+                } else if (!hasGoodAddons && metrics.addonRate !== null && metrics.addonRate < 10) {
+                    feedback.push({
+                        type: 'info',
+                        icon: 'info',
+                        text: `<strong>Add-on services.</strong> ${metrics.addonRate.toFixed(0)}% add-on rate. Suggest complementary services (beard trim, hot towel, etc.) to boost ticket.`
+                    });
+                }
+            }
+
+            // Average ticket feedback
+            if (transactionCount >= 5 && metrics.avgTicket > 0) {
+                if (metrics.avgTicket >= 45) {
+                    feedback.push({
+                        type: 'success',
+                        icon: 'check',
+                        text: `<strong>Strong ticket average!</strong> $${metrics.avgTicket.toFixed(2)} per transaction exceeds the $45 target.`
+                    });
+                } else if (metrics.avgTicket < 30) {
+                    feedback.push({
+                        type: 'warning',
+                        icon: 'alert',
+                        text: `<strong>Low ticket average.</strong> $${metrics.avgTicket.toFixed(2)} is below target. Consider premium services or add-ons to increase value.`
+                    });
+                }
+            }
+
+            // No-show feedback
+            if (metrics.noShowRate !== null && transactionCount >= 10) {
+                if (metrics.noShowRate > 10) {
+                    feedback.push({
+                        type: 'warning',
+                        icon: 'alert',
+                        text: `<strong>High no-show rate: ${metrics.noShowRate.toFixed(0)}%.</strong> Send appointment reminders 24hrs before to reduce no-shows.`
+                    });
+                } else if (metrics.noShowRate <= 5) {
+                    feedback.push({
+                        type: 'success',
+                        icon: 'check',
+                        text: `<strong>Excellent no-show rate!</strong> ${metrics.noShowRate.toFixed(0)}% is well under the 5% target.`
+                    });
+                }
+            }
+
+            // Just starting out
+            if (transactionCount < 5) {
+                feedback.push({
+                    type: 'info',
+                    icon: 'info',
+                    text: `<strong>Welcome!</strong> Complete ${5 - transactionCount} more transactions to start building your score. Track rebooking to maximize points.`
+                });
+            }
+
+            // Limit to top 3 most important feedback items
+            return feedback.slice(0, 3);
         }
 
         function updateBarberScore() {
