@@ -2675,80 +2675,80 @@
             const daysSinceFirst = timeInfo.daysSinceFirst;
             const uniqueDays = timeInfo.uniqueDays;
 
-            // Time-based feedback (most important for understanding score)
+            // Time-based feedback - explain assessment requires history
             if (daysSinceFirst < 7) {
                 feedback.push({
                     type: 'info',
                     icon: 'clock',
-                    text: `<strong>Keep building your history!</strong> Your score is currently limited to Level 0 in your first week. Keep taking consistent transactions to unlock higher tiers.`
+                    text: `<strong>Building your business profile.</strong> Your assessment reflects your first week of activity. Continue operating consistently to develop a fuller picture.`
                 });
             } else if (daysSinceFirst < 14) {
                 feedback.push({
                     type: 'info',
                     icon: 'clock',
-                    text: `<strong>You're in week 2!</strong> You can now reach Level 1. Keep building consistency over the next 2 weeks to unlock Level 2.`
+                    text: `<strong>Two weeks of history.</strong> Your assessment is becoming more comprehensive. Maintain regular business patterns to demonstrate stability.`
                 });
             } else if (daysSinceFirst < 30) {
                 feedback.push({
                     type: 'info',
                     icon: 'clock',
-                    text: `<strong>Almost at 1 month!</strong> After 30 days of consistent history, you'll unlock access to Level 2 and beyond.`
+                    text: `<strong>Nearly 1 month of data.</strong> A longer track record helps paint a clearer picture of your business fundamentals.`
                 });
             }
 
-            // Consistency feedback
+            // Consistency feedback - business sustainability focus
             if (transactionCount >= 5) {
                 if (uniqueDays < 3) {
                     feedback.push({
                         type: 'warning',
                         icon: 'calendar',
-                        text: `<strong>Spread out your transactions.</strong> You have ${transactionCount} transactions but only ${uniqueDays} unique days. Space transactions across more days to boost your score.`
+                        text: `<strong>Consider spreading activity.</strong> Regular operations across different days demonstrates sustainable business patterns (currently ${uniqueDays} days).`
                     });
                 } else if (uniqueDays >= 14) {
                     feedback.push({
                         type: 'success',
                         icon: 'check',
-                        text: `<strong>Great consistency!</strong> You've been active ${uniqueDays} different days. This consistency pattern is boosting your score.`
+                        text: `<strong>Consistent operations.</strong> You've maintained activity across ${uniqueDays} different days, showing reliable business rhythm.`
                     });
                 } else if (uniqueDays >= 7) {
                     feedback.push({
                         type: 'success',
                         icon: 'check',
-                        text: `<strong>Good pattern!</strong> You have ${uniqueDays} unique days of activity. Keep this up to earn consistency bonuses.`
+                        text: `<strong>Good operational pattern.</strong> Activity across ${uniqueDays} days reflects steady business practices.`
                     });
                 }
             }
 
-            // Rebook rate feedback (most important metric)
+            // Rebook rate feedback - client retention focus
             if (metrics.rebookRate !== null && transactionCount >= 10) {
                 if (metrics.rebookRate >= 55) {
                     feedback.push({
                         type: 'success',
                         icon: 'check',
-                        text: `<strong>Excellent rebooking!</strong> ${metrics.rebookRate.toFixed(0)}% of clients rebook. This is your biggest score driver.`
+                        text: `<strong>Strong client retention.</strong> ${metrics.rebookRate.toFixed(0)}% rebooking shows clients trust and value your service.`
                     });
                 } else if (metrics.rebookRate >= 35) {
                     feedback.push({
                         type: 'info',
                         icon: 'info',
-                        text: `<strong>Rebook rate: ${metrics.rebookRate.toFixed(0)}%.</strong> Target is 55%+. Ask clients to book their next appointment before they leave.`
+                        text: `<strong>Client retention at ${metrics.rebookRate.toFixed(0)}%.</strong> Industry leaders see 55%+ by helping clients book their next visit before leaving.`
                     });
                 } else {
                     feedback.push({
                         type: 'warning',
                         icon: 'alert',
-                        text: `<strong>Improve rebooking.</strong> Only ${metrics.rebookRate.toFixed(0)}% rebook rate. Encourage clients to pre-book their next visit for big score gains.`
+                        text: `<strong>Client retention opportunity.</strong> ${metrics.rebookRate.toFixed(0)}% rebooking suggests room to strengthen client relationships through pre-booking.`
                     });
                 }
             } else if (transactionCount >= 3 && transactionCount < 10) {
                 feedback.push({
                     type: 'info',
                     icon: 'info',
-                    text: `<strong>Build your sample size.</strong> Complete ${10 - transactionCount} more transactions to unlock rebook rate scoring (worth up to 200 points).`
+                    text: `<strong>Keep building your client base.</strong> A few more transactions will help establish meaningful retention patterns.`
                 });
             }
 
-            // Retail/Add-on feedback
+            // Retail/Add-on feedback - revenue diversification
             if (transactionCount >= 10) {
                 const hasGoodRetail = metrics.retailRate !== null && metrics.retailRate >= 30;
                 const hasGoodAddons = metrics.addonRate !== null && metrics.addonRate >= 20;
@@ -2757,63 +2757,63 @@
                     feedback.push({
                         type: 'success',
                         icon: 'check',
-                        text: `<strong>Great upselling!</strong> ${metrics.retailRate.toFixed(0)}% retail rate and ${metrics.addonRate.toFixed(0)}% add-on rate are excellent.`
+                        text: `<strong>Well-rounded revenue.</strong> ${metrics.retailRate.toFixed(0)}% retail and ${metrics.addonRate.toFixed(0)}% add-ons show good service diversification.`
                     });
                 } else if (!hasGoodRetail && metrics.retailRate !== null && metrics.retailRate < 15) {
                     feedback.push({
                         type: 'info',
                         icon: 'info',
-                        text: `<strong>Retail opportunity.</strong> Only ${metrics.retailRate.toFixed(0)}% of clients buy products. Recommend 1-2 products per visit to increase revenue.`
+                        text: `<strong>Product recommendation opportunity.</strong> ${metrics.retailRate.toFixed(0)}% retail rate. Successful barbers often suggest 1-2 products clients can use at home.`
                     });
                 } else if (!hasGoodAddons && metrics.addonRate !== null && metrics.addonRate < 10) {
                     feedback.push({
                         type: 'info',
                         icon: 'info',
-                        text: `<strong>Add-on services.</strong> ${metrics.addonRate.toFixed(0)}% add-on rate. Suggest complementary services (beard trim, hot towel, etc.) to boost ticket.`
+                        text: `<strong>Service enhancement suggestion.</strong> ${metrics.addonRate.toFixed(0)}% add-on rate. Consider offering complementary services that enhance the client experience.`
                     });
                 }
             }
 
-            // Average ticket feedback
+            // Average ticket feedback - service value
             if (transactionCount >= 5 && metrics.avgTicket > 0) {
                 if (metrics.avgTicket >= 45) {
                     feedback.push({
                         type: 'success',
                         icon: 'check',
-                        text: `<strong>Strong ticket average!</strong> $${metrics.avgTicket.toFixed(2)} per transaction exceeds the $45 target.`
+                        text: `<strong>Healthy service value.</strong> $${metrics.avgTicket.toFixed(2)} average shows you're delivering quality services clients value.`
                     });
                 } else if (metrics.avgTicket < 30) {
                     feedback.push({
-                        type: 'warning',
-                        icon: 'alert',
-                        text: `<strong>Low ticket average.</strong> $${metrics.avgTicket.toFixed(2)} is below target. Consider premium services or add-ons to increase value.`
+                        type: 'info',
+                        icon: 'info',
+                        text: `<strong>Service value consideration.</strong> $${metrics.avgTicket.toFixed(2)} average. Many shops find success offering premium options or service bundles.`
                     });
                 }
             }
 
-            // No-show feedback
+            // No-show feedback - operational efficiency
             if (metrics.noShowRate !== null && transactionCount >= 10) {
                 if (metrics.noShowRate > 10) {
                     feedback.push({
                         type: 'warning',
                         icon: 'alert',
-                        text: `<strong>High no-show rate: ${metrics.noShowRate.toFixed(0)}%.</strong> Send appointment reminders 24hrs before to reduce no-shows.`
+                        text: `<strong>Schedule reliability: ${metrics.noShowRate.toFixed(0)}% no-shows.</strong> Appointment reminders 24hrs ahead help reduce wasted chair time.`
                     });
                 } else if (metrics.noShowRate <= 5) {
                     feedback.push({
                         type: 'success',
                         icon: 'check',
-                        text: `<strong>Excellent no-show rate!</strong> ${metrics.noShowRate.toFixed(0)}% is well under the 5% target.`
+                        text: `<strong>Reliable scheduling.</strong> ${metrics.noShowRate.toFixed(0)}% no-show rate shows strong client commitment and operational efficiency.`
                     });
                 }
             }
 
-            // Just starting out
+            // Just starting out - encouragement
             if (transactionCount < 5) {
                 feedback.push({
                     type: 'info',
                     icon: 'info',
-                    text: `<strong>Welcome!</strong> Complete ${5 - transactionCount} more transactions to start building your score. Track rebooking to maximize points.`
+                    text: `<strong>Welcome to the platform!</strong> As you complete more transactions, you'll start seeing patterns emerge about your business performance.`
                 });
             }
 
