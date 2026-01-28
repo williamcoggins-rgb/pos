@@ -1,7 +1,8 @@
 {
+  "outputDirectory": "web",
   "rewrites": [
-    { "source": "/", "destination": "/web/pos-v4.html" },
-    { "source": "/index.html", "destination": "/web/pos-v4.html" }
+    { "source": "/", "destination": "/pos-v4.html" },
+    { "source": "/index.html", "destination": "/pos-v4.html" }
   ],
   "headers": [
     {
