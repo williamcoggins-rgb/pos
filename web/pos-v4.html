@@ -2369,7 +2369,10 @@
             // Check for admin mode via URL parameter
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('admin') === 'true') {
-                document.getElementById('adminNavItem').style.display = 'flex';
+                const adminNav = document.getElementById('adminNavItem');
+                if (adminNav) {
+                    adminNav.style.display = 'flex';
+                }
             }
 
             // Check if user has completed setup
@@ -3726,6 +3729,11 @@
 
         // Admin Panel Functions
         function refreshAdminData() {
+            // Safety check - only run if admin panel elements exist
+            if (!document.getElementById('adminUserProfile')) {
+                return;
+            }
+
             // User Profile
             const profileData = JSON.stringify(userProfile, null, 2);
             document.getElementById('adminUserProfile').textContent = profileData;
