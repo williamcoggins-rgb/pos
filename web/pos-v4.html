@@ -2780,14 +2780,11 @@
             const total = cart.reduce((sum, item) => sum + item.price, 0);
             cartTotal.textContent = `$${total.toFixed(2)}`;
 
-            // Update button text to show total
+            // Show button and update text to show total
             const completeSaleBtn = document.getElementById('completeSaleBtn');
             if (completeSaleBtn) {
-                if (cart.length === 0) {
-                    completeSaleBtn.textContent = 'Complete Sale';
-                } else {
-                    completeSaleBtn.textContent = `Process $${total.toFixed(2)}`;
-                }
+                completeSaleBtn.style.display = 'block';
+                completeSaleBtn.textContent = `Choose Payment Method`;
             }
         }
 
