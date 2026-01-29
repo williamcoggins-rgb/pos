@@ -1876,42 +1876,89 @@
             <div class="content">
                 <div style="background: #FEF3C7; border-left: 3px solid #F59E0B; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px;">
                     <p style="font-size: 13px; color: #92400E; margin: 0;">
-                        <strong>⚠️ Admin Mode:</strong> This panel is hidden from regular users and accessible only via <code>?admin=true</code> URL parameter.
+                        <strong>⚠️ Admin Mode:</strong> Hidden from users • Access: <code>?admin=true</code>
                     </p>
                 </div>
 
-                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">localStorage Data</h2>
-
-                <div class="stat-card" style="margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h3 style="font-size: 15px; font-weight: 600; color: #DC2626;">User Profile</h3>
-                        <button class="btn btn-secondary" onclick="refreshAdminData()" style="padding: 6px 12px; font-size: 12px;">🔄 Refresh</button>
+                <!-- KPI Dashboard -->
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">📊 Key Metrics</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px;">
+                    <div class="metric-card" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); color: white;">
+                        <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">💰 Total Revenue</div>
+                        <div style="font-size: 24px; font-weight: 700;" id="adminTotalRevenue">$0.00</div>
                     </div>
-                    <pre id="adminUserProfile" style="background: #F3F4F6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; line-height: 1.5; color: #374151;"></pre>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white;">
+                        <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">📝 Transactions</div>
+                        <div style="font-size: 24px; font-weight: 700;" id="adminTotalTransactions">0</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white;">
+                        <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">⭐ Current Score</div>
+                        <div style="font-size: 24px; font-weight: 700;" id="adminCurrentScore">0</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white;">
+                        <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">💈 Services</div>
+                        <div style="font-size: 24px; font-weight: 700;" id="adminTotalServices">0</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); color: white;">
+                        <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">💵 Avg Transaction</div>
+                        <div style="font-size: 24px; font-weight: 700;" id="adminAvgTransaction">$0.00</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: white;">
+                        <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">🔄 Rebook Rate</div>
+                        <div style="font-size: 24px; font-weight: 700;" id="adminRebookRate">0%</div>
+                    </div>
                 </div>
 
-                <div class="stat-card" style="margin-bottom: 16px;">
-                    <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #DC2626;">Transactions (<span id="adminTransactionCount">0</span>)</h3>
-                    <pre id="adminTransactions" style="background: #F3F4F6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; line-height: 1.5; color: #374151; max-height: 400px;"></pre>
+                <!-- Payment Methods Breakdown -->
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">💳 Payment Methods</h2>
+                <div class="stat-card" style="margin-bottom: 24px;">
+                    <div id="adminPaymentBreakdown" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <div class="stat-card" style="margin-bottom: 16px;">
-                    <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #DC2626;">Services Catalog (<span id="adminServicesCount">0</span>)</h3>
-                    <pre id="adminServices" style="background: #F3F4F6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; line-height: 1.5; color: #374151;"></pre>
+                <!-- Business Metrics -->
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">📈 Business Metrics</h2>
+                <div class="stat-card" style="margin-bottom: 24px;">
+                    <div id="adminBusinessMetrics" style="display: grid; gap: 12px;"></div>
                 </div>
 
-                <div class="stat-card" style="margin-bottom: 16px;">
-                    <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #DC2626;">Current Score Calculation</h3>
-                    <pre id="adminScoreCalc" style="background: #F3F4F6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; line-height: 1.5; color: #374151;"></pre>
+                <!-- Recent Transactions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h2 style="font-size: 18px; font-weight: 600; margin: 0;">📋 Recent Transactions</h2>
+                    <button class="btn btn-secondary" onclick="refreshAdminData()" style="padding: 6px 12px; font-size: 12px;">🔄 Refresh All</button>
                 </div>
+                <div id="adminTransactionList" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;"></div>
 
-                <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Transaction Details</h2>
-                <div id="adminTransactionList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                <!-- Raw Data (Collapsible) -->
+                <details style="margin-bottom: 24px;">
+                    <summary style="font-size: 18px; font-weight: 600; cursor: pointer; padding: 12px; background: #F3F4F6; border-radius: 8px; margin-bottom: 16px;">
+                        🗄️ Raw Database (localStorage)
+                    </summary>
 
-                <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Raw localStorage Keys</h2>
-                <div class="stat-card">
-                    <pre id="adminAllKeys" style="background: #F3F4F6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; line-height: 1.5; color: #374151;"></pre>
-                </div>
+                    <div class="stat-card" style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #DC2626;">👤 User Profile</h3>
+                        <pre id="adminUserProfile" style="background: #F3F4F6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 11px; line-height: 1.5; color: #374151;"></pre>
+                    </div>
+
+                    <div class="stat-card" style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #DC2626;">📝 Transactions JSON</h3>
+                        <pre id="adminTransactions" style="background: #F3F4F6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 11px; line-height: 1.5; color: #374151; max-height: 400px;"></pre>
+                    </div>
+
+                    <div class="stat-card" style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #DC2626;">💈 Services Catalog JSON</h3>
+                        <pre id="adminServices" style="background: #F3F4F6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 11px; line-height: 1.5; color: #374151;"></pre>
+                    </div>
+
+                    <div class="stat-card" style="margin-bottom: 16px;">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #DC2626;">⭐ Score Calculation Breakdown</h3>
+                        <pre id="adminScoreCalc" style="background: #F3F4F6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 11px; line-height: 1.5; color: #374151;"></pre>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #DC2626;">🔑 All localStorage Keys</h3>
+                        <pre id="adminAllKeys" style="background: #F3F4F6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 11px; line-height: 1.5; color: #374151;"></pre>
+                    </div>
+                </details>
             </div>
         </div>
 
@@ -3734,31 +3781,98 @@
                 return;
             }
 
-            // User Profile
-            const profileData = JSON.stringify(userProfile, null, 2);
-            document.getElementById('adminUserProfile').textContent = profileData;
-
-            // Transactions
-            document.getElementById('adminTransactionCount').textContent = transactions.length;
-            const transactionsData = JSON.stringify(transactions, null, 2);
-            document.getElementById('adminTransactions').textContent = transactionsData;
-
-            // Services
-            document.getElementById('adminServicesCount').textContent = services.length;
-            const servicesData = JSON.stringify(services, null, 2);
-            document.getElementById('adminServices').textContent = servicesData;
-
-            // Score Calculation
+            // Calculate KPIs
+            const validTransactions = transactions.filter(t => !t.noShow && !t.cancelled);
+            const totalRevenue = validTransactions.reduce((sum, t) => sum + t.total, 0);
+            const avgTransaction = validTransactions.length > 0 ? totalRevenue / validTransactions.length : 0;
             const scoreResult = calculateBarberScore();
-            const scoreData = JSON.stringify(scoreResult, null, 2);
-            document.getElementById('adminScoreCalc').textContent = scoreData;
 
-            // Transaction Details (render each transaction as a card)
+            // Rebook rate
+            const rebookCount = validTransactions.filter(t => t.rebooked).length;
+            const rebookRate = validTransactions.length > 0 ? (rebookCount / validTransactions.length * 100) : 0;
+
+            // Retail and addon rates
+            const retailCount = validTransactions.filter(t => t.hadRetail).length;
+            const retailRate = validTransactions.length > 0 ? (retailCount / validTransactions.length * 100) : 0;
+            const addonCount = validTransactions.filter(t => t.hadAddons).length;
+            const addonRate = validTransactions.length > 0 ? (addonCount / validTransactions.length * 100) : 0;
+
+            // Completion rate
+            const completionRate = transactions.length > 0 ? ((transactions.length - transactions.filter(t => t.noShow || t.cancelled).length) / transactions.length * 100) : 100;
+
+            // Update KPI cards
+            document.getElementById('adminTotalRevenue').textContent = `$${totalRevenue.toFixed(2)}`;
+            document.getElementById('adminTotalTransactions').textContent = validTransactions.length;
+            document.getElementById('adminCurrentScore').textContent = scoreResult.score;
+            document.getElementById('adminTotalServices').textContent = services.length;
+            document.getElementById('adminAvgTransaction').textContent = `$${avgTransaction.toFixed(2)}`;
+            document.getElementById('adminRebookRate').textContent = `${rebookRate.toFixed(0)}%`;
+
+            // Payment Methods Breakdown
+            const paymentMethods = {};
+            validTransactions.forEach(t => {
+                const method = t.paymentMethod || 'Not Specified';
+                paymentMethods[method] = (paymentMethods[method] || 0) + 1;
+            });
+
+            const paymentBreakdown = document.getElementById('adminPaymentBreakdown');
+            if (Object.keys(paymentMethods).length === 0) {
+                paymentBreakdown.innerHTML = '<p style="color: #666; text-align: center;">No payment data yet</p>';
+            } else {
+                paymentBreakdown.innerHTML = Object.entries(paymentMethods).map(([method, count]) => {
+                    const percentage = (count / validTransactions.length * 100).toFixed(1);
+                    const methodIcon = method === 'Tap to Pay' ? '📱' : method === 'Apple Pay' ? '🍎' : method === 'Cash App' ? '💵' : method === 'Invoice' ? '📧' : '💳';
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #E5E5E5;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 18px;">${methodIcon}</span>
+                                <span style="font-weight: 500;">${method}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="color: #666; font-size: 14px;">${count} tx</span>
+                                <span style="font-weight: 600; color: #DC2626; min-width: 50px; text-align: right;">${percentage}%</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Business Metrics
+            const metricsEl = document.getElementById('adminBusinessMetrics');
+            metricsEl.innerHTML = `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E5E5E5;">
+                    <span style="font-weight: 500;">🔄 Rebook Rate</span>
+                    <span style="font-weight: 600; color: ${rebookRate >= 55 ? '#059669' : '#DC2626'};">${rebookRate.toFixed(1)}% <span style="font-size: 12px; color: #666;">(${rebookCount}/${validTransactions.length})</span></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E5E5E5;">
+                    <span style="font-weight: 500;">🛍️ Retail Rate</span>
+                    <span style="font-weight: 600; color: #059669;">${retailRate.toFixed(1)}% <span style="font-size: 12px; color: #666;">(${retailCount}/${validTransactions.length})</span></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E5E5E5;">
+                    <span style="font-weight: 500;">➕ Add-on Rate</span>
+                    <span style="font-weight: 600; color: #059669;">${addonRate.toFixed(1)}% <span style="font-size: 12px; color: #666;">(${addonCount}/${validTransactions.length})</span></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E5E5E5;">
+                    <span style="font-weight: 500;">✅ Completion Rate</span>
+                    <span style="font-weight: 600; color: ${completionRate >= 95 ? '#059669' : '#F59E0B'};">${completionRate.toFixed(1)}% <span style="font-size: 12px; color: #666;">(${validTransactions.length}/${transactions.length})</span></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E5E5E5;">
+                    <span style="font-weight: 500;">❌ No-Shows</span>
+                    <span style="font-weight: 600; color: #DC2626;">${transactions.filter(t => t.noShow).length}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                    <span style="font-weight: 500;">🚫 Cancelled</span>
+                    <span style="font-weight: 600; color: #DC2626;">${transactions.filter(t => t.cancelled).length}</span>
+                </div>
+            `;
+
+            // Transaction Details (render each transaction as a card) - show last 10
             const transactionList = document.getElementById('adminTransactionList');
             if (transactions.length === 0) {
                 transactionList.innerHTML = '<div class="stat-card"><p style="color: #666; text-align: center;">No transactions yet</p></div>';
             } else {
-                transactionList.innerHTML = transactions.slice().reverse().map((t, index) => {
+                const recentTransactions = transactions.slice().reverse().slice(0, 10);
+                transactionList.innerHTML = recentTransactions.map((t, index) => {
                     const date = new Date(t.date);
                     const flags = [];
                     if (t.rebooked) flags.push('🔄 Rebooked');
@@ -3785,7 +3899,24 @@
                         </div>
                     `;
                 }).join('');
+
+                if (transactions.length > 10) {
+                    transactionList.innerHTML += `<div class="stat-card" style="text-align: center; color: #666; font-size: 14px;">Showing 10 most recent of ${transactions.length} total transactions</div>`;
+                }
             }
+
+            // Raw data (JSON)
+            const profileData = JSON.stringify(userProfile, null, 2);
+            document.getElementById('adminUserProfile').textContent = profileData;
+
+            const transactionsData = JSON.stringify(transactions, null, 2);
+            document.getElementById('adminTransactions').textContent = transactionsData;
+
+            const servicesData = JSON.stringify(services, null, 2);
+            document.getElementById('adminServices').textContent = servicesData;
+
+            const scoreData = JSON.stringify(scoreResult, null, 2);
+            document.getElementById('adminScoreCalc').textContent = scoreData;
 
             // All localStorage keys
             const allKeys = {};
