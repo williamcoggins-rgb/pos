@@ -1010,6 +1010,159 @@
             margin-top: 20px;
         }
 
+        /* Payment Methods */
+        .payment-method-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 20px 16px;
+            background: white;
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            cursor: pointer;
+            transition: all var(--duration-normal);
+        }
+
+        .payment-method-btn:hover {
+            border-color: var(--color-brand-primary);
+            background: #FEF2F2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+        }
+
+        .payment-method-btn:active {
+            transform: scale(0.98) translateY(0);
+        }
+
+        .payment-method-btn svg {
+            color: var(--color-brand-primary);
+        }
+
+        /* Tap to Pay Modal */
+        .tap-to-pay-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000000;
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tap-to-pay-modal.active {
+            display: flex;
+        }
+
+        .tap-to-pay-content {
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .tap-to-pay-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            background: rgba(220, 38, 38, 0.2);
+            border: 2px solid var(--color-brand-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .tap-to-pay-close:hover {
+            background: rgba(220, 38, 38, 0.4);
+            transform: rotate(90deg);
+        }
+
+        .tap-to-pay-close svg {
+            width: 24px;
+            height: 24px;
+            color: var(--color-brand-primary);
+        }
+
+        .tap-icon-container {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 32px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tap-icon-glow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(220, 38, 38, 0.4) 0%, transparent 70%);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.6;
+            }
+        }
+
+        .tap-icon {
+            position: relative;
+            z-index: 1;
+            width: 120px;
+            height: 120px;
+            color: var(--color-brand-primary);
+        }
+
+        .tap-to-pay-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: white;
+        }
+
+        .tap-to-pay-amount {
+            font-size: 56px;
+            font-weight: 800;
+            color: var(--color-brand-primary);
+            margin-bottom: 24px;
+        }
+
+        .tap-to-pay-subtitle {
+            font-size: 18px;
+            color: #999;
+            margin-bottom: 40px;
+        }
+
+        .tap-to-pay-status {
+            font-size: 16px;
+            color: #666;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: inline-block;
+        }
+
         /* Skeleton Loaders */
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -1425,7 +1578,41 @@
                             <span class="total-value" id="cartTotal">$0.00</span>
                         </div>
                     </div>
-                    <button class="btn btn-primary" id="completeSaleBtn" onclick="completeSale()">Complete Sale</button>
+
+                    <!-- Payment Methods Section -->
+                    <div id="paymentMethodsSection" style="margin-top: 24px; display: none;">
+                        <label class="form-label" style="margin-bottom: 12px; display: block;">Select Payment Method</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                            <button class="payment-method-btn" onclick="selectPaymentMethod('tap-to-pay')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                                <span>Tap to Pay</span>
+                            </button>
+                            <button class="payment-method-btn" onclick="selectPaymentMethod('apple-pay')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                </svg>
+                                <span>Apple Pay</span>
+                            </button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <button class="payment-method-btn" onclick="selectPaymentMethod('cash-app')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Cash App</span>
+                            </button>
+                            <button class="payment-method-btn" onclick="selectPaymentMethod('invoice')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                <span>Send Invoice</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" id="completeSaleBtn" onclick="showPaymentMethods()" style="display: none;">Choose Payment Method</button>
                 </div>
             </div>
         </div>
@@ -1764,6 +1951,52 @@
         </div>
     </div>
 
+    <!-- Tap to Pay Modal -->
+    <div class="tap-to-pay-modal" id="tapToPayModal">
+        <button class="tap-to-pay-close" onclick="closeTapToPay()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <div class="tap-to-pay-content">
+            <div class="tap-icon-container">
+                <div class="tap-icon-glow"></div>
+                <svg class="tap-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9h6m-6 4h6"></path>
+                </svg>
+            </div>
+            <div class="tap-to-pay-title">Tap to Pay</div>
+            <div class="tap-to-pay-amount" id="tapToPayAmount">$0.00</div>
+            <div class="tap-to-pay-subtitle">Hold customer's device near your phone</div>
+            <div class="tap-to-pay-status" id="tapToPayStatus">Waiting for device...</div>
+        </div>
+    </div>
+
+    <!-- Invoice Modal -->
+    <div class="modal" id="invoiceModal">
+        <div class="modal-content">
+            <h2 class="modal-header">Send Invoice</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">An invoice link will be sent to the customer</p>
+            <div class="form-group">
+                <label class="form-label">Recipient</label>
+                <input type="text" class="form-input" id="invoiceRecipient" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Amount</label>
+                <input type="text" class="form-input" id="invoiceAmount" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Due Date</label>
+                <input type="date" class="form-input" id="invoiceDueDate">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeInvoiceModal()" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" onclick="sendInvoice()" style="flex: 1;">Send Invoice</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Data Storage
         let services = JSON.parse(localStorage.getItem('services')) || [];
@@ -1872,6 +2105,210 @@
 
         function closeCelebrationModal() {
             document.getElementById('celebrationModal').classList.remove('active');
+        }
+
+        // Payment Methods
+        let selectedPaymentMethod = null;
+
+        function showPaymentMethods() {
+            // Validate cart and customer info first
+            if (cart.length === 0) {
+                showToast('error', 'Cart is empty', 'Add services to cart before selecting payment');
+                return;
+            }
+
+            const customerContact = document.getElementById('customerContact').value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRegex = /^[\d\s\-\(\)]+$/;
+
+            if (!customerContact) {
+                showToast('error', 'Customer info required', 'Enter email or phone before selecting payment');
+                return;
+            }
+
+            if (!emailRegex.test(customerContact) && !phoneRegex.test(customerContact)) {
+                showToast('error', 'Invalid contact info', 'Please enter a valid email or phone number');
+                return;
+            }
+
+            // Show payment methods
+            document.getElementById('paymentMethodsSection').style.display = 'block';
+            document.getElementById('completeSaleBtn').style.display = 'none';
+
+            // Scroll to payment methods
+            document.getElementById('paymentMethodsSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+
+            if (method === 'tap-to-pay') {
+                showTapToPay();
+            } else if (method === 'apple-pay') {
+                processApplePay();
+            } else if (method === 'cash-app') {
+                processCashApp();
+            } else if (method === 'invoice') {
+                showInvoiceModal();
+            }
+        }
+
+        // Tap to Pay
+        function showTapToPay() {
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('tapToPayAmount').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('tapToPayStatus').textContent = 'Waiting for device...';
+            document.getElementById('tapToPayModal').classList.add('active');
+
+            // Simulate payment processing after 3 seconds
+            setTimeout(() => {
+                document.getElementById('tapToPayStatus').textContent = 'Processing payment...';
+                setTimeout(() => {
+                    document.getElementById('tapToPayStatus').textContent = 'Payment successful!';
+                    setTimeout(() => {
+                        closeTapToPay();
+                        completeSaleWithPayment('Tap to Pay');
+                    }, 1000);
+                }, 2000);
+            }, 3000);
+        }
+
+        function closeTapToPay() {
+            document.getElementById('tapToPayModal').classList.remove('active');
+        }
+
+        // Apple Pay
+        function processApplePay() {
+            showToast('info', 'Apple Pay', 'Initiating Apple Pay...');
+            // Simulate Apple Pay processing
+            setTimeout(() => {
+                completeSaleWithPayment('Apple Pay');
+            }, 2000);
+        }
+
+        // Cash App
+        function processCashApp() {
+            showToast('info', 'Cash App', 'Initiating Cash App payment...');
+            // Simulate Cash App processing
+            setTimeout(() => {
+                completeSaleWithPayment('Cash App');
+            }, 2000);
+        }
+
+        // Invoice
+        function showInvoiceModal() {
+            const customerContact = document.getElementById('customerContact').value.trim();
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+
+            document.getElementById('invoiceRecipient').value = customerContact;
+            document.getElementById('invoiceAmount').value = `$${total.toFixed(2)}`;
+
+            // Set default due date to 7 days from now
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 7);
+            document.getElementById('invoiceDueDate').value = dueDate.toISOString().split('T')[0];
+
+            document.getElementById('invoiceModal').classList.add('active');
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').classList.remove('active');
+        }
+
+        function sendInvoice() {
+            const recipient = document.getElementById('invoiceRecipient').value;
+            const dueDate = document.getElementById('invoiceDueDate').value;
+
+            closeInvoiceModal();
+            showToast('success', 'Invoice sent', `Invoice sent to ${recipient}`);
+
+            // Complete sale with invoice
+            completeSaleWithPayment('Invoice');
+        }
+
+        // Complete sale with payment method
+        function completeSaleWithPayment(paymentMethod) {
+            const customerContact = document.getElementById('customerContact').value.trim();
+
+            // Calculate old score before transaction
+            const oldScoreResult = calculateBarberScore();
+            const oldScore = oldScoreResult.score;
+            const oldStage = getScoreStage(oldScore);
+
+            // Get tracking checkboxes
+            const rebooked = document.getElementById('trackRebook').checked;
+            const hadRetail = document.getElementById('trackRetail').checked;
+            const hadAddons = document.getElementById('trackAddons').checked;
+
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            const transaction = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                services: [...cart],
+                total: total,
+                customerContact: customerContact,
+                paymentMethod: paymentMethod,
+                rebooked: rebooked,
+                hadRetail: hadRetail,
+                hadAddons: hadAddons,
+                noShow: false,
+                cancelled: false
+            };
+
+            transactions.push(transaction);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+
+            // Calculate new score after transaction
+            const newScoreResult = calculateBarberScore();
+            const newScore = newScoreResult.score;
+            const scoreDiff = newScore - oldScore;
+            const newStage = getScoreStage(newScore);
+
+            // Check for tier unlock
+            const tierUnlocked = newStage.tier > oldStage.tier;
+
+            // Build success message
+            let trackingMsg = [];
+            if (rebooked) trackingMsg.push('rebooked');
+            if (hadRetail) trackingMsg.push('retail');
+            if (hadAddons) trackingMsg.push('add-on');
+
+            const trackingText = trackingMsg.length > 0
+                ? `Tracked: ${trackingMsg.join(', ')}`
+                : 'Track rebook/retail/add-ons next time!';
+
+            // Clear form
+            cart = [];
+            document.getElementById('customerContact').value = '';
+            document.getElementById('trackRebook').checked = false;
+            document.getElementById('trackRetail').checked = false;
+            document.getElementById('trackAddons').checked = false;
+            document.getElementById('trackingSection').style.display = 'none';
+            document.getElementById('paymentMethodsSection').style.display = 'none';
+            document.getElementById('completeSaleBtn').style.display = 'block';
+            renderCart();
+            updateDashboard();
+            updateBarberScore();
+
+            // Show tier unlock celebration if tier increased
+            if (tierUnlocked) {
+                setTimeout(() => {
+                    showCelebration(
+                        `🎉 Level ${newStage.tier} Unlocked!`,
+                        `You've reached ${newStage.name}! Your consistent business practices are paying off. Keep building your profile to unlock even more opportunities.`
+                    );
+                }, 500);
+            }
+
+            // Show success toast with score info
+            showToast(
+                'success',
+                `$${total.toFixed(2)} Sale Complete!`,
+                `${paymentMethod} • Score: ${newScore} (+${scoreDiff}) • ${trackingText}`,
+                6000
+            );
+
+            navigateTo('dashboard');
         }
 
         // Initialize
@@ -2321,6 +2758,8 @@
                     </div>
                 `;
                 cartTotal.textContent = '$0.00';
+                document.getElementById('paymentMethodsSection').style.display = 'none';
+                document.getElementById('completeSaleBtn').style.display = 'none';
                 return;
             }
 
