@@ -551,6 +551,22 @@
             box-shadow: none;
         }
 
+        .btn-danger {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #E53935;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 82, 82, 0.3);
+        }
+
+        .btn-danger:active {
+            transform: scale(0.98) translateY(0);
+            box-shadow: 0 2px 4px rgba(255, 82, 82, 0.2);
+        }
+
         .btn-small {
             padding: 8px 16px;
             font-size: 14px;
@@ -994,6 +1010,53 @@
             margin-top: 20px;
         }
 
+        /* Skeleton Loaders */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        @keyframes fall {
+            0% {
+                top: -10px;
+                opacity: 1;
+                transform: rotate(0deg);
+            }
+            100% {
+                top: 100%;
+                opacity: 0;
+                transform: rotate(360deg);
+            }
+        }
+
+        .skeleton-text {
+            height: 16px;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-card {
+            height: 100px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+        }
+
+        .skeleton-score {
+            height: 180px;
+            margin-bottom: 24px;
+            border-radius: 16px;
+        }
+
         .tabs {
             display: flex;
             gap: 8px;
@@ -1173,8 +1236,9 @@
         <!-- Business Setup Screen -->
         <div class="onboarding-screen hidden" id="businessSetupScreen">
             <form class="setup-form" onsubmit="submitBusinessSetup(event)">
-                <h2 class="form-title">Business Setup</h2>
-                <p class="form-subtitle">Tell us about your business</p>
+                <div class="welcome-logo" style="width: 64px; height: 64px; font-size: 28px; margin: 0 auto 16px;">BS</div>
+                <h2 class="form-title">Welcome to BarberScore POS</h2>
+                <p class="form-subtitle">Let's set up your business profile to get started</p>
 
                 <div class="form-group">
                     <label class="form-label">Shop Name <span class="required-badge">*</span></label>
@@ -1330,10 +1394,13 @@
                             <label class="form-label">
                                 Email or Phone <span class="required-badge">REQUIRED</span>
                             </label>
-                            <input type="text" class="form-input" id="customerContact" placeholder="customer@email.com or (555) 123-4567">
+                            <input type="text" class="form-input" id="customerContact" placeholder="customer@email.com or (555) 123-4567" oninput="handleCustomerContactInput()">
                         </div>
-                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #E5E5E5;">
-                            <label class="form-label" style="margin-bottom: 12px; display: block;">BarberScore Tracking</label>
+                        <div id="trackingSection" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #E5E5E5; display: none; animation: fadeIn 0.3s ease-in-out;">
+                            <label class="form-label" style="margin-bottom: 12px; display: block;">
+                                BarberScore Tracking
+                                <span style="font-size: 11px; color: #666; font-weight: 400;">- Optional</span>
+                            </label>
                             <div style="display: flex; flex-direction: column; gap: 10px;">
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
                                     <input type="checkbox" id="trackRebook" style="width: 18px; height: 18px; cursor: pointer;">
@@ -1348,7 +1415,7 @@
                                     <span>Client added service upgrade</span>
                                 </label>
                             </div>
-                            <p style="font-size: 11px; color: #666; margin-top: 8px;">Track these to improve your BarberScore</p>
+                            <p style="font-size: 11px; color: #666; margin-top: 8px;">Track these behaviors to build your business profile</p>
                         </div>
                     </div>
                     <div class="cart-list" id="cartList"></div>
@@ -1675,6 +1742,28 @@
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h2 class="modal-header" id="confirmTitle">Confirm</h2>
+            <p id="confirmMessage" style="color: #666; font-size: 14px; line-height: 1.5; margin: 16px 0;"></p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" id="confirmButton" onclick="handleConfirm()" style="flex: 1;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tier Celebration Modal -->
+    <div class="modal" id="celebrationModal">
+        <div class="modal-content" style="text-align: center;">
+            <div id="confettiContainer" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;"></div>
+            <h2 class="modal-header" id="celebrationTitle" style="font-size: 24px; margin-bottom: 16px;">🎉 Congratulations!</h2>
+            <p id="celebrationMessage" style="color: #666; font-size: 16px; line-height: 1.6; margin: 16px 0;"></p>
+            <button class="btn btn-primary" onclick="closeCelebrationModal()" style="margin-top: 20px;">Continue</button>
+        </div>
+    </div>
+
     <script>
         // Data Storage
         let services = JSON.parse(localStorage.getItem('services')) || [];
@@ -1730,6 +1819,61 @@
             }, duration);
         }
 
+        // Confirmation Modal System
+        let confirmCallback = null;
+
+        function showConfirm(title, message, onConfirm, confirmText = 'Confirm', isDangerous = false) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            const confirmBtn = document.getElementById('confirmButton');
+            confirmBtn.textContent = confirmText;
+            confirmBtn.className = isDangerous ? 'btn btn-danger' : 'btn btn-primary';
+            confirmCallback = onConfirm;
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
+        function handleConfirm() {
+            closeConfirmModal();
+            if (confirmCallback) {
+                confirmCallback();
+                confirmCallback = null;
+            }
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('active');
+            confirmCallback = null;
+        }
+
+        // Celebration Modal
+        function showCelebration(title, message) {
+            document.getElementById('celebrationTitle').textContent = title;
+            document.getElementById('celebrationMessage').textContent = message;
+            document.getElementById('celebrationModal').classList.add('active');
+
+            // Simple confetti effect
+            const container = document.getElementById('confettiContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < 30; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.cssText = `
+                    position: absolute;
+                    width: 10px;
+                    height: 10px;
+                    background: ${['#DC2626', '#00C853', '#FFB300', '#3B82F6'][Math.floor(Math.random() * 4)]};
+                    left: ${Math.random() * 100}%;
+                    top: -10px;
+                    animation: fall ${1 + Math.random() * 2}s linear;
+                    opacity: 0;
+                `;
+                container.appendChild(confetti);
+            }
+        }
+
+        function closeCelebrationModal() {
+            document.getElementById('celebrationModal').classList.remove('active');
+        }
+
         // Initialize
         function init() {
             // Check if user has completed setup
@@ -1751,8 +1895,9 @@
 
         // Onboarding Flow
         function showWelcomeScreen() {
-            document.getElementById('welcomeScreen').classList.remove('hidden');
-            document.getElementById('businessSetupScreen').classList.add('hidden');
+            // Skip welcome screen, go directly to business setup
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('businessSetupScreen').classList.remove('hidden');
             document.getElementById('passcodeSetupScreen').classList.add('hidden');
         }
 
@@ -1940,15 +2085,9 @@
         }
 
         function promptNewPasscode() {
-            const newPasscode = prompt('Set your 4-digit passcode:');
-            if (newPasscode && newPasscode.length === 4 && /^\d+$/.test(newPasscode)) {
-                currentPasscode = newPasscode;
-                localStorage.setItem('passcode', currentPasscode);
-                showPasscodeScreen();
-            } else {
-                alert('Please enter a valid 4-digit passcode');
-                promptNewPasscode();
-            }
+            // Redirect to passcode setup screen for security
+            showPasscodeSetupScreen();
+            showToast('info', 'Set new passcode', 'Enter your new 4-digit passcode below');
         }
 
         function enterPasscode(digit) {
@@ -2000,12 +2139,18 @@
         }
 
         function changePasscode() {
-            const oldPasscode = prompt('Enter your current passcode:');
-            if (oldPasscode === currentPasscode) {
-                promptNewPasscode();
-            } else {
-                alert('Incorrect passcode');
-            }
+            showConfirm(
+                'Change Passcode',
+                'You will be logged out and can set a new passcode. Continue?',
+                () => {
+                    logout();
+                    setTimeout(() => {
+                        currentPasscode = '';
+                        localStorage.removeItem('passcode');
+                        promptNewPasscode();
+                    }, 300);
+                }
+            );
         }
 
         function logout() {
@@ -2131,11 +2276,19 @@
         }
 
         function deleteService(index) {
-            if (confirm('Are you sure you want to delete this service?')) {
-                services.splice(index, 1);
-                localStorage.setItem('services', JSON.stringify(services));
-                renderServices();
-            }
+            const serviceName = services[index].name;
+            showConfirm(
+                'Delete Service',
+                `Are you sure you want to delete "${serviceName}"? This cannot be undone.`,
+                () => {
+                    services.splice(index, 1);
+                    localStorage.setItem('services', JSON.stringify(services));
+                    renderServices();
+                    showToast('success', 'Service deleted', `${serviceName} has been removed`);
+                },
+                'Delete',
+                true
+            );
         }
 
         function closeServiceModal() {
@@ -2204,6 +2357,21 @@
             renderCart();
         }
 
+        // Progressive disclosure for tracking section
+        function handleCustomerContactInput() {
+            const customerContact = document.getElementById('customerContact').value.trim();
+            const trackingSection = document.getElementById('trackingSection');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRegex = /^[\d\s\-\(\)]+$/;
+
+            // Show tracking section if contact info looks valid
+            if (customerContact && (emailRegex.test(customerContact) || phoneRegex.test(customerContact))) {
+                trackingSection.style.display = 'block';
+            } else {
+                trackingSection.style.display = 'none';
+            }
+        }
+
         function completeSale() {
             if (cart.length === 0) {
                 showToast('error', 'Cart is empty', 'Add services to cart before completing sale');
@@ -2229,6 +2397,7 @@
             // Calculate old score before transaction
             const oldScoreResult = calculateBarberScore();
             const oldScore = oldScoreResult.score;
+            const oldStage = getScoreStage(oldScore);
 
             // Get tracking checkboxes
             const rebooked = document.getElementById('trackRebook').checked;
@@ -2258,6 +2427,9 @@
             const scoreDiff = newScore - oldScore;
             const newStage = getScoreStage(newScore);
 
+            // Check for tier unlock
+            const tierUnlocked = newStage.tier > oldStage.tier;
+
             // Build success message
             let trackingMsg = [];
             if (rebooked) trackingMsg.push('rebooked');
@@ -2274,9 +2446,20 @@
             document.getElementById('trackRebook').checked = false;
             document.getElementById('trackRetail').checked = false;
             document.getElementById('trackAddons').checked = false;
+            document.getElementById('trackingSection').style.display = 'none';
             renderCart();
             updateDashboard();
             updateBarberScore();
+
+            // Show tier unlock celebration if tier increased
+            if (tierUnlocked) {
+                setTimeout(() => {
+                    showCelebration(
+                        `🎉 Level ${newStage.tier} Unlocked!`,
+                        `You've reached ${newStage.name}! Your consistent business practices are paying off. Keep building your profile to unlock even more opportunities.`
+                    );
+                }, 500);
+            }
 
             // Show success toast with score info
             showToast(
@@ -2330,7 +2513,16 @@
 
             const dashboardScoreEl = document.getElementById('dashboardScore');
             const dashboardTierEl = document.getElementById('dashboardTier');
-            if (dashboardScoreEl) dashboardScoreEl.textContent = score;
+
+            // Animate score change
+            if (dashboardScoreEl) {
+                const oldScore = parseInt(dashboardScoreEl.textContent) || 0;
+                if (oldScore !== score && oldScore > 0) {
+                    animateNumber(dashboardScoreEl, oldScore, score, 800);
+                } else {
+                    dashboardScoreEl.textContent = score;
+                }
+            }
             if (dashboardTierEl) dashboardTierEl.textContent = tier;
 
             // Calculate progress to next tier
@@ -2956,7 +3148,7 @@
             const file = fileInput.files[0];
 
             if (!file) {
-                alert('Please select a CSV file');
+                showToast('error', 'No file selected', 'Please select a CSV file to import');
                 return;
             }
 
@@ -2984,7 +3176,7 @@
 
                 localStorage.setItem('services', JSON.stringify(services));
                 renderServices();
-                alert(`Successfully imported ${imported} services`);
+                showToast('success', 'Import complete', `Successfully imported ${imported} services`);
                 fileInput.value = '';
             };
 
@@ -3010,8 +3202,10 @@
         }
 
         function clearAllData() {
-            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-                if (confirm('This will delete all services, transactions, and profile data. Continue?')) {
+            showConfirm(
+                'Delete Everything?',
+                'This will permanently delete all services, transactions, and business data. This cannot be undone.',
+                () => {
                     services = [];
                     transactions = [];
                     cart = [];
@@ -3026,9 +3220,11 @@
                     updateBarberScore();
                     loadProfile();
 
-                    alert('All data has been cleared');
-                }
-            }
+                    showToast('success', 'Data cleared', 'All business data has been deleted');
+                },
+                'Delete Everything',
+                true
+            );
         }
 
         // Initialize app
