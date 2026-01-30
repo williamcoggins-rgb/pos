@@ -90,6 +90,36 @@ app.use('/api/products', productRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/shops', shopRoutes);
 
+// Database setup routes
+app.get('/setup', (req, res) => {
+    res.sendFile(require('path').join(__dirname, '../setup.html'));
+});
+
+app.post('/setup-database', async (req, res) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+
+        // Read schema file
+        const schemaPath = path.join(__dirname, '../schema.sql');
+        const schema = fs.readFileSync(schemaPath, 'utf8');
+
+        // Execute schema
+        await pool.query(schema);
+
+        res.json({
+            success: true,
+            message: 'Database setup completed successfully'
+        });
+    } catch (error) {
+        console.error('Database setup error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({

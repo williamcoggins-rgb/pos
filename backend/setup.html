@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Setup - BarberScore POS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .status {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            color: #1976D2;
+            display: block;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            color: #2E7D32;
+        }
+
+        .status.error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            color: #c62828;
+        }
+
+        .status.loading {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            color: #e65100;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .tables-list {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .tables-list h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .tables-list ul {
+            list-style: none;
+        }
+
+        .tables-list li {
+            padding: 8px 0;
+            color: #555;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tables-list li:last-child {
+            border-bottom: none;
+        }
+
+        .tables-list li::before {
+            content: "✓ ";
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Database Setup</h1>
+        <p class="subtitle">Initialize your BarberScore POS database with all required tables</p>
+
+        <div id="status" class="status info">
+            Click the button below to create all database tables. This will set up tables for customers, transactions, barbers, appointments, products, and more.
+        </div>
+
+        <button id="setupBtn" onclick="setupDatabase()">
+            Create Database Tables
+        </button>
+
+        <div id="tablesList" class="tables-list">
+            <h3>Tables Created:</h3>
+            <ul>
+                <li>Users & Authentication</li>
+                <li>Shops & Locations</li>
+                <li>Customers</li>
+                <li>Barbers (Employees)</li>
+                <li>Services</li>
+                <li>Appointments</li>
+                <li>Transactions (Sales)</li>
+                <li>Transaction Items</li>
+                <li>Products (Inventory)</li>
+                <li>Inventory Transactions</li>
+                <li>BarberScore Metrics</li>
+                <li>Audit Logs</li>
+                <li>Plus views and triggers for automation</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function setupDatabase() {
+            const statusDiv = document.getElementById('status');
+            const btn = document.getElementById('setupBtn');
+            const tablesList = document.getElementById('tablesList');
+
+            // Show loading state
+            statusDiv.className = 'status loading';
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<div class="spinner"></div>Creating database tables... This may take a minute.';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/setup-database', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `
+                        <strong>✅ Success!</strong><br>
+                        All database tables have been created successfully. Your POS system is ready to use!
+                    `;
+                    tablesList.style.display = 'block';
+                    btn.textContent = 'Database Ready ✓';
+                } else {
+                    throw new Error(result.error || 'Failed to setup database');
+                }
+
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `
+                    <strong>❌ Error:</strong><br>
+                    ${error.message}<br><br>
+                    <small>Please check that your DATABASE_URL is correctly configured in Railway.</small>
+                `;
+                btn.disabled = false;
+                btn.textContent = 'Try Again';
+            }
+        }
+    </script>
+</body>
+</html>
