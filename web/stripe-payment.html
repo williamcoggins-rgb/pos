@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Payment - BarberScore POS</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="api-service.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .amount-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .amount-display .label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .amount-display .amount {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input[type="email"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #card-element {
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+        }
+
+        #card-element.StripeElement--focus {
+            border-color: #667eea;
+        }
+
+        #card-errors {
+            color: #f44336;
+            font-size: 14px;
+            margin-top: 8px;
+            min-height: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            color: #2E7D32;
+        }
+
+        .message.error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            color: #c62828;
+        }
+
+        .payment-methods {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #999;
+            text-align: center;
+        }
+
+        .secure-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .secure-badge svg {
+            width: 16px;
+            height: 16px;
+            fill: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💳 Process Payment</h1>
+        <p class="subtitle">Secure payment powered by Stripe</p>
+
+        <div class="amount-display">
+            <div class="label">Total Amount</div>
+            <div class="amount" id="amountDisplay">$0.00</div>
+        </div>
+
+        <form id="payment-form">
+            <div class="form-group">
+                <label for="customer-email">Customer Email (Optional)</label>
+                <input type="email" id="customer-email" placeholder="customer@example.com">
+                <small style="color: #999; font-size: 12px;">Receipt will be sent to this email</small>
+            </div>
+
+            <div class="form-group">
+                <label for="customer-name">Customer Name</label>
+                <input type="text" id="customer-name" placeholder="John Doe" required>
+            </div>
+
+            <div class="form-group">
+                <label for="card-element">Card Information</label>
+                <div id="card-element"></div>
+                <div id="card-errors"></div>
+            </div>
+
+            <div class="payment-methods">
+                Accepts Visa, Mastercard, Amex, Discover, Apple Pay, Google Pay
+            </div>
+
+            <button type="submit" id="submit-button">
+                <span id="button-text">Pay Now</span>
+            </button>
+
+            <div class="secure-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                </svg>
+                Secure payment processed by Stripe
+            </div>
+        </form>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        // Initialize Stripe (You'll need to add your publishable key)
+        const STRIPE_PUBLISHABLE_KEY = 'pk_test_YOUR_STRIPE_KEY'; // Replace with your key
+        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+
+        // Create card element
+        const elements = stripe.elements();
+        const cardElement = elements.create('card', {
+            style: {
+                base: {
+                    fontSize: '16px',
+                    color: '#32325d',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    '::placeholder': {
+                        color: '#aab7c4'
+                    }
+                },
+                invalid: {
+                    color: '#f44336',
+                    iconColor: '#f44336'
+                }
+            }
+        });
+
+        cardElement.mount('#card-element');
+
+        // Handle card errors
+        cardElement.on('change', (event) => {
+            const displayError = document.getElementById('card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+
+        // Get amount from URL parameter or default
+        const urlParams = new URLSearchParams(window.location.search);
+        const amount = parseFloat(urlParams.get('amount')) || 0;
+        document.getElementById('amountDisplay').textContent = `$${amount.toFixed(2)}`;
+
+        // Handle form submission
+        const form = document.getElementById('payment-form');
+        const submitButton = document.getElementById('submit-button');
+        const buttonText = document.getElementById('button-text');
+        const messageDiv = document.getElementById('message');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (amount <= 0) {
+                showMessage('error', 'Invalid amount. Please go back and enter a valid amount.');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Step 1: Create payment intent on backend
+                const { clientSecret, paymentIntentId } = await api.request('/payments/create-payment-intent', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        amount: amount,
+                        currency: 'usd',
+                        customer_email: document.getElementById('customer-email').value,
+                        customer_name: document.getElementById('customer-name').value,
+                        metadata: {
+                            source: 'barberscore_pos'
+                        }
+                    })
+                });
+
+                // Step 2: Confirm payment with Stripe
+                const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: {
+                            name: document.getElementById('customer-name').value,
+                            email: document.getElementById('customer-email').value || undefined
+                        }
+                    }
+                });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                if (paymentIntent.status === 'succeeded') {
+                    // Step 3: Confirm payment on backend and create transaction
+                    // You would pass transaction details here from your POS
+                    showMessage('success', `✅ Payment successful! Payment ID: ${paymentIntent.id}`);
+
+                    // Redirect back to POS after 2 seconds
+                    setTimeout(() => {
+                        // window.location.href = 'pos-v4.html?payment_success=true';
+                    }, 2000);
+                }
+
+            } catch (error) {
+                showMessage('error', `❌ Payment failed: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function setLoading(isLoading) {
+            submitButton.disabled = isLoading;
+            if (isLoading) {
+                buttonText.innerHTML = '<span class="spinner"></span>Processing...';
+            } else {
+                buttonText.textContent = 'Pay Now';
+            }
+        }
+
+        function showMessage(type, text) {
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+            messageDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

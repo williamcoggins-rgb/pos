@@ -15,6 +15,7 @@ const appointmentRoutes = require('./routes/appointments');
 const productRoutes = require('./routes/products');
 const analyticsRoutes = require('./routes/analytics');
 const shopRoutes = require('./routes/shops');
+const paymentRoutes = require('./routes/payments');
 
 // Import database
 const { pool } = require('./config/database');
@@ -89,6 +90,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/shops', shopRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Database setup routes
 app.get('/setup', async (req, res) => {
