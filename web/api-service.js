@@ -1,8 +1,7 @@
 // BarberScore POS API Service
 // Handles all communication with backend API
 
-const API_BASE_URL = 'http://localhost:3000/api'; // Change to your Railway URL after deployment
-// Production: const API_BASE_URL = 'https://your-project.up.railway.app/api';
+const API_BASE_URL = 'https://pos-production-fd37.up.railway.app/api';
 
 class APIService {
     constructor() {
