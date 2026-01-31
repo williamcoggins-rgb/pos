@@ -16,6 +16,7 @@ const productRoutes = require('./routes/products');
 const analyticsRoutes = require('./routes/analytics');
 const shopRoutes = require('./routes/shops');
 const paymentRoutes = require('./routes/payments');
+const stripeOnboardingRoutes = require('./routes/stripe-onboarding');
 
 // Import database
 const { pool } = require('./config/database');
@@ -91,8 +92,26 @@ app.use('/api/products', productRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/shops', shopRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/stripe', stripeOnboardingRoutes);
 
 // Database setup routes
+app.get('/add-stripe-fields', async (req, res) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+
+        const migrationPath = path.join(__dirname, '../add-stripe-field.sql');
+        const migration = fs.readFileSync(migrationPath, 'utf8');
+
+        await pool.query(migration);
+
+        res.send('<h1>✅ Stripe fields added successfully!</h1>');
+    } catch (error) {
+        console.error('Migration error:', error);
+        res.status(500).send(`<h1>❌ Error: ${error.message}</h1>`);
+    }
+});
+
 app.get('/setup', async (req, res) => {
     try {
         const fs = require('fs');

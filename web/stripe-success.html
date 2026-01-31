@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Setup Complete - BarberScore POS</title>
+    <script src="api-service.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 0.6s ease-out;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .features {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .features h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features li {
+            padding: 10px 0;
+            color: #555;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .features li:last-child {
+            border-bottom: none;
+        }
+
+        .features li::before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .status {
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            color: #2E7D32;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">🎉</div>
+        <h1>Payment Setup Complete!</h1>
+        <p>Congratulations! Your Stripe account has been connected successfully.</p>
+
+        <div class="features">
+            <h3>What You Can Do Now:</h3>
+            <ul>
+                <li>Accept credit and debit card payments</li>
+                <li>Process Apple Pay and Google Pay</li>
+                <li>Receive money directly to your bank account</li>
+                <li>Track all payments in real-time</li>
+                <li>Automatic deposits in 2 business days</li>
+            </ul>
+        </div>
+
+        <p><strong>Next Step:</strong> Start using your POS to accept payments from clients!</p>
+
+        <div id="statusDiv" class="status">
+            Verifying your account status<span class="loading"></span>
+        </div>
+
+        <button onclick="goToPOS()" id="continueBtn" style="display: none;">
+            Continue to POS →
+        </button>
+    </div>
+
+    <script>
+        // Check account status
+        async function checkStatus() {
+            try {
+                const status = await api.request('/stripe/account-status');
+
+                const statusDiv = document.getElementById('statusDiv');
+                const continueBtn = document.getElementById('continueBtn');
+
+                if (status.charges_enabled) {
+                    statusDiv.innerHTML = '<strong>✅ Verified!</strong> Your account is ready to accept payments.';
+                    continueBtn.style.display = 'inline-block';
+                } else if (status.onboarding_complete) {
+                    statusDiv.innerHTML = '<strong>⏳ Almost Ready</strong> Your account is being verified by Stripe. This usually takes a few minutes.';
+                    continueBtn.style.display = 'inline-block';
+                } else {
+                    statusDiv.innerHTML = '<strong>⚠️ Setup Incomplete</strong> Please complete all required steps in your Stripe onboarding.';
+                }
+            } catch (error) {
+                console.error('Error checking status:', error);
+                document.getElementById('statusDiv').innerHTML = '<strong>Account connected!</strong> You can start accepting payments.';
+                document.getElementById('continueBtn').style.display = 'inline-block';
+            }
+        }
+
+        function goToPOS() {
+            window.location.href = 'pos-v4.html';
+        }
+
+        // Check status on page load
+        setTimeout(checkStatus, 1000);
+    </script>
+</body>
+</html>
