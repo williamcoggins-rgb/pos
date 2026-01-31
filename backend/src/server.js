@@ -17,6 +17,7 @@ const analyticsRoutes = require('./routes/analytics');
 const shopRoutes = require('./routes/shops');
 const paymentRoutes = require('./routes/payments');
 const stripeOnboardingRoutes = require('./routes/stripe-onboarding');
+const diagnosticsRoutes = require('./routes/diagnostics');
 
 // Import database
 const { pool } = require('./config/database');
@@ -93,6 +94,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/shops', shopRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/stripe', stripeOnboardingRoutes);
+app.use('/diagnostics', diagnosticsRoutes);
 
 // Database setup routes
 app.get('/add-stripe-fields', async (req, res) => {
