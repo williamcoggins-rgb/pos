@@ -89,8 +89,14 @@ router.post('/create-account', authenticate, async (req, res, next) => {
 // Generates the onboarding link for user to complete Stripe setup
 
 router.post('/create-account-link', authenticate, async (req, res, next) => {
+    console.log('=== CREATE ACCOUNT LINK REQUEST ===');
+    console.log('User ID:', req.user.id);
+    console.log('User email:', req.user.email);
+    console.log('Existing Stripe Account ID:', req.user.stripe_account_id);
+
     try {
         if (!stripe) {
+            console.error('Stripe not initialized!');
             return res.status(500).json({
                 error: 'Stripe not configured'
             });
@@ -101,10 +107,14 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
 
         // If no account exists, create one first
         if (!stripeAccountId) {
+            console.log('No Stripe account found, creating new one...');
+
             const userResult = await query(
                 'SELECT email FROM users WHERE id = $1',
                 [req.user.id]
             );
+
+            console.log('Creating Stripe account for:', userResult.rows[0].email);
 
             const account = await stripe.accounts.create({
                 type: 'express',
@@ -121,16 +131,21 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
                 }
             });
 
+            console.log('Stripe account created:', account.id);
             stripeAccountId = account.id;
 
             await query(
                 'UPDATE users SET stripe_account_id = $1 WHERE id = $2',
                 [stripeAccountId, req.user.id]
             );
+            console.log('Database updated with Stripe account ID');
+        } else {
+            console.log('Using existing Stripe account:', stripeAccountId);
         }
 
         // Create account link for onboarding
         const BASE_URL = process.env.FRONTEND_URL || 'https://pos-ivrc.vercel.app';
+        console.log('Creating account link with BASE_URL:', BASE_URL);
 
         const accountLink = await stripe.accountLinks.create({
             account: stripeAccountId,
@@ -139,23 +154,37 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
             type: 'account_onboarding'
         });
 
+        console.log('Account link created successfully');
+        console.log('Redirecting to:', accountLink.url.substring(0, 50) + '...');
+        console.log('=== REQUEST SUCCESSFUL ===');
+
         res.json({
             url: accountLink.url
         });
 
     } catch (error) {
-        console.error('Create account link error:', error);
+        console.error('=== CREATE ACCOUNT LINK ERROR ===');
+        console.error('Error type:', error.type);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Full error:', JSON.stringify(error, null, 2));
 
         // Send detailed error message for Stripe errors
         if (error.type && error.type.includes('Stripe')) {
             return res.status(400).json({
                 error: 'Stripe Error',
                 message: error.message,
-                type: error.type
+                type: error.type,
+                code: error.code
             });
         }
 
-        next(error);
+        // Send detailed error for any other error
+        return res.status(500).json({
+            error: error.name || 'Error',
+            message: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
