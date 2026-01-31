@@ -86,13 +86,40 @@ router.get('/stripe-check', async (req, res) => {
                 message: 'Successfully created and deleted test Connect account. Stripe Connect is enabled!'
             });
         } catch (connectError) {
+            let fixMessage = 'Go to https://dashboard.stripe.com/test/connect/accounts/overview and enable Connect';
+
+            // Provide more specific fix instructions based on error message
+            if (connectError.message && connectError.message.includes('platform-profile')) {
+                fixMessage = `
+                    <strong>Steps to fix:</strong><br>
+                    1. Make sure you're in <strong>TEST MODE</strong> (toggle at top right of Stripe dashboard)<br>
+                    2. Go to: <a href="https://dashboard.stripe.com/settings/connect/platform-profile" target="_blank" style="color: #00ff00;">Platform Profile Settings</a><br>
+                    3. Fill out ALL required fields:<br>
+                    &nbsp;&nbsp;&nbsp;- Business website (can use a placeholder like https://example.com)<br>
+                    &nbsp;&nbsp;&nbsp;- Customer support info<br>
+                    &nbsp;&nbsp;&nbsp;- Platform description<br>
+                    &nbsp;&nbsp;&nbsp;- Loss liability settings<br>
+                    4. <strong>Scroll to the bottom and click SAVE</strong><br>
+                    5. Then refresh this diagnostic page<br>
+                    <br>
+                    <strong>Important:</strong> All fields must be filled out, even for test mode!
+                `;
+            } else if (connectError.message && connectError.message.includes('signed up for Connect')) {
+                fixMessage = `
+                    1. Go to: <a href="https://dashboard.stripe.com/test/connect/accounts/overview" target="_blank" style="color: #00ff00;">Stripe Connect Overview</a><br>
+                    2. Click "Enable Connect" or "Get Started"<br>
+                    3. Complete the onboarding form<br>
+                    4. Then refresh this diagnostic page
+                `;
+            }
+
             diagnostics.checks.push({
                 name: 'Stripe Connect Enabled',
                 status: 'FAIL',
-                message: `Stripe Connect is NOT enabled: ${connectError.message}`,
+                message: `Stripe Connect setup incomplete: ${connectError.message}`,
                 error_type: connectError.type,
                 error_code: connectError.code,
-                fix: 'Go to https://dashboard.stripe.com/test/connect/accounts/overview and enable Connect'
+                fix: fixMessage
             });
         }
 
