@@ -300,7 +300,10 @@ router.post('/refund', async (req, res, next) => {
 // STRIPE WEBHOOK
 // ============================================
 // Handle Stripe webhook events (payment confirmations, failures, etc.)
+// TEMPORARILY DISABLED - express.raw() conflicts with express.json()
+// TODO: Configure webhook endpoint separately
 
+/*
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -338,5 +341,6 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
     res.json({ received: true });
 });
+*/
 
 module.exports = router;

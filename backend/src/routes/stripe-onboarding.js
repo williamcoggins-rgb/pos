@@ -273,7 +273,10 @@ router.get('/account-status', authenticate, async (req, res, next) => {
 // STRIPE WEBHOOK FOR ACCOUNT UPDATES
 // ============================================
 // Handle Stripe webhooks for account status changes
+// TEMPORARILY DISABLED - express.raw() conflicts with express.json()
+// TODO: Configure webhook endpoint separately
 
+/*
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     const webhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
@@ -320,5 +323,6 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
     res.json({ received: true });
 });
+*/
 
 module.exports = router;
