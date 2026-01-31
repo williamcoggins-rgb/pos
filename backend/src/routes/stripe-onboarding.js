@@ -367,4 +367,34 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 });
 */
 
+// ============================================
+// RESET STRIPE ACCOUNT (for fixing broken setups)
+// ============================================
+router.post('/reset-account', authenticate, async (req, res, next) => {
+    console.log('=== RESET STRIPE ACCOUNT REQUEST ===');
+    console.log('User ID:', req.user.id);
+
+    try {
+        // Clear Stripe account ID from database
+        await query(
+            'UPDATE users SET stripe_account_id = NULL, stripe_onboarding_complete = false, stripe_charges_enabled = false WHERE id = $1',
+            [req.user.id]
+        );
+
+        console.log('Stripe data cleared for user:', req.user.id);
+
+        res.json({
+            success: true,
+            message: 'Stripe account data cleared. You can now set up Stripe from scratch.'
+        });
+
+    } catch (error) {
+        console.error('Reset error:', error);
+        return res.status(500).json({
+            error: 'Reset failed',
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;
