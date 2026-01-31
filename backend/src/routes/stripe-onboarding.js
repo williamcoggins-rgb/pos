@@ -145,6 +145,16 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
 
     } catch (error) {
         console.error('Create account link error:', error);
+
+        // Send detailed error message for Stripe errors
+        if (error.type && error.type.includes('Stripe')) {
+            return res.status(400).json({
+                error: 'Stripe Error',
+                message: error.message,
+                type: error.type
+            });
+        }
+
         next(error);
     }
 });

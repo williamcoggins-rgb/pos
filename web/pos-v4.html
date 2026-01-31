@@ -2728,6 +2728,12 @@
                     }
                 });
 
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Status check error:', errorData);
+                    throw new Error(errorData.error || 'Failed to check account status');
+                }
+
                 const status = await response.json();
 
                 if (status.charges_enabled) {
@@ -2754,18 +2760,24 @@
                     }
                 });
 
+                if (!linkResponse.ok) {
+                    const errorData = await linkResponse.json();
+                    console.error('Link creation error:', errorData);
+                    throw new Error(errorData.error || errorData.message || 'Failed to generate setup link');
+                }
+
                 const linkData = await linkResponse.json();
 
                 if (linkData.url) {
                     // Redirect to Stripe onboarding
                     window.location.href = linkData.url;
                 } else {
-                    throw new Error('Failed to generate setup link');
+                    throw new Error('No URL returned from server');
                 }
 
             } catch (error) {
                 console.error('Stripe setup error:', error);
-                alert('Error setting up payments. Please try again or contact support.');
+                alert(`Error setting up payments: ${error.message}\n\nPlease check the browser console (F12) for more details.`);
                 btn.disabled = false;
                 btn.textContent = 'Set Up Payment Processing';
             }
