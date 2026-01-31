@@ -63,6 +63,39 @@ router.get('/stripe-check', async (req, res) => {
             });
         }
 
+        // Check 5: Can we create Stripe Connect accounts?
+        try {
+            // Try to create a test account to verify Connect is enabled
+            const testAccount = await stripe.accounts.create({
+                type: 'express',
+                country: 'US',
+                email: 'test-' + Date.now() + '@example.com',
+                capabilities: {
+                    card_payments: { requested: true },
+                    transfers: { requested: true }
+                },
+                business_type: 'individual'
+            });
+
+            // If successful, delete the test account
+            await stripe.accounts.del(testAccount.id);
+
+            diagnostics.checks.push({
+                name: 'Stripe Connect Enabled',
+                status: 'PASS',
+                message: 'Successfully created and deleted test Connect account. Stripe Connect is enabled!'
+            });
+        } catch (connectError) {
+            diagnostics.checks.push({
+                name: 'Stripe Connect Enabled',
+                status: 'FAIL',
+                message: `Stripe Connect is NOT enabled: ${connectError.message}`,
+                error_type: connectError.type,
+                error_code: connectError.code,
+                fix: 'Go to https://dashboard.stripe.com/test/connect/accounts/overview and enable Connect'
+            });
+        }
+
     } catch (error) {
         diagnostics.checks.push({
             name: 'Stripe SDK Initialization',
@@ -71,7 +104,7 @@ router.get('/stripe-check', async (req, res) => {
         });
     }
 
-    // Check 5: Database connectivity
+    // Check 6: Database connectivity
     try {
         const { query } = require('../config/database');
         const result = await query('SELECT COUNT(*) as count FROM users');
@@ -177,6 +210,12 @@ router.get('/stripe-check', async (req, res) => {
                 <div style="margin-top: 8px;">${check.message}</div>
                 ${check.error_type ? `<div style="margin-top: 4px; opacity: 0.7;">Error Type: ${check.error_type}</div>` : ''}
                 ${check.error_code ? `<div style="opacity: 0.7;">Error Code: ${check.error_code}</div>` : ''}
+                ${check.fix ? `
+                    <div style="margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                        <strong style="color: #00ff00;">🔧 How to Fix:</strong><br>
+                        <div style="margin-top: 6px;">${check.fix}</div>
+                    </div>
+                ` : ''}
             </div>
         `).join('')}
 
