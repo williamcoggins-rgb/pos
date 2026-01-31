@@ -49,6 +49,7 @@ router.post('/create-account', authenticate, async (req, res, next) => {
         // Create Stripe Express account
         const account = await stripe.accounts.create({
             type: 'express',
+            country: 'US',  // Required by Stripe API
             email: userEmail,
             capabilities: {
                 card_payments: { requested: true },
@@ -107,6 +108,7 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
 
             const account = await stripe.accounts.create({
                 type: 'express',
+                country: 'US',  // Required by Stripe API
                 email: userResult.rows[0].email,
                 capabilities: {
                     card_payments: { requested: true },
@@ -175,6 +177,7 @@ router.post('/send-onboarding-email', authenticate, async (req, res, next) => {
         if (!stripeAccountId) {
             const account = await stripe.accounts.create({
                 type: 'express',
+                country: 'US',  // Required by Stripe API
                 email: user.email,
                 capabilities: {
                     card_payments: { requested: true },
