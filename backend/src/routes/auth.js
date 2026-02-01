@@ -138,6 +138,9 @@ router.post('/register', async (req, res, next) => {
                     // Create onboarding link
                     let BASE_URL = process.env.FRONTEND_URL || 'https://pos-ivrc.vercel.app';
 
+                    // Trim whitespace
+                    BASE_URL = BASE_URL.trim();
+
                     // Ensure URL has protocol
                     if (!BASE_URL.startsWith('http://') && !BASE_URL.startsWith('https://')) {
                         BASE_URL = `https://${BASE_URL}`;
