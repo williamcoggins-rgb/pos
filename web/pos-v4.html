@@ -1869,6 +1869,10 @@
                     <button class="btn btn-primary" onclick="setupStripePayments()" id="setupStripeBtn">
                         Set Up Payment Processing
                     </button>
+                    <button class="btn btn-secondary" onclick="testStripeSetup()" id="testStripeBtn" style="margin-top: 12px; background: #6B7280;">
+                        🔧 Debug: Test Stripe Setup
+                    </button>
+                    <div id="testResult" style="margin-top: 16px; padding: 12px; background: #F3F4F6; border-radius: 8px; font-family: monospace; font-size: 12px; white-space: pre-wrap; display: none; max-height: 400px; overflow-y: auto;"></div>
                 </div>
 
                 <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Security</h2>
@@ -2780,6 +2784,44 @@
                 alert(`Error setting up payments: ${error.message}\n\nPlease check the browser console (F12) for more details.`);
                 btn.disabled = false;
                 btn.textContent = 'Set Up Payment Processing';
+            }
+        }
+
+        // Test Stripe setup - shows detailed debug info
+        async function testStripeSetup() {
+            const btn = document.getElementById('testStripeBtn');
+            const resultDiv = document.getElementById('testResult');
+
+            btn.disabled = true;
+            btn.textContent = '🔧 Testing...';
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Running test...\n';
+
+            try {
+                const response = await fetch('https://pos-production-fd37.up.railway.app/diagnostics/test-user-account', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    }
+                });
+
+                const result = await response.json();
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+
+                if (result.status === 'SUCCESS') {
+                    resultDiv.style.background = '#D1FAE5';
+                    resultDiv.style.color = '#065F46';
+                } else {
+                    resultDiv.style.background = '#FEE2E2';
+                    resultDiv.style.color = '#991B1B';
+                }
+
+            } catch (error) {
+                resultDiv.style.background = '#FEE2E2';
+                resultDiv.style.color = '#991B1B';
+                resultDiv.textContent = `Test failed: ${error.message}\n\n${error.stack}`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔧 Debug: Test Stripe Setup';
             }
         }
 
