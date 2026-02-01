@@ -65,6 +65,9 @@ router.get('/stripe-check', async (req, res) => {
 
         // Check 5: Can we create Stripe Connect accounts?
         try {
+            console.log('Testing Stripe Connect account creation...');
+            console.log('Stripe API Version:', stripe.VERSION || 'default');
+
             // Try to create a test account to verify Connect is enabled
             const testAccount = await stripe.accounts.create({
                 type: 'express',
@@ -77,15 +80,22 @@ router.get('/stripe-check', async (req, res) => {
                 business_type: 'individual'
             });
 
+            console.log('Test account created successfully:', testAccount.id);
+
             // If successful, delete the test account
             await stripe.accounts.del(testAccount.id);
+            console.log('Test account deleted');
 
             diagnostics.checks.push({
                 name: 'Stripe Connect Enabled',
                 status: 'PASS',
-                message: 'Successfully created and deleted test Connect account. Stripe Connect is enabled!'
+                message: `Successfully created and deleted test Connect account. Stripe Connect is enabled! API Version: ${stripe.VERSION || 'default'}`
             });
         } catch (connectError) {
+            console.error('Connect test failed:', connectError.message);
+            console.error('Error type:', connectError.type);
+            console.error('Error code:', connectError.code);
+
             let fixMessage = 'Go to https://dashboard.stripe.com/test/connect/accounts/overview and enable Connect';
 
             // Provide more specific fix instructions based on error message
@@ -106,10 +116,22 @@ router.get('/stripe-check', async (req, res) => {
                 `;
             } else if (connectError.message && connectError.message.includes('signed up for Connect')) {
                 fixMessage = `
-                    1. Go to: <a href="https://dashboard.stripe.com/test/connect/accounts/overview" target="_blank" style="color: #00ff00;">Stripe Connect Overview</a><br>
-                    2. Click "Enable Connect" or "Get Started"<br>
-                    3. Complete the onboarding form<br>
-                    4. Then refresh this diagnostic page
+                    <strong>Complete These Steps:</strong><br>
+                    1. <a href="https://dashboard.stripe.com/settings/connect/platform-profile" target="_blank" style="color: #00ff00;">Platform Profile</a> - Fill out completely<br>
+                    2. <a href="https://dashboard.stripe.com/settings/connect" target="_blank" style="color: #00ff00;">Connect Branding</a> - Add business name, icon, and brand color<br>
+                    3. <a href="https://dashboard.stripe.com/settings/connect/express" target="_blank" style="color: #00ff00;">Express Settings</a> - Check default capabilities and enable onboarding for US<br>
+                    4. Refresh this page after completing all steps
+                `;
+            } else if (connectError.message && connectError.message.includes('client application')) {
+                fixMessage = `
+                    <strong>Branding Settings Required:</strong><br>
+                    Go to: <a href="https://dashboard.stripe.com/settings/connect" target="_blank" style="color: #00ff00;">Connect Settings → Branding</a><br>
+                    You MUST set:<br>
+                    &nbsp;&nbsp;&nbsp;✓ Business name<br>
+                    &nbsp;&nbsp;&nbsp;✓ Icon (upload a square logo)<br>
+                    &nbsp;&nbsp;&nbsp;✓ Brand color<br>
+                    <br>
+                    Then refresh this page.
                 `;
             }
 
