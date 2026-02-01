@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { authenticate } = require('../middleware/auth');
 
 // Diagnostic endpoint to check Stripe configuration
 router.get('/stripe-check', async (req, res) => {
@@ -274,6 +275,74 @@ router.get('/stripe-check', async (req, res) => {
 </body>
 </html>
     `);
+});
+
+// Test creating account with user's actual email
+router.get('/test-user-account', authenticate, async (req, res) => {
+    const result = {
+        timestamp: new Date().toISOString(),
+        user_id: req.user.id,
+        steps: []
+    };
+
+    try {
+        const Stripe = require('stripe');
+        const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+        const { query } = require('../config/database');
+
+        // Get user email
+        const userResult = await query('SELECT email, stripe_account_id FROM users WHERE id = $1', [req.user.id]);
+        const user = userResult.rows[0];
+
+        result.steps.push({ step: 1, action: 'User data', email: user.email, existing_account: user.stripe_account_id });
+
+        // Try to create account
+        try {
+            const account = await stripe.accounts.create({
+                type: 'express',
+                country: 'US',
+                email: user.email,
+                capabilities: {
+                    card_payments: { requested: true },
+                    transfers: { requested: true }
+                },
+                business_type: 'individual'
+            });
+
+            result.steps.push({ step: 2, action: 'Account created', account_id: account.id });
+
+            // Try to create link
+            const accountLink = await stripe.accountLinks.create({
+                account: account.id,
+                refresh_url: 'https://pos-ivrc.vercel.app/stripe-refresh.html',
+                return_url: 'https://pos-ivrc.vercel.app/stripe-success.html',
+                type: 'account_onboarding'
+            });
+
+            result.steps.push({ step: 3, action: 'Link created', url: accountLink.url });
+
+            // Clean up
+            await stripe.accounts.del(account.id);
+            result.steps.push({ step: 4, action: 'Test account deleted' });
+            result.status = 'SUCCESS';
+
+        } catch (stripeError) {
+            result.error = {
+                message: stripeError.message,
+                type: stripeError.type,
+                code: stripeError.code,
+                statusCode: stripeError.statusCode
+            };
+            result.status = 'FAILED';
+        }
+
+        res.json(result);
+
+    } catch (error) {
+        result.error = { message: error.message };
+        result.status = 'ERROR';
+        res.status(500).json(result);
+    }
 });
 
 module.exports = router;
