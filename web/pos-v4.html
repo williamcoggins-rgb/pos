@@ -1860,19 +1860,18 @@
 
                 <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">💳 Payment Processing</h2>
                 <div class="stat-card" id="stripeSetupCard">
-                    <div id="stripeStatus" style="padding: 16px; background: #FEF3C7; border-left: 3px solid #F59E0B; border-radius: 8px; margin-bottom: 16px;">
-                        <p style="color: #92400E; margin-bottom: 8px; font-weight: 600;">⚠️ Payment Setup Required</p>
-                        <p style="color: #78350F; font-size: 14px; margin: 0;">
-                            Set up Stripe to accept credit card payments, Apple Pay, and Google Pay from your clients.
+                    <div id="stripeStatus" style="padding: 16px; background: #FEE2E2; border-left: 3px solid #DC2626; border-radius: 8px; margin-bottom: 16px;">
+                        <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Login Required</p>
+                        <p style="color: #991B1B; font-size: 14px; margin: 0;">
+                            You must login to your account before setting up Stripe payments.
                         </p>
                     </div>
-                    <button class="btn btn-primary" onclick="setupStripePayments()" id="setupStripeBtn">
+                    <a href="login.html" class="btn btn-primary" style="display: inline-block; text-align: center; text-decoration: none; background: #635BFF; margin-bottom: 12px;">
+                        Login / Register
+                    </a>
+                    <button class="btn btn-secondary" onclick="setupStripePayments()" id="setupStripeBtn" style="display: block;">
                         Set Up Payment Processing
                     </button>
-                    <button class="btn btn-secondary" onclick="testStripeSetup()" id="testStripeBtn" style="margin-top: 12px; background: #6B7280;">
-                        🔧 Debug: Test Stripe Setup
-                    </button>
-                    <div id="testResult" style="margin-top: 16px; padding: 12px; background: #F3F4F6; border-radius: 8px; font-family: monospace; font-size: 12px; white-space: pre-wrap; display: none; max-height: 400px; overflow-y: auto;"></div>
                 </div>
 
                 <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Security</h2>
