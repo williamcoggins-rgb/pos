@@ -136,7 +136,16 @@ router.post('/register', async (req, res, next) => {
                     );
 
                     // Create onboarding link
-                    const BASE_URL = process.env.FRONTEND_URL || 'https://pos-ivrc.vercel.app';
+                    let BASE_URL = process.env.FRONTEND_URL || 'https://pos-ivrc.vercel.app';
+
+                    // Ensure URL has protocol
+                    if (!BASE_URL.startsWith('http://') && !BASE_URL.startsWith('https://')) {
+                        BASE_URL = `https://${BASE_URL}`;
+                    }
+
+                    // Remove trailing slash if present
+                    BASE_URL = BASE_URL.replace(/\/$/, '');
+
                     const accountLink = await stripe.accountLinks.create({
                         account: stripeAccount.id,
                         refresh_url: `${BASE_URL}/stripe-refresh.html`,

@@ -186,14 +186,29 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
         }
 
         // Create account link for onboarding
-        const BASE_URL = process.env.FRONTEND_URL || 'https://pos-ivrc.vercel.app';
+        let BASE_URL = process.env.FRONTEND_URL || 'https://pos-ivrc.vercel.app';
+
+        // Ensure URL has protocol
+        if (!BASE_URL.startsWith('http://') && !BASE_URL.startsWith('https://')) {
+            BASE_URL = `https://${BASE_URL}`;
+        }
+
+        // Remove trailing slash if present
+        BASE_URL = BASE_URL.replace(/\/$/, '');
+
         console.log('Creating account link with BASE_URL:', BASE_URL);
+
+        const refreshUrl = `${BASE_URL}/stripe-refresh.html`;
+        const returnUrl = `${BASE_URL}/stripe-success.html`;
+
+        console.log('Refresh URL:', refreshUrl);
+        console.log('Return URL:', returnUrl);
 
         try {
             const accountLink = await stripe.accountLinks.create({
                 account: stripeAccountId,
-                refresh_url: `${BASE_URL}/stripe-refresh.html`,
-                return_url: `${BASE_URL}/stripe-success.html`,
+                refresh_url: refreshUrl,
+                return_url: returnUrl,
                 type: 'account_onboarding'
             });
 
@@ -291,7 +306,15 @@ router.post('/send-onboarding-email', authenticate, async (req, res, next) => {
         }
 
         // Create onboarding link
-        const BASE_URL = process.env.FRONTEND_URL || 'https://pos-ivrc.vercel.app';
+        let BASE_URL = process.env.FRONTEND_URL || 'https://pos-ivrc.vercel.app';
+
+        // Ensure URL has protocol
+        if (!BASE_URL.startsWith('http://') && !BASE_URL.startsWith('https://')) {
+            BASE_URL = `https://${BASE_URL}`;
+        }
+
+        // Remove trailing slash if present
+        BASE_URL = BASE_URL.replace(/\/$/, '');
 
         const accountLink = await stripe.accountLinks.create({
             account: stripeAccountId,
