@@ -88,11 +88,11 @@ router.post('/register', async (req, res, next) => {
             return { user, shop };
         });
 
-        // Generate JWT token
+        // Generate JWT token (30 days for better UX)
         const token = jwt.sign(
             { userId: result.user.id },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+            { expiresIn: '30d' }
         );
 
         // Send response immediately
@@ -229,11 +229,11 @@ router.post('/login', async (req, res, next) => {
             [user.id]
         );
 
-        // Generate JWT token
+        // Generate JWT token (30 days for better UX)
         const token = jwt.sign(
             { userId: user.id },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+            { expiresIn: '30d' }
         );
 
         res.json({
