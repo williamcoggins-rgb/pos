@@ -2767,6 +2767,21 @@
                 if (!linkResponse.ok) {
                     const errorData = await linkResponse.json();
                     console.error('Link creation error:', errorData);
+
+                    // Check if account is already onboarded
+                    if (errorData.already_onboarded) {
+                        statusDiv.innerHTML = `
+                            <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
+                            <p style="color: #065F46; font-size: 14px; margin: 0;">
+                                You're all set to accept payments! Your account is verified and ready.
+                            </p>
+                        `;
+                        statusDiv.style.background = '#D1FAE5';
+                        statusDiv.style.borderLeftColor = '#10B981';
+                        btn.textContent = 'Payment Setup Complete';
+                        return;
+                    }
+
                     throw new Error(errorData.message || errorData.error || 'Failed to generate setup link');
                 }
 

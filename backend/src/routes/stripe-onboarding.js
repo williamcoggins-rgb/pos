@@ -112,6 +112,29 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
                 // Try to retrieve the account to verify it exists and is accessible
                 const existingAccount = await stripe.accounts.retrieve(stripeAccountId);
                 console.log('Existing account is valid:', existingAccount.id);
+
+                // Check if account is already fully onboarded
+                if (existingAccount.details_submitted) {
+                    console.log('Account is already onboarded (details_submitted = true)');
+
+                    // Update database with current status
+                    await query(
+                        `UPDATE users
+                         SET stripe_onboarding_complete = $1,
+                             stripe_charges_enabled = $2
+                         WHERE id = $3`,
+                        [existingAccount.details_submitted, existingAccount.charges_enabled, req.user.id]
+                    );
+
+                    // Return error indicating account is already set up
+                    return res.status(400).json({
+                        error: 'Account Already Onboarded',
+                        message: 'Your Stripe account is already set up and ready to accept payments.',
+                        already_onboarded: true,
+                        charges_enabled: existingAccount.charges_enabled
+                    });
+                }
+
             } catch (accountError) {
                 console.error('Existing account is invalid or inaccessible:', accountError.message);
                 console.log('Will create a new account instead');
@@ -166,20 +189,31 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
         const BASE_URL = process.env.FRONTEND_URL || 'https://pos-ivrc.vercel.app';
         console.log('Creating account link with BASE_URL:', BASE_URL);
 
-        const accountLink = await stripe.accountLinks.create({
-            account: stripeAccountId,
-            refresh_url: `${BASE_URL}/stripe-refresh.html`,
-            return_url: `${BASE_URL}/stripe-success.html`,
-            type: 'account_onboarding'
-        });
+        try {
+            const accountLink = await stripe.accountLinks.create({
+                account: stripeAccountId,
+                refresh_url: `${BASE_URL}/stripe-refresh.html`,
+                return_url: `${BASE_URL}/stripe-success.html`,
+                type: 'account_onboarding'
+            });
 
-        console.log('Account link created successfully');
-        console.log('Redirecting to:', accountLink.url.substring(0, 50) + '...');
-        console.log('=== REQUEST SUCCESSFUL ===');
+            console.log('Account link created successfully');
+            console.log('Redirecting to:', accountLink.url.substring(0, 50) + '...');
+            console.log('=== REQUEST SUCCESSFUL ===');
 
-        res.json({
-            url: accountLink.url
-        });
+            res.json({
+                url: accountLink.url
+            });
+        } catch (linkError) {
+            console.error('=== ACCOUNT LINK CREATION FAILED ===');
+            console.error('Stripe account ID:', stripeAccountId);
+            console.error('Error creating account link:', linkError.message);
+            console.error('Error type:', linkError.type);
+            console.error('Error code:', linkError.code);
+
+            // Provide helpful error message
+            throw new Error(`Failed to create Stripe onboarding link: ${linkError.message}`);
+        }
 
     } catch (error) {
         console.error('=== CREATE ACCOUNT LINK ERROR ===');
