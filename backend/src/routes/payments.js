@@ -18,6 +18,7 @@ router.use(authenticate);
 // CREATE PAYMENT INTENT
 // ============================================
 // Creates a Stripe payment intent for processing a payment
+// Routes payment to barber's connected Stripe account
 
 router.post('/create-payment-intent', async (req, res, next) => {
     try {
@@ -37,26 +38,69 @@ router.post('/create-payment-intent', async (req, res, next) => {
             });
         }
 
-        // Create payment intent
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(amount * 100), // Stripe uses cents
+        // Get the barber's connected Stripe account
+        const userResult = await query(
+            'SELECT stripe_account_id, stripe_charges_enabled FROM users WHERE id = $1',
+            [req.user.id]
+        );
+
+        const stripeAccountId = userResult.rows[0]?.stripe_account_id;
+        const chargesEnabled = userResult.rows[0]?.stripe_charges_enabled;
+
+        if (!stripeAccountId) {
+            return res.status(400).json({
+                error: 'Stripe Not Set Up',
+                message: 'You need to complete Stripe onboarding before accepting payments. Go to Settings → Payment Processing.'
+            });
+        }
+
+        if (!chargesEnabled) {
+            return res.status(400).json({
+                error: 'Stripe Not Ready',
+                message: 'Your Stripe account is still being verified. Please wait or check your Stripe dashboard.'
+            });
+        }
+
+        // Calculate platform fee (optional - e.g., 2.9% + $0.30)
+        const amountInCents = Math.round(amount * 100);
+        const platformFeePercent = parseFloat(process.env.PLATFORM_FEE_PERCENT) || 0; // e.g., 2.9
+        const platformFeeFixed = parseFloat(process.env.PLATFORM_FEE_FIXED) || 0; // e.g., 0.30
+        const platformFee = Math.round((amountInCents * platformFeePercent / 100) + (platformFeeFixed * 100));
+
+        // Create payment intent with transfer to connected account
+        const paymentIntentData = {
+            amount: amountInCents,
             currency: currency.toLowerCase(),
             automatic_payment_methods: {
                 enabled: true,
             },
+            // Send payment directly to the barber's connected account
+            transfer_data: {
+                destination: stripeAccountId,
+            },
             receipt_email: customer_email || null,
-            description: `BarberScore POS - ${req.user.shop_id}`,
+            description: `BarberScore POS Payment`,
             metadata: {
                 shop_id: req.user.shop_id,
                 user_id: req.user.id,
                 customer_name: customer_name || 'Walk-in',
+                connected_account: stripeAccountId,
                 ...metadata
             }
-        });
+        };
+
+        // Add platform fee if configured
+        if (platformFee > 0) {
+            paymentIntentData.application_fee_amount = platformFee;
+        }
+
+        const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
 
         res.json({
             clientSecret: paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id
+            paymentIntentId: paymentIntent.id,
+            amount: amount,
+            connectedAccount: stripeAccountId
         });
 
     } catch (error) {
