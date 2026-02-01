@@ -2,6 +2,48 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 
+// Quick Stripe key verification endpoint (JSON only)
+router.get('/stripe-key-check', async (req, res) => {
+    const result = {
+        timestamp: new Date().toISOString(),
+        status: 'checking'
+    };
+
+    // Check if key is set
+    if (!process.env.STRIPE_SECRET_KEY) {
+        result.status = 'FAIL';
+        result.error = 'STRIPE_SECRET_KEY not set';
+        return res.json(result);
+    }
+
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    result.key_prefix = secretKey.substring(0, 12) + '...';
+    result.key_type = secretKey.startsWith('sk_live_') ? 'LIVE' :
+                      secretKey.startsWith('sk_test_') ? 'TEST' : 'UNKNOWN';
+
+    // Try to make a simple API call to verify the key works
+    try {
+        const Stripe = require('stripe');
+        const stripe = Stripe(secretKey);
+
+        // Simple API call to verify key
+        const balance = await stripe.balance.retrieve();
+
+        result.status = 'PASS';
+        result.api_connection = 'SUCCESS';
+        result.balance_available = balance.available;
+
+    } catch (error) {
+        result.status = 'FAIL';
+        result.api_connection = 'FAILED';
+        result.error = error.message;
+        result.error_type = error.type;
+        result.error_code = error.code;
+    }
+
+    res.json(result);
+});
+
 // Diagnostic endpoint to check Stripe configuration
 router.get('/stripe-check', async (req, res) => {
     const diagnostics = {
