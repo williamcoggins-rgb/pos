@@ -18,6 +18,7 @@ router.use(authenticate);
 // CREATE PAYMENT INTENT
 // ============================================
 // Creates a Stripe payment intent for processing a payment
+// Routes payment to barber's connected Stripe account
 
 router.post('/create-payment-intent', async (req, res, next) => {
     try {
@@ -37,30 +38,70 @@ router.post('/create-payment-intent', async (req, res, next) => {
             });
         }
 
-        // Create payment intent
+        // Check if user has a connected Stripe account
+        if (!req.user.stripe_account_id) {
+            return res.status(400).json({
+                error: 'Payment Setup Required',
+                message: 'Please complete your Stripe setup in Settings before accepting payments.'
+            });
+        }
+
+        // Verify the connected account is active
+        if (!req.user.stripe_charges_enabled) {
+            return res.status(400).json({
+                error: 'Account Not Active',
+                message: 'Your Stripe account is not yet active. Please complete the verification process.'
+            });
+        }
+
+        const amountInCents = Math.round(amount * 100);
+
+        // Calculate platform fee (2.5% of transaction)
+        const platformFeePercent = 0.025;
+        const applicationFeeAmount = Math.round(amountInCents * platformFeePercent);
+
+        // Create payment intent with destination charge
+        // This routes the payment to the connected account with a platform fee
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(amount * 100), // Stripe uses cents
+            amount: amountInCents,
             currency: currency.toLowerCase(),
             automatic_payment_methods: {
                 enabled: true,
             },
             receipt_email: customer_email || null,
-            description: `BarberScore POS - ${req.user.shop_id}`,
+            description: `BarberScore POS Sale`,
+            // Route payment to connected account
+            transfer_data: {
+                destination: req.user.stripe_account_id,
+            },
+            // Platform fee (optional - remove if no platform fee)
+            application_fee_amount: applicationFeeAmount,
             metadata: {
                 shop_id: req.user.shop_id,
                 user_id: req.user.id,
                 customer_name: customer_name || 'Walk-in',
+                connected_account: req.user.stripe_account_id,
                 ...metadata
             }
         });
 
         res.json({
             clientSecret: paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id
+            paymentIntentId: paymentIntent.id,
+            connectedAccountId: req.user.stripe_account_id
         });
 
     } catch (error) {
         console.error('Stripe Payment Intent Error:', error);
+
+        // Handle specific Stripe errors
+        if (error.type === 'StripeInvalidRequestError') {
+            return res.status(400).json({
+                error: 'Payment Error',
+                message: error.message
+            });
+        }
+
         next(error);
     }
 });
