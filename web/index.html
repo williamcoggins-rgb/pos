@@ -1845,6 +1845,19 @@
 
                 <button class="btn btn-primary" onclick="saveProfile()">Update My Info</button>
 
+                <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Payment Setup</h2>
+                <div class="stat-card" id="stripeSetupCard">
+                    <div id="stripeStatus" style="padding: 16px; background: #FEF3C7; border-left: 3px solid #F59E0B; border-radius: 8px; margin-bottom: 16px;">
+                        <p style="color: #92400E; margin-bottom: 8px; font-weight: 600;">💳 Set Up Payment Processing</p>
+                        <p style="color: #A16207; font-size: 14px; margin: 0;">
+                            Connect Stripe to accept credit card payments, Apple Pay, and Google Pay from your clients.
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" id="stripeSetupBtn" onclick="setupStripe()" style="background: #635BFF;">
+                        Set Up Stripe Payments
+                    </button>
+                </div>
+
                 <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Import Data</h2>
                 <div class="stat-card">
                     <p style="color: #666; margin-bottom: 16px; line-height: 1.6;">
@@ -2715,6 +2728,140 @@
             // This is logout, not account deletion
         }
 
+        // Stripe Payment Setup
+        const STRIPE_API_URL = 'https://pos-production-fd37.up.railway.app';
+
+        async function setupStripe() {
+            const btn = document.getElementById('stripeSetupBtn');
+            const statusDiv = document.getElementById('stripeStatus');
+
+            btn.disabled = true;
+            btn.textContent = 'Checking status...';
+
+            try {
+                // Check if user already has Stripe set up
+                const response = await fetch(`${STRIPE_API_URL}/api/stripe/account-status`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Status check error:', errorData);
+                    throw new Error(errorData.error || 'Failed to check account status');
+                }
+
+                const status = await response.json();
+
+                if (status.charges_enabled) {
+                    // Already set up!
+                    statusDiv.innerHTML = `
+                        <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
+                        <p style="color: #065F46; font-size: 14px; margin: 0;">
+                            You're all set to accept payments! Your account is verified and ready.
+                        </p>
+                    `;
+                    statusDiv.style.background = '#D1FAE5';
+                    statusDiv.style.borderLeftColor = '#10B981';
+                    btn.textContent = 'Payment Setup Complete';
+                    btn.style.background = '#10B981';
+                    return;
+                }
+
+                // Need to set up - get onboarding link
+                btn.textContent = 'Generating setup link...';
+
+                const linkResponse = await fetch(`${STRIPE_API_URL}/api/stripe/create-account-link`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    }
+                });
+
+                if (!linkResponse.ok) {
+                    const errorData = await linkResponse.json();
+                    console.error('Link creation error:', errorData);
+
+                    // Check if account is already onboarded
+                    if (errorData.already_onboarded) {
+                        statusDiv.innerHTML = `
+                            <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
+                            <p style="color: #065F46; font-size: 14px; margin: 0;">
+                                You're all set to accept payments! Your account is verified and ready.
+                            </p>
+                        `;
+                        statusDiv.style.background = '#D1FAE5';
+                        statusDiv.style.borderLeftColor = '#10B981';
+                        btn.textContent = 'Payment Setup Complete';
+                        btn.style.background = '#10B981';
+                        return;
+                    }
+
+                    throw new Error(errorData.message || errorData.error || 'Failed to generate setup link');
+                }
+
+                const linkData = await linkResponse.json();
+
+                if (linkData.url) {
+                    // Redirect to Stripe onboarding
+                    window.location.href = linkData.url;
+                } else {
+                    throw new Error('No URL returned from server');
+                }
+
+            } catch (error) {
+                console.error('Stripe setup error:', error);
+                alert(`Error setting up payments: ${error.message}\n\nPlease check the browser console (F12) for more details.`);
+                btn.disabled = false;
+                btn.textContent = 'Set Up Stripe Payments';
+            }
+        }
+
+        // Check Stripe status on settings load
+        async function checkStripeStatus() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                if (!token) return; // Not logged in with backend
+
+                const response = await fetch(`${STRIPE_API_URL}/api/stripe/account-status`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) return;
+
+                const status = await response.json();
+                const statusDiv = document.getElementById('stripeStatus');
+                const btn = document.getElementById('stripeSetupBtn');
+
+                if (status.charges_enabled) {
+                    statusDiv.innerHTML = `
+                        <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
+                        <p style="color: #065F46; font-size: 14px; margin: 0;">
+                            You're all set! Accepting credit cards, Apple Pay, and Google Pay.
+                        </p>
+                    `;
+                    statusDiv.style.background = '#D1FAE5';
+                    statusDiv.style.borderLeftColor = '#10B981';
+                    btn.textContent = 'Payment Setup Complete';
+                    btn.style.background = '#10B981';
+                } else if (status.onboarding_complete) {
+                    statusDiv.innerHTML = `
+                        <p style="color: #2563EB; margin-bottom: 8px; font-weight: 600;">⏳ Verification in Progress</p>
+                        <p style="color: #1E40AF; font-size: 14px; margin: 0;">
+                            Your payment account is being verified by Stripe. This usually takes a few minutes.
+                        </p>
+                    `;
+                    statusDiv.style.background = '#DBEAFE';
+                    statusDiv.style.borderLeftColor = '#3B82F6';
+                }
+            } catch (error) {
+                console.log('Could not check Stripe status:', error);
+            }
+        }
+
         // Navigation
         function navigateTo(section) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -2733,6 +2880,8 @@
                 updateProcurement();
             } else if (section === 'admin') {
                 refreshAdminData();
+            } else if (section === 'settings') {
+                checkStripeStatus();
             }
         }
 

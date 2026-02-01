@@ -474,56 +474,6 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 */
 
 // ============================================
-// DEBUG ENDPOINT - Check URL configuration
-// ============================================
-router.get('/debug-urls', authenticate, async (req, res) => {
-    try {
-        let BASE_URL = process.env.FRONTEND_URL || 'https://pos-ivrc.vercel.app';
-        const raw = BASE_URL;
-
-        // Process URL
-        BASE_URL = BASE_URL.trim();
-        if (!BASE_URL.startsWith('http://') && !BASE_URL.startsWith('https://')) {
-            BASE_URL = `https://${BASE_URL}`;
-        }
-        BASE_URL = BASE_URL.replace(/\/$/, '');
-
-        const refreshUrl = `${BASE_URL}/stripe-refresh.html`;
-        const returnUrl = `${BASE_URL}/stripe-success.html`;
-
-        let validation = { valid: false, error: null };
-        try {
-            new URL(refreshUrl);
-            new URL(returnUrl);
-            validation.valid = true;
-        } catch (e) {
-            validation.error = e.message;
-        }
-
-        res.json({
-            env_variable: {
-                FRONTEND_URL: process.env.FRONTEND_URL,
-                raw_value: raw
-            },
-            processed: {
-                base_url: BASE_URL,
-                refresh_url: refreshUrl,
-                return_url: returnUrl
-            },
-            validation,
-            stripe_configured: !!stripe,
-            user: {
-                id: req.user.id,
-                has_stripe_account: !!req.user.stripe_account_id,
-                stripe_account_id: req.user.stripe_account_id
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ============================================
 // RESET STRIPE ACCOUNT (for fixing broken setups)
 // ============================================
 router.post('/reset-account', authenticate, async (req, res, next) => {
