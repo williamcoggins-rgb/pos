@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS - Point of Sale</title>
+    <meta name="version" content="2.0.0-stripe">
+    <title>BarberScore POS - Point of Sale</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1372,6 +1373,8 @@
             margin-top: 4px;
         }
     </style>
+    <!-- Stripe.js for payment processing -->
+    <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <!-- Toast Notifications -->
@@ -1583,31 +1586,31 @@
                     <div id="paymentMethodsSection" style="margin-top: 24px; display: none;">
                         <label class="form-label" style="margin-bottom: 12px; display: block;">Select Payment Method</label>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                            <button class="payment-method-btn" onclick="selectPaymentMethod('card')" id="cardPaymentBtn">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                </svg>
+                                <span>Card</span>
+                            </button>
+                            <button class="payment-method-btn" onclick="selectPaymentMethod('cash')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <span>Cash</span>
+                            </button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                             <button class="payment-method-btn" onclick="selectPaymentMethod('tap-to-pay')">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                                 </svg>
                                 <span>Tap to Pay</span>
                             </button>
-                            <button class="payment-method-btn" onclick="selectPaymentMethod('apple-pay')">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                                </svg>
-                                <span>Apple Pay</span>
-                            </button>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <button class="payment-method-btn" onclick="selectPaymentMethod('cash-app')">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <span>Cash App</span>
-                            </button>
                             <button class="payment-method-btn" onclick="selectPaymentMethod('invoice')">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                 </svg>
-                                <span>Send Invoice</span>
+                                <span>Invoice</span>
                             </button>
                         </div>
                     </div>
@@ -1858,6 +1861,19 @@
                 <button class="btn btn-secondary" onclick="exportData()" style="margin-bottom: 12px;">Export All Data</button>
                 <button class="btn btn-secondary" onclick="clearAllData()" style="margin-bottom: 12px;">Delete Everything</button>
 
+                <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">💳 Payment Processing</h2>
+                <div class="stat-card" id="stripeSetupCard">
+                    <div id="stripeStatus" style="padding: 16px; background: #FEF3C7; border-left: 3px solid #F59E0B; border-radius: 8px; margin-bottom: 16px;">
+                        <p style="color: #92400E; margin-bottom: 8px; font-weight: 600;">⚠️ Payment Setup Required</p>
+                        <p style="color: #78350F; font-size: 14px; margin: 0;">
+                            Set up Stripe to accept credit card payments, Apple Pay, and Google Pay from your clients.
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" onclick="setupStripePayments()" id="setupStripeBtn">
+                        Set Up Payment Processing
+                    </button>
+                </div>
+
                 <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Security</h2>
                 <button class="btn btn-secondary" onclick="changePasscode()" style="margin-bottom: 12px;">Change Passcode</button>
                 <button class="btn btn-secondary" onclick="logout()" style="background: #DC2626; color: white;">Logout</button>
@@ -2097,6 +2113,24 @@
         </div>
     </div>
 
+    <!-- Card Payment Modal (Stripe) -->
+    <div class="modal" id="cardPaymentModal">
+        <div class="modal-content" style="max-width: 420px;">
+            <h2 class="modal-header">Card Payment</h2>
+            <div id="cardPaymentAmount" style="font-size: 32px; font-weight: 700; text-align: center; margin: 16px 0; color: #1A1A1A;">$0.00</div>
+            <div id="cardPaymentError" style="color: #DC2626; font-size: 14px; margin-bottom: 12px; display: none; padding: 12px; background: #FEE2E2; border-radius: 8px;"></div>
+            <div class="form-group">
+                <label class="form-label">Card Details</label>
+                <div id="card-element" style="padding: 12px; border: 1px solid #E5E5E5; border-radius: 8px; background: #FAFAFA;"></div>
+            </div>
+            <div id="cardPaymentStatus" style="text-align: center; color: #666; font-size: 14px; margin: 16px 0; display: none;"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeCardPayment()" id="cancelCardBtn" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" onclick="submitCardPayment()" id="submitCardBtn" style="flex: 1;">Pay Now</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Data Storage
         let services = JSON.parse(localStorage.getItem('services')) || [];
@@ -2242,57 +2276,213 @@
         function selectPaymentMethod(method) {
             selectedPaymentMethod = method;
 
-            if (method === 'tap-to-pay') {
+            if (method === 'card') {
+                showCardPayment();
+            } else if (method === 'cash') {
+                processCashPayment();
+            } else if (method === 'tap-to-pay') {
                 showTapToPay();
-            } else if (method === 'apple-pay') {
-                processApplePay();
-            } else if (method === 'cash-app') {
-                processCashApp();
             } else if (method === 'invoice') {
                 showInvoiceModal();
             }
         }
 
-        // Tap to Pay
+        // Stripe Configuration
+        const STRIPE_PUBLISHABLE_KEY = 'pk_live_51QdH9JGCCDfFdwQbzfI4bpbY06zmrYwS2OjNlFEMqGhfGJt6SuA2bFIFz3pbFLHN2btYSCj1xVTAYBnDbSW0NuAn00a0yJ88yW';
+        const API_BASE_URL = 'https://pos-production-fd37.up.railway.app';
+        let stripe = null;
+        let cardElement = null;
+        let currentPaymentIntent = null;
+
+        // Initialize Stripe when page loads
+        function initStripe() {
+            if (typeof Stripe !== 'undefined' && STRIPE_PUBLISHABLE_KEY) {
+                stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+                console.log('Stripe initialized');
+            } else {
+                console.warn('Stripe.js not loaded or key missing');
+            }
+        }
+
+        // Card Payment with Stripe
+        async function showCardPayment() {
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('cardPaymentAmount').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('cardPaymentError').style.display = 'none';
+            document.getElementById('cardPaymentStatus').style.display = 'none';
+            document.getElementById('submitCardBtn').disabled = false;
+            document.getElementById('submitCardBtn').textContent = 'Pay Now';
+
+            // Show modal
+            document.getElementById('cardPaymentModal').classList.add('active');
+
+            // Initialize Stripe if not already done
+            if (!stripe) {
+                initStripe();
+            }
+
+            if (!stripe) {
+                showCardError('Payment system not available. Please try again later.');
+                return;
+            }
+
+            // Create card element if not exists
+            if (!cardElement) {
+                const elements = stripe.elements();
+                cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#1A1A1A',
+                            '::placeholder': {
+                                color: '#999999',
+                            },
+                        },
+                        invalid: {
+                            color: '#DC2626',
+                        },
+                    }
+                });
+                cardElement.mount('#card-element');
+
+                // Listen for errors
+                cardElement.on('change', (event) => {
+                    if (event.error) {
+                        showCardError(event.error.message);
+                    } else {
+                        document.getElementById('cardPaymentError').style.display = 'none';
+                    }
+                });
+            }
+
+            // Create payment intent
+            try {
+                const customerContact = document.getElementById('customerContact').value.trim();
+                const response = await fetch(`${API_BASE_URL}/api/payments/create-payment-intent`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({
+                        amount: total,
+                        customer_email: customerContact.includes('@') ? customerContact : null,
+                        customer_name: customerContact
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to initialize payment');
+                }
+
+                currentPaymentIntent = data;
+                console.log('Payment intent created:', data.paymentIntentId);
+
+            } catch (error) {
+                console.error('Payment intent error:', error);
+                showCardError(error.message);
+            }
+        }
+
+        function showCardError(message) {
+            const errorDiv = document.getElementById('cardPaymentError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function closeCardPayment() {
+            document.getElementById('cardPaymentModal').classList.remove('active');
+            currentPaymentIntent = null;
+        }
+
+        async function submitCardPayment() {
+            if (!stripe || !cardElement || !currentPaymentIntent) {
+                showCardError('Payment not ready. Please try again.');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitCardBtn');
+            const cancelBtn = document.getElementById('cancelCardBtn');
+            const statusDiv = document.getElementById('cardPaymentStatus');
+
+            submitBtn.disabled = true;
+            cancelBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            statusDiv.textContent = 'Processing your payment...';
+            statusDiv.style.display = 'block';
+            document.getElementById('cardPaymentError').style.display = 'none';
+
+            try {
+                const { error, paymentIntent } = await stripe.confirmCardPayment(
+                    currentPaymentIntent.clientSecret,
+                    {
+                        payment_method: {
+                            card: cardElement,
+                        }
+                    }
+                );
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                if (paymentIntent.status === 'succeeded') {
+                    statusDiv.textContent = 'Payment successful!';
+                    statusDiv.style.color = '#00C853';
+
+                    // Close modal after short delay and complete sale
+                    setTimeout(() => {
+                        closeCardPayment();
+                        completeSaleWithPayment('Card', currentPaymentIntent.paymentIntentId);
+                    }, 1500);
+                } else {
+                    throw new Error(`Payment status: ${paymentIntent.status}`);
+                }
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                showCardError(error.message);
+                submitBtn.disabled = false;
+                cancelBtn.disabled = false;
+                submitBtn.textContent = 'Try Again';
+                statusDiv.style.display = 'none';
+            }
+        }
+
+        // Cash Payment
+        function processCashPayment() {
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            showConfirm(
+                'Cash Payment',
+                `Confirm cash payment of $${total.toFixed(2)}?`,
+                () => {
+                    completeSaleWithPayment('Cash');
+                },
+                'Confirm Payment'
+            );
+        }
+
+        // Tap to Pay (uses Stripe Terminal in production)
         function showTapToPay() {
             const total = cart.reduce((sum, item) => sum + item.price, 0);
             document.getElementById('tapToPayAmount').textContent = `$${total.toFixed(2)}`;
-            document.getElementById('tapToPayStatus').textContent = 'Waiting for device...';
+            document.getElementById('tapToPayStatus').textContent = 'Initializing...';
             document.getElementById('tapToPayModal').classList.add('active');
 
-            // Simulate payment processing after 3 seconds
+            // For now, redirect to card payment since Tap to Pay requires Stripe Terminal hardware
             setTimeout(() => {
-                document.getElementById('tapToPayStatus').textContent = 'Processing payment...';
+                document.getElementById('tapToPayStatus').textContent = 'Tap to Pay requires Stripe Terminal setup. Use Card payment instead.';
                 setTimeout(() => {
-                    document.getElementById('tapToPayStatus').textContent = 'Payment successful!';
-                    setTimeout(() => {
-                        closeTapToPay();
-                        completeSaleWithPayment('Tap to Pay');
-                    }, 1000);
+                    closeTapToPay();
+                    showCardPayment();
                 }, 2000);
-            }, 3000);
+            }, 1000);
         }
 
         function closeTapToPay() {
             document.getElementById('tapToPayModal').classList.remove('active');
-        }
-
-        // Apple Pay
-        function processApplePay() {
-            showToast('info', 'Apple Pay', 'Initiating Apple Pay...');
-            // Simulate Apple Pay processing
-            setTimeout(() => {
-                completeSaleWithPayment('Apple Pay');
-            }, 2000);
-        }
-
-        // Cash App
-        function processCashApp() {
-            showToast('info', 'Cash App', 'Initiating Cash App payment...');
-            // Simulate Cash App processing
-            setTimeout(() => {
-                completeSaleWithPayment('Cash App');
-            }, 2000);
         }
 
         // Invoice
@@ -2327,7 +2517,7 @@
         }
 
         // Complete sale with payment method
-        function completeSaleWithPayment(paymentMethod) {
+        async function completeSaleWithPayment(paymentMethod, paymentIntentId = null) {
             const customerContact = document.getElementById('customerContact').value.trim();
 
             // Calculate old score before transaction
@@ -2348,12 +2538,60 @@
                 total: total,
                 customerContact: customerContact,
                 paymentMethod: paymentMethod,
+                paymentIntentId: paymentIntentId,
                 rebooked: rebooked,
                 hadRetail: hadRetail,
                 hadAddons: hadAddons,
                 noShow: false,
                 cancelled: false
             };
+
+            // If this was a card payment, confirm with backend
+            if (paymentMethod === 'Card' && paymentIntentId) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/payments/confirm-payment`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                        },
+                        body: JSON.stringify({
+                            payment_intent_id: paymentIntentId,
+                            transaction_data: {
+                                shop_id: userProfile?.shop_id || 1,
+                                customer_id: null,
+                                barber_id: userProfile?.id || null,
+                                items: cart.map(item => ({
+                                    service_id: item.id,
+                                    item_type: 'service',
+                                    name: item.name,
+                                    quantity: 1,
+                                    unit_price: item.price,
+                                    total_price: item.price
+                                })),
+                                subtotal: total,
+                                tax: 0,
+                                tip: 0,
+                                discount: 0,
+                                total: total,
+                                client_rebooked: rebooked,
+                                had_retail: hadRetail,
+                                had_addons: hadAddons,
+                                notes: `Customer: ${customerContact}`
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        console.warn('Backend transaction sync failed, continuing with local storage');
+                    } else {
+                        const result = await response.json();
+                        console.log('Transaction synced to backend:', result.transaction?.id);
+                    }
+                } catch (error) {
+                    console.warn('Backend sync error:', error.message);
+                }
+            }
 
             transactions.push(transaction);
             localStorage.setItem('transactions', JSON.stringify(transactions));
@@ -2413,6 +2651,9 @@
 
         // Initialize
         function init() {
+            // Initialize Stripe for payment processing
+            initStripe();
+
             // Check for admin mode via URL parameter
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('admin') === 'true') {
@@ -2699,6 +2940,131 @@
             );
         }
 
+        // Stripe Payment Setup
+        async function setupStripePayments() {
+            const btn = document.getElementById('setupStripeBtn');
+            const statusDiv = document.getElementById('stripeStatus');
+
+            btn.disabled = true;
+            btn.textContent = 'Checking status...';
+
+            try {
+                // Check if user already has Stripe set up
+                const response = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/account-status', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Status check error:', errorData);
+                    throw new Error(errorData.error || 'Failed to check account status');
+                }
+
+                const status = await response.json();
+
+                if (status.charges_enabled) {
+                    // Already set up!
+                    statusDiv.innerHTML = `
+                        <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
+                        <p style="color: #065F46; font-size: 14px; margin: 0;">
+                            You're all set to accept payments! Your account is verified and ready.
+                        </p>
+                    `;
+                    statusDiv.style.background = '#D1FAE5';
+                    statusDiv.style.borderLeftColor = '#10B981';
+                    btn.textContent = 'Payment Setup Complete';
+                    return;
+                }
+
+                // Need to set up - get onboarding link
+                btn.textContent = 'Generating setup link...';
+
+                const linkResponse = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/create-account-link', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    }
+                });
+
+                if (!linkResponse.ok) {
+                    const errorData = await linkResponse.json();
+                    console.error('Link creation error:', errorData);
+
+                    // Check if account is already onboarded
+                    if (errorData.already_onboarded) {
+                        statusDiv.innerHTML = `
+                            <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
+                            <p style="color: #065F46; font-size: 14px; margin: 0;">
+                                You're all set to accept payments! Your account is verified and ready.
+                            </p>
+                        `;
+                        statusDiv.style.background = '#D1FAE5';
+                        statusDiv.style.borderLeftColor = '#10B981';
+                        btn.textContent = 'Payment Setup Complete';
+                        return;
+                    }
+
+                    throw new Error(errorData.message || errorData.error || 'Failed to generate setup link');
+                }
+
+                const linkData = await linkResponse.json();
+
+                if (linkData.url) {
+                    // Redirect to Stripe onboarding
+                    window.location.href = linkData.url;
+                } else {
+                    throw new Error('No URL returned from server');
+                }
+
+            } catch (error) {
+                console.error('Stripe setup error:', error);
+                alert(`Error setting up payments: ${error.message}\n\nPlease check the browser console (F12) for more details.`);
+                btn.disabled = false;
+                btn.textContent = 'Set Up Payment Processing';
+            }
+        }
+
+        // Check Stripe status on settings load
+        async function checkStripeStatus() {
+            try {
+                const response = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/account-status', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    }
+                });
+
+                const status = await response.json();
+                const statusDiv = document.getElementById('stripeStatus');
+                const btn = document.getElementById('setupStripeBtn');
+
+                if (status.charges_enabled) {
+                    statusDiv.innerHTML = `
+                        <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
+                        <p style="color: #065F46; font-size: 14px; margin: 0;">
+                            You're all set! Accepting credit cards, Apple Pay, and Google Pay.
+                        </p>
+                    `;
+                    statusDiv.style.background = '#D1FAE5';
+                    statusDiv.style.borderLeftColor = '#10B981';
+                    btn.textContent = 'Payment Setup Complete';
+                    btn.style.background = '#10B981';
+                } else if (status.onboarding_complete) {
+                    statusDiv.innerHTML = `
+                        <p style="color: #2563EB; margin-bottom: 8px; font-weight: 600;">⏳ Verification in Progress</p>
+                        <p style="color: #1E40AF; font-size: 14px; margin: 0;">
+                            Your payment account is being verified by Stripe. This usually takes a few minutes.
+                        </p>
+                    `;
+                    statusDiv.style.background = '#DBEAFE';
+                    statusDiv.style.borderLeftColor = '#3B82F6';
+                }
+            } catch (error) {
+                console.log('Could not check Stripe status:', error);
+            }
+        }
+
         function logout() {
             // Hide all main sections
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -2733,6 +3099,8 @@
                 updateProcurement();
             } else if (section === 'admin') {
                 refreshAdminData();
+            } else if (section === 'settings') {
+                checkStripeStatus();
             }
         }
 
