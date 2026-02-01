@@ -105,9 +105,28 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
         // Get user's Stripe account ID
         let stripeAccountId = req.user.stripe_account_id;
 
-        // If no account exists, create one first
+        // If account exists, verify it's still valid
+        if (stripeAccountId) {
+            console.log('Checking existing Stripe account:', stripeAccountId);
+            try {
+                // Try to retrieve the account to verify it exists and is accessible
+                const existingAccount = await stripe.accounts.retrieve(stripeAccountId);
+                console.log('Existing account is valid:', existingAccount.id);
+            } catch (accountError) {
+                console.error('Existing account is invalid or inaccessible:', accountError.message);
+                console.log('Will create a new account instead');
+                // Clear the invalid account ID
+                stripeAccountId = null;
+                await query(
+                    'UPDATE users SET stripe_account_id = NULL WHERE id = $1',
+                    [req.user.id]
+                );
+            }
+        }
+
+        // If no account exists (or previous one was invalid), create one
         if (!stripeAccountId) {
-            console.log('No Stripe account found, creating new one...');
+            console.log('Creating new Stripe account...');
 
             const userResult = await query(
                 'SELECT email FROM users WHERE id = $1',
@@ -140,7 +159,7 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
             );
             console.log('Database updated with Stripe account ID');
         } else {
-            console.log('Using existing Stripe account:', stripeAccountId);
+            console.log('Using existing valid Stripe account:', stripeAccountId);
         }
 
         // Create account link for onboarding
