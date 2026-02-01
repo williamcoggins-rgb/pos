@@ -2757,8 +2757,8 @@
 
                 const status = await response.json();
 
-                if (status.charges_enabled) {
-                    // Already set up!
+                if (status.charges_enabled && status.payouts_enabled) {
+                    // Fully set up - can accept AND receive payments
                     statusDiv.innerHTML = `
                         <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
                         <p style="color: #065F46; font-size: 14px; margin: 0;">
@@ -2768,6 +2768,7 @@
                     statusDiv.style.background = '#D1FAE5';
                     statusDiv.style.borderLeftColor = '#10B981';
                     btn.textContent = 'Payment Setup Complete';
+                    btn.disabled = true;
                     return;
                 }
 
@@ -2785,8 +2786,8 @@
                     const errorData = await linkResponse.json();
                     console.error('Link creation error:', errorData);
 
-                    // Check if account is already onboarded
-                    if (errorData.already_onboarded) {
+                    // Check if account is already fully onboarded (with payouts enabled)
+                    if (errorData.already_onboarded && errorData.payouts_enabled) {
                         statusDiv.innerHTML = `
                             <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
                             <p style="color: #065F46; font-size: 14px; margin: 0;">
@@ -2796,6 +2797,7 @@
                         statusDiv.style.background = '#D1FAE5';
                         statusDiv.style.borderLeftColor = '#10B981';
                         btn.textContent = 'Payment Setup Complete';
+                        btn.disabled = true;
                         return;
                     }
 
@@ -2907,7 +2909,8 @@
 
                 const status = await response.json();
 
-                if (status.charges_enabled) {
+                if (status.charges_enabled && status.payouts_enabled) {
+                    // Fully set up - can accept payments AND receive payouts
                     statusDiv.innerHTML = `
                         <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
                         <p style="color: #065F46; font-size: 14px; margin: 0;">
@@ -2918,7 +2921,21 @@
                     statusDiv.style.borderLeftColor = '#10B981';
                     btn.textContent = 'Payment Setup Complete';
                     btn.style.background = '#10B981';
-                } else if (status.onboarding_complete) {
+                    btn.disabled = true;
+                } else if (status.has_account && !status.payouts_enabled) {
+                    // Account exists but needs bank info to receive payouts
+                    statusDiv.innerHTML = `
+                        <p style="color: #F59E0B; margin-bottom: 8px; font-weight: 600;">⚠️ Bank Account Required</p>
+                        <p style="color: #92400E; font-size: 14px; margin: 0;">
+                            Complete your setup to receive payouts. Add your bank account or debit card.
+                        </p>
+                    `;
+                    statusDiv.style.background = '#FEF3C7';
+                    statusDiv.style.borderLeftColor = '#F59E0B';
+                    btn.textContent = 'Complete Setup - Add Bank Info';
+                    btn.style.background = '#F59E0B';
+                    btn.disabled = false;
+                } else if (status.onboarding_complete && !status.charges_enabled) {
                     statusDiv.innerHTML = `
                         <p style="color: #2563EB; margin-bottom: 8px; font-weight: 600;">⏳ Verification in Progress</p>
                         <p style="color: #1E40AF; font-size: 14px; margin: 0;">

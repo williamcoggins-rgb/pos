@@ -113,9 +113,10 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
                 const existingAccount = await stripe.accounts.retrieve(stripeAccountId);
                 console.log('Existing account is valid:', existingAccount.id);
 
-                // Check if account is already fully onboarded
-                if (existingAccount.details_submitted) {
-                    console.log('Account is already onboarded (details_submitted = true)');
+                // Check if account is FULLY onboarded (can receive payouts)
+                // Only skip onboarding if they can actually receive money
+                if (existingAccount.details_submitted && existingAccount.payouts_enabled) {
+                    console.log('Account is fully onboarded (details_submitted=true, payouts_enabled=true)');
 
                     // Update database with current status
                     await query(
@@ -131,8 +132,15 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
                         error: 'Account Already Onboarded',
                         message: 'Your Stripe account is already set up and ready to accept payments.',
                         already_onboarded: true,
-                        charges_enabled: existingAccount.charges_enabled
+                        charges_enabled: existingAccount.charges_enabled,
+                        payouts_enabled: existingAccount.payouts_enabled
                     });
+                }
+
+                // Account exists but needs to complete onboarding (add bank info, etc.)
+                if (existingAccount.details_submitted && !existingAccount.payouts_enabled) {
+                    console.log('Account needs to complete payout setup (details_submitted=true but payouts_enabled=false)');
+                    console.log('Requirements:', JSON.stringify(existingAccount.requirements, null, 2));
                 }
 
             } catch (accountError) {
