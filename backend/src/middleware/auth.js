@@ -20,7 +20,7 @@ const authenticate = async (req, res, next) => {
 
         // Get user from database
         const result = await query(
-            'SELECT id, email, role, shop_id, is_active FROM users WHERE id = $1',
+            'SELECT id, email, role, shop_id, is_active, stripe_account_id, stripe_onboarding_complete, stripe_charges_enabled FROM users WHERE id = $1',
             [decoded.userId]
         );
 

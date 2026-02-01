@@ -2767,7 +2767,7 @@
                 if (!linkResponse.ok) {
                     const errorData = await linkResponse.json();
                     console.error('Link creation error:', errorData);
-                    throw new Error(errorData.error || errorData.message || 'Failed to generate setup link');
+                    throw new Error(errorData.message || errorData.error || 'Failed to generate setup link');
                 }
 
                 const linkData = await linkResponse.json();

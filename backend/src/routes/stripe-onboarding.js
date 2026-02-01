@@ -191,7 +191,7 @@ router.post('/create-account-link', authenticate, async (req, res, next) => {
         // Send detailed error message for Stripe errors
         if (error.type && error.type.includes('Stripe')) {
             return res.status(400).json({
-                error: 'Stripe Error',
+                error: error.message,
                 message: error.message,
                 type: error.type,
                 code: error.code
