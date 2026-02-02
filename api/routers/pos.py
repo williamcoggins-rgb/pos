@@ -230,15 +230,31 @@ async def create_refund(
     """Create refund for sale"""
     try:
         pos = get_pos_runtime(barber_id)
+        sale = pos.get_sale(sale_id)
+
+        # Create refund in POS system
         refund_id = pos.create_refund(
             sale_id,
             amount=Money(amount_minor=request.amount_cents),
             reason=request.reason,
         )
 
-        # TODO: Process Stripe refund if original payment was via card
+        # Process Stripe refund if payment_intent_id is provided
+        stripe_refund_id = None
+        if request.payment_intent_id:
+            try:
+                stripe_refund_id = payment_service.create_refund(
+                    payment_intent_id=request.payment_intent_id,
+                    amount=Money(amount_minor=request.amount_cents) if request.amount_cents else None
+                )
+            except Exception as stripe_error:
+                # Log error but don't fail the refund record
+                print(f"Stripe refund failed: {stripe_error}")
 
-        return {"refund_id": refund_id}
+        return {
+            "refund_id": refund_id,
+            "stripe_refund_id": stripe_refund_id
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
