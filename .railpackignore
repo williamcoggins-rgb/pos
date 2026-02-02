@@ -1,0 +1,4 @@
+# Ignore Node.js backend - we use Dockerfile for Python API
+backend/
+backend/**
+node_modules/
