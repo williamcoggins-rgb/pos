@@ -2959,6 +2959,26 @@
                     }
                 });
 
+                // Handle authentication errors from status check
+                if (response.status === 401) {
+                    console.error('Auth token invalid for account-status');
+                    // Clear invalid token
+                    localStorage.removeItem('auth_token');
+                    statusDiv.innerHTML = `
+                        <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Session Expired</p>
+                        <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
+                            Your login session has expired or is invalid. Please log in again.
+                        </p>
+                        <a href="login.html" style="display: inline-block; background: #635BFF; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                            Login Again
+                        </a>
+                    `;
+                    statusDiv.style.background = '#FEE2E2';
+                    statusDiv.style.borderLeftColor = '#DC2626';
+                    btn.style.display = 'none';
+                    return;
+                }
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error('Status check error:', errorData);
@@ -2991,6 +3011,26 @@
                         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                     }
                 });
+
+                // Handle authentication errors from link creation
+                if (linkResponse.status === 401) {
+                    console.error('Auth token invalid for create-account-link');
+                    // Clear invalid token
+                    localStorage.removeItem('auth_token');
+                    statusDiv.innerHTML = `
+                        <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Session Expired</p>
+                        <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
+                            Your login session has expired or is invalid. Please log in again.
+                        </p>
+                        <a href="login.html" style="display: inline-block; background: #635BFF; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                            Login Again
+                        </a>
+                    `;
+                    statusDiv.style.background = '#FEE2E2';
+                    statusDiv.style.borderLeftColor = '#DC2626';
+                    btn.style.display = 'none';
+                    return;
+                }
 
                 if (!linkResponse.ok) {
                     const errorData = await linkResponse.json();
@@ -3025,9 +3065,28 @@
 
             } catch (error) {
                 console.error('Stripe setup error:', error);
-                alert(`Error setting up payments: ${error.message}\n\nPlease check the browser console (F12) for more details.`);
-                btn.disabled = false;
-                btn.textContent = 'Set Up Payment Processing';
+
+                // Check if it's an auth-related error message
+                const errorMsg = error.message.toLowerCase();
+                if (errorMsg.includes('unauthorized') || errorMsg.includes('token') || errorMsg.includes('session')) {
+                    localStorage.removeItem('auth_token');
+                    statusDiv.innerHTML = `
+                        <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Session Expired</p>
+                        <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
+                            Your login session has expired. Please log in again.
+                        </p>
+                        <a href="login.html" style="display: inline-block; background: #635BFF; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                            Login Again
+                        </a>
+                    `;
+                    statusDiv.style.background = '#FEE2E2';
+                    statusDiv.style.borderLeftColor = '#DC2626';
+                    btn.style.display = 'none';
+                } else {
+                    alert(`Error setting up payments: ${error.message}\n\nPlease check the browser console (F12) for more details.`);
+                    btn.disabled = false;
+                    btn.textContent = 'Set Up Payment Processing';
+                }
             }
         }
 
