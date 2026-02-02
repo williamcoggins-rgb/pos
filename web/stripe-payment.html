@@ -243,10 +243,13 @@
         let stripe;
         let cardElement;
 
+        // Railway backend API URL
+        const API_BASE_URL = 'https://pos-production-fd37.up.railway.app';
+
         async function initializeStripe() {
             try {
-                // Fetch publishable key from backend API
-                const response = await fetch('/api/stripe/config');
+                // Fetch publishable key from backend API (Railway)
+                const response = await fetch(`${API_BASE_URL}/api/stripe/config`);
                 const config = await response.json();
 
                 if (!config.publishableKey) {
