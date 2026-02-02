@@ -2371,8 +2371,38 @@
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to create payment');
+                    let errorData = {};
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        console.error('Could not parse error response:', e);
+                    }
+
+                    console.error('Payment intent creation failed:', response.status, errorData);
+
+                    // Handle specific error types
+                    if (response.status === 401) {
+                        throw new Error('Session expired. Please log in again in Settings.');
+                    }
+
+                    // Handle Stripe setup errors
+                    if (errorData.error === 'Stripe Not Set Up') {
+                        throw new Error('Please set up Stripe payments in Settings first.');
+                    }
+
+                    if (errorData.error === 'Stripe Not Ready') {
+                        throw new Error('Your Stripe account is still being verified. Please wait.');
+                    }
+
+                    // Handle Stripe API key mismatch errors
+                    const errMsg = errorData.message || errorData.error || '';
+                    if (errMsg.includes('No such account') ||
+                        errMsg.includes('Invalid API Key') ||
+                        errMsg.includes('api_key_expired')) {
+                        throw new Error('Stripe configuration error. API keys may not match. Contact support.');
+                    }
+
+                    throw new Error(errorData.message || errorData.error || 'Failed to create payment');
                 }
 
                 const { clientSecret, paymentIntentId } = await response.json();
@@ -3070,12 +3100,92 @@
                 });
 
                 if (!response.ok) {
-                    // Token might be expired or invalid
-                    console.log('Auth token invalid, showing login prompt');
+                    // Parse the error response to determine the actual issue
+                    let errorData = {};
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        console.error('Could not parse error response:', e);
+                    }
+
+                    console.log('Stripe status check failed:', response.status, errorData);
+
+                    // Check specifically for authentication errors (401)
+                    if (response.status === 401) {
+                        console.log('Auth token invalid, showing login prompt');
+                        statusDiv.innerHTML = `
+                            <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Session Expired</p>
+                            <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
+                                Your session has expired. Please log in again to set up payments.
+                            </p>
+                            <a href="login.html" style="display: inline-block; background: #635BFF; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                Login Again
+                            </a>
+                        `;
+                        statusDiv.style.background = '#FEE2E2';
+                        statusDiv.style.borderLeftColor = '#DC2626';
+                        btn.style.display = 'none';
+                        return;
+                    }
+
+                    // Check for Stripe configuration errors (500 - Stripe not configured)
+                    if (response.status === 500 && errorData.error === 'Stripe not configured') {
+                        statusDiv.innerHTML = `
+                            <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Stripe Not Configured</p>
+                            <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
+                                The payment system is not configured on the server. Please contact support.
+                            </p>
+                        `;
+                        statusDiv.style.background = '#FEE2E2';
+                        statusDiv.style.borderLeftColor = '#DC2626';
+                        btn.style.display = 'none';
+                        return;
+                    }
+
+                    // Handle Stripe API errors (e.g., key mismatch, account issues)
+                    if (errorData.error || errorData.message) {
+                        const errorMessage = errorData.message || errorData.error;
+                        // Check for common Stripe API key mismatch errors
+                        if (errorMessage.includes('No such account') ||
+                            errorMessage.includes('not be found') ||
+                            errorMessage.includes('Invalid API Key') ||
+                            errorMessage.includes('api_key_expired') ||
+                            errorMessage.includes('key mismatch') ||
+                            errorData.error === 'Stripe Account Not Found') {
+                            statusDiv.innerHTML = `
+                                <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Stripe Account Mismatch</p>
+                                <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
+                                    Your Stripe account was set up in a different mode (test vs live).
+                                    Reset your Stripe setup to fix this issue.
+                                </p>
+                                <p style="color: #6B7280; font-size: 12px; margin-bottom: 12px;">Error: ${errorMessage}</p>
+                                <button onclick="resetStripeAccount()" style="display: inline-block; background: #DC2626; color: white; padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer;">
+                                    Reset Stripe Setup
+                                </button>
+                            `;
+                            btn.style.display = 'none';
+                        } else {
+                            statusDiv.innerHTML = `
+                                <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Payment Setup Error</p>
+                                <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
+                                    ${errorMessage}
+                                </p>
+                                <a href="login.html" style="display: inline-block; background: #635BFF; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                    Login Again
+                                </a>
+                            `;
+                            btn.style.display = 'none';
+                        }
+                        statusDiv.style.background = '#FEE2E2';
+                        statusDiv.style.borderLeftColor = '#DC2626';
+                        return;
+                    }
+
+                    // Fallback for unknown errors
                     statusDiv.innerHTML = `
-                        <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Session Expired</p>
+                        <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Connection Error</p>
                         <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
-                            Your session has expired. Please log in again to set up payments.
+                            Could not connect to the payment service. Please try again later.
                         </p>
                         <a href="login.html" style="display: inline-block; background: #635BFF; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                             Login Again
@@ -3127,6 +3237,41 @@
                 }
             } catch (error) {
                 console.log('Could not check Stripe status:', error);
+            }
+        }
+
+        // Reset Stripe account to fix key mismatch issues
+        async function resetStripeAccount() {
+            const authToken = localStorage.getItem('auth_token');
+            if (!authToken) {
+                showToast('error', 'Error', 'Please log in first');
+                return;
+            }
+
+            if (!confirm('This will disconnect your current Stripe account. You will need to set up Stripe again. Continue?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/reset-account', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to reset Stripe account');
+                }
+
+                showToast('success', 'Success', 'Stripe account reset. You can now set up payments again.');
+                // Refresh the Stripe status
+                checkStripeStatus();
+            } catch (error) {
+                console.error('Reset Stripe account error:', error);
+                showToast('error', 'Error', error.message);
             }
         }
 

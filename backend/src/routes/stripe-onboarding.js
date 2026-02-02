@@ -421,6 +421,32 @@ router.get('/account-status', authenticate, async (req, res, next) => {
 
     } catch (error) {
         console.error('Account status error:', error);
+
+        // Handle specific Stripe API errors
+        if (error.type === 'StripeInvalidRequestError') {
+            if (error.message.includes('No such account')) {
+                // The account ID stored in DB doesn't exist in Stripe
+                // This can happen if the account was created with different API keys (test vs live)
+                return res.status(400).json({
+                    error: 'Stripe Account Not Found',
+                    message: 'The Stripe account could not be found. This may be due to API key mismatch (test vs live mode). Please re-setup Stripe payments.',
+                    stripe_error: error.message
+                });
+            }
+            return res.status(400).json({
+                error: 'Stripe API Error',
+                message: error.message
+            });
+        }
+
+        if (error.type === 'StripeAuthenticationError') {
+            return res.status(500).json({
+                error: 'Stripe Configuration Error',
+                message: 'Invalid Stripe API key. Please check the server configuration.',
+                stripe_error: error.message
+            });
+        }
+
         next(error);
     }
 });
