@@ -88,11 +88,11 @@ router.post('/register', async (req, res, next) => {
             return { user, shop };
         });
 
-        // Generate JWT token
+        // Generate JWT token - 1 year expiration for POS systems (users stay logged in)
         const token = jwt.sign(
             { userId: result.user.id },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+            { expiresIn: process.env.JWT_EXPIRES_IN || '365d' }
         );
 
         // Send response immediately
@@ -229,11 +229,11 @@ router.post('/login', async (req, res, next) => {
             [user.id]
         );
 
-        // Generate JWT token
+        // Generate JWT token - 1 year expiration for POS systems (users stay logged in)
         const token = jwt.sign(
             { userId: user.id },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+            { expiresIn: process.env.JWT_EXPIRES_IN || '365d' }
         );
 
         res.json({
@@ -291,6 +291,36 @@ router.get('/me', authenticate, async (req, res, next) => {
                 phone: user.phone,
                 timezone: user.timezone
             } : null
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// ============================================
+// REFRESH TOKEN
+// ============================================
+// Issue a new token if the current one is still valid
+// This keeps users logged in indefinitely as long as they use the app
+
+router.post('/refresh-token', authenticate, async (req, res, next) => {
+    try {
+        // User is already authenticated, issue a fresh token
+        const token = jwt.sign(
+            { userId: req.user.id },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '365d' }
+        );
+
+        // Update last login
+        await query(
+            'UPDATE users SET last_login = NOW() WHERE id = $1',
+            [req.user.id]
+        );
+
+        res.json({
+            message: 'Token refreshed',
+            token
         });
     } catch (error) {
         next(error);
