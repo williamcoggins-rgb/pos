@@ -239,40 +239,60 @@
     </div>
 
     <script>
-        // Initialize Stripe (You'll need to add your publishable key)
-        const STRIPE_PUBLISHABLE_KEY = 'pk_test_YOUR_STRIPE_KEY'; // Replace with your key
-        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+        // Initialize Stripe - fetch publishable key from backend
+        let stripe;
+        let cardElement;
 
-        // Create card element
-        const elements = stripe.elements();
-        const cardElement = elements.create('card', {
-            style: {
-                base: {
-                    fontSize: '16px',
-                    color: '#32325d',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    '::placeholder': {
-                        color: '#aab7c4'
-                    }
-                },
-                invalid: {
-                    color: '#f44336',
-                    iconColor: '#f44336'
+        async function initializeStripe() {
+            try {
+                // Fetch publishable key from backend API
+                const response = await fetch('/api/stripe/config');
+                const config = await response.json();
+
+                if (!config.publishableKey) {
+                    throw new Error('Stripe not configured');
                 }
-            }
-        });
 
-        cardElement.mount('#card-element');
+                stripe = Stripe(config.publishableKey);
 
-        // Handle card errors
-        cardElement.on('change', (event) => {
-            const displayError = document.getElementById('card-errors');
-            if (event.error) {
-                displayError.textContent = event.error.message;
-            } else {
-                displayError.textContent = '';
+                // Create card element after Stripe is initialized
+                const elements = stripe.elements();
+                cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#32325d',
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                            '::placeholder': {
+                                color: '#aab7c4'
+                            }
+                        },
+                        invalid: {
+                            color: '#f44336',
+                            iconColor: '#f44336'
+                        }
+                    }
+                });
+
+                cardElement.mount('#card-element');
+
+                // Handle card errors
+                cardElement.on('change', (event) => {
+                    const displayError = document.getElementById('card-errors');
+                    if (event.error) {
+                        displayError.textContent = event.error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                });
+            } catch (error) {
+                showMessage('error', 'Failed to initialize payment: ' + error.message);
+                document.getElementById('submit-button').disabled = true;
             }
-        });
+        }
+
+        // Initialize on page load
+        initializeStripe();
 
         // Get amount from URL parameter or default
         const urlParams = new URLSearchParams(window.location.search);

@@ -3,12 +3,13 @@ BarberScore POS API
 Main FastAPI application
 """
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import time
 import sys
 import os
+import stripe
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -17,6 +18,10 @@ from api.config import get_settings
 from api.routers import pos, eligibility, procurement, auth
 
 settings = get_settings()
+
+# Initialize Stripe
+if settings.STRIPE_SECRET_KEY:
+    stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # Create FastAPI app
 app = FastAPI(
@@ -84,6 +89,81 @@ async def root():
         "version": settings.API_VERSION,
         "docs": "/docs",
         "health": "/health",
+    }
+
+
+# Stripe Webhook endpoint
+@app.post("/webhooks/stripe")
+async def stripe_webhook(request: Request):
+    """
+    Handle Stripe webhook events
+    Processes payment confirmations, failures, disputes, and refunds
+    """
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+
+    # Verify webhook signature if secret is configured
+    if settings.STRIPE_WEBHOOK_SECRET and sig_header:
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            )
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid payload")
+        except stripe.error.SignatureVerificationError:
+            raise HTTPException(status_code=400, detail="Invalid signature")
+    else:
+        # For testing without signature verification
+        import json
+        event = json.loads(payload)
+
+    # Handle different event types
+    event_type = event.get("type", "")
+    data = event.get("data", {}).get("object", {})
+
+    if event_type == "payment_intent.succeeded":
+        # Payment was successful
+        payment_intent_id = data.get("id")
+        amount = data.get("amount")
+        print(f"Payment succeeded: {payment_intent_id} for {amount} cents")
+
+    elif event_type == "payment_intent.payment_failed":
+        # Payment failed
+        payment_intent_id = data.get("id")
+        error = data.get("last_payment_error", {}).get("message", "Unknown error")
+        print(f"Payment failed: {payment_intent_id} - {error}")
+
+    elif event_type == "charge.refunded":
+        # Refund was processed
+        charge_id = data.get("id")
+        amount_refunded = data.get("amount_refunded")
+        print(f"Refund processed: {charge_id} for {amount_refunded} cents")
+
+    elif event_type == "charge.dispute.created":
+        # Dispute/chargeback created
+        charge_id = data.get("charge")
+        amount = data.get("amount")
+        reason = data.get("reason")
+        print(f"Dispute created: {charge_id} for {amount} cents - {reason}")
+
+    elif event_type == "charge.dispute.closed":
+        # Dispute resolved
+        charge_id = data.get("charge")
+        status = data.get("status")
+        print(f"Dispute closed: {charge_id} - {status}")
+
+    return {"received": True, "type": event_type}
+
+
+# Stripe config endpoint (for frontend to get publishable key)
+@app.get("/api/stripe/config")
+async def get_stripe_config():
+    """
+    Get Stripe configuration for frontend
+    Returns the publishable key (safe to expose)
+    """
+    return {
+        "publishableKey": settings.STRIPE_PUBLISHABLE_KEY,
     }
 
 

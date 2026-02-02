@@ -60,6 +60,7 @@ class CreateRefundRequest(BaseModel):
     """Request to create refund"""
     amount_cents: int = Field(..., description="Refund amount in cents", ge=0)
     reason: str = Field(default="", description="Reason for refund")
+    payment_intent_id: Optional[str] = Field(default=None, description="Stripe payment intent ID for card refunds")
 
 
 class VoidSaleRequest(BaseModel):
