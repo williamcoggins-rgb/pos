@@ -18,9 +18,10 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
 
-    # Stripe
-    STRIPE_SECRET_KEY: str
-    STRIPE_PUBLISHABLE_KEY: str
+    # Stripe (optional - allows app to start without Stripe configured)
+    # These are RUNTIME env vars, not build-time secrets
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
 
     # Supabase Auth
