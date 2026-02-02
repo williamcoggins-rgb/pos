@@ -1,0 +1,15 @@
+[build]
+# Use Dockerfile instead of Railpack/Nixpacks auto-detection
+# This prevents BuildKit secrets errors for runtime env vars
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Runtime environment variables (not build-time secrets)
+# STRIPE_PUBLISHABLE_KEY and STRIPE_SECRET_KEY are set in Railway dashboard
+# and injected at runtime, NOT during build
+startCommand = "uvicorn api.main:app --host 0.0.0.0 --port 8000"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
