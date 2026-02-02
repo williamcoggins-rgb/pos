@@ -23,9 +23,9 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Health check
+# Health check (Railway handles healthcheck externally, but keep for local dev)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-8000}/health')"
 
-# Start application
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start application (use Railway's PORT env var, default to 8000)
+CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}
