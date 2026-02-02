@@ -1,0 +1,11 @@
+# Force Railway to use Dockerfile instead of auto-detecting Node.js
+# This file prevents Railpack/Nixpacks from building the backend/ folder
+
+[phases.build]
+cmds = []
+
+[phases.setup]
+cmds = []
+
+[start]
+cmd = "echo 'Use Dockerfile instead'"
