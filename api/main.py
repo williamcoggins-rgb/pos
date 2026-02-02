@@ -3,13 +3,15 @@ BarberScore POS API
 Main FastAPI application
 """
 
-from fastapi import FastAPI, Request, Header, HTTPException
+from fastapi import FastAPI, Request, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from typing import Optional
 import time
 import sys
 import os
 import stripe
+import httpx
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -165,6 +167,162 @@ async def get_stripe_config():
     return {
         "publishableKey": settings.STRIPE_PUBLISHABLE_KEY,
     }
+
+
+# ============================================================================
+# Stripe Connect Endpoints
+# ============================================================================
+
+async def get_current_user_from_token(authorization: Optional[str] = Header(None)):
+    """Extract user info from JWT token"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    token = authorization.split(" ")[1]
+
+    from api.services.auth_service import AuthService
+    auth_service = AuthService()
+    payload = auth_service.verify_token(token)
+
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    return {"user_id": user_id, "token": token}
+
+
+async def get_barber_stripe_account(user_id: str, token: str) -> Optional[str]:
+    """Get Stripe account ID from Supabase barbers table"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{settings.SUPABASE_URL}/rest/v1/barbers?id=eq.{user_id}&select=stripe_account_id",
+            headers={
+                "apikey": settings.SUPABASE_KEY,
+                "Authorization": f"Bearer {token}",
+            }
+        )
+
+        if response.status_code != 200:
+            return None
+
+        barbers = response.json()
+        if not barbers:
+            return None
+
+        return barbers[0].get("stripe_account_id")
+
+
+async def save_barber_stripe_account(user_id: str, token: str, stripe_account_id: str):
+    """Save Stripe account ID to Supabase barbers table"""
+    async with httpx.AsyncClient() as client:
+        response = await client.patch(
+            f"{settings.SUPABASE_URL}/rest/v1/barbers?id=eq.{user_id}",
+            headers={
+                "apikey": settings.SUPABASE_KEY,
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal"
+            },
+            json={"stripe_account_id": stripe_account_id}
+        )
+
+        return response.status_code == 204
+
+
+@app.get("/api/stripe/account-status")
+async def get_stripe_account_status(user: dict = Depends(get_current_user_from_token)):
+    """
+    Check Stripe Connect account status for current user
+    Returns whether they can accept payments and receive payouts
+    """
+    try:
+        # Get existing Stripe account ID
+        stripe_account_id = await get_barber_stripe_account(user["user_id"], user["token"])
+
+        if not stripe_account_id:
+            return {
+                "has_account": False,
+                "charges_enabled": False,
+                "payouts_enabled": False,
+                "details_submitted": False,
+            }
+
+        # Get account status from Stripe
+        account = stripe.Account.retrieve(stripe_account_id)
+
+        return {
+            "has_account": True,
+            "stripe_account_id": stripe_account_id,
+            "charges_enabled": account.charges_enabled,
+            "payouts_enabled": account.payouts_enabled,
+            "details_submitted": account.details_submitted,
+            "business_type": account.business_type,
+        }
+
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=f"Stripe error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/stripe/create-account-link")
+async def create_stripe_account_link(user: dict = Depends(get_current_user_from_token)):
+    """
+    Create Stripe Connect onboarding link
+    Creates a new Express account if needed, then returns onboarding URL
+    """
+    try:
+        # Get existing Stripe account ID
+        stripe_account_id = await get_barber_stripe_account(user["user_id"], user["token"])
+
+        # If no account exists, create one
+        if not stripe_account_id:
+            account = stripe.Account.create(
+                type="express",
+                country="US",
+                capabilities={
+                    "card_payments": {"requested": True},
+                    "transfers": {"requested": True},
+                },
+                business_type="individual",
+            )
+            stripe_account_id = account.id
+
+            # Save to Supabase
+            await save_barber_stripe_account(user["user_id"], user["token"], stripe_account_id)
+        else:
+            # Check if already fully onboarded
+            account = stripe.Account.retrieve(stripe_account_id)
+            if account.charges_enabled and account.payouts_enabled:
+                return {
+                    "already_onboarded": True,
+                    "charges_enabled": True,
+                    "payouts_enabled": True,
+                }
+
+        # Create account link for onboarding
+        # Use the frontend URL for return/refresh
+        frontend_url = "https://pos-ruby-seven.vercel.app"
+
+        account_link = stripe.AccountLink.create(
+            account=stripe_account_id,
+            refresh_url=f"{frontend_url}/pos-v4.html?stripe_refresh=true",
+            return_url=f"{frontend_url}/pos-v4.html?stripe_success=true",
+            type="account_onboarding",
+        )
+
+        return {
+            "url": account_link.url,
+            "stripe_account_id": stripe_account_id,
+        }
+
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=f"Stripe error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
