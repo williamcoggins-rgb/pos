@@ -64,36 +64,32 @@ class AuthService:
 
             data = response.json()
 
-            # Handle case where email confirmation is enabled (no access_token returned)
-            if "access_token" not in data:
-                # Check if user was created but needs email confirmation
-                if "id" in data:
-                    user_id = data["id"]
-                elif "user" in data and data["user"]:
-                    user_id = data["user"]["id"]
-                else:
-                    raise Exception("Registration failed - no user data returned")
-
-                # Generate our own JWT for immediate use (user can use app without email confirmation)
-                access_token = self._generate_token(user_id)
-            else:
-                access_token = data["access_token"]
+            # Extract user_id from response
+            if "id" in data:
+                user_id = data["id"]
+            elif "user" in data and data["user"]:
                 user_id = data["user"]["id"]
+            else:
+                raise Exception("Registration failed - no user data returned")
+
+            # Always generate our own JWT token for consistency
+            # This ensures the token can be verified by our verify_token() method
+            # regardless of Supabase's email confirmation settings
+            access_token = self._generate_token(user_id)
 
             # Create barber record
             barber_id = f"barber_{user_id[:16]}"
 
             # Insert into barbers table
-            # Use service key (apikey) for insertion when using self-generated token
+            # Use Supabase token if available, otherwise use service key
             insert_headers = {
                 **self.headers,
                 "Prefer": "return=minimal"
             }
-            # Use Supabase token if available, otherwise use service key
             if "access_token" in data:
                 insert_headers["Authorization"] = f"Bearer {data['access_token']}"
             else:
-                # Use service role key (apikey header is already set in self.headers)
+                # Use service role key for insertion
                 insert_headers["Authorization"] = f"Bearer {self.supabase_key}"
 
             barber_response = await client.post(
