@@ -209,7 +209,10 @@ class RegisterRequest(BaseModel):
     """Registration request"""
     email: str = Field(..., description="Email address")
     password: str = Field(..., min_length=8, description="Password (min 8 chars)")
-    shop_name: str = Field(..., min_length=1, description="Shop name")
+    shop_name: str = Field(..., alias="shopName", min_length=1, description="Shop name")
+
+    class Config:
+        populate_by_name = True
 
 
 class LoginRequest(BaseModel):

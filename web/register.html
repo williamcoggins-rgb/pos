@@ -162,7 +162,7 @@
 
             <div class="form-group">
                 <label for="password">Password *</label>
-                <input type="password" id="password" required minlength="6" placeholder="At least 6 characters">
+                <input type="password" id="password" required minlength="8" placeholder="At least 8 characters">
             </div>
 
             <div class="form-group">
@@ -231,7 +231,7 @@
 
                     // Store credentials for migration tool
                     localStorage.setItem('migration_email', data.email);
-                    localStorage.setItem('auth_token', result.token);
+                    localStorage.setItem('auth_token', result.access_token);
 
                     document.getElementById('registerForm').reset();
                 } else {

@@ -15,7 +15,7 @@ import stripe
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from api.config import get_settings
-from api.routers import pos, eligibility, procurement, auth
+from api.routers import pos, eligibility, procurement, auth, stripe_connect
 
 settings = get_settings()
 
@@ -32,10 +32,11 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS middleware
+# CORS middleware - use regex to allow all vercel.app subdomains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,6 +66,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include routers
 app.include_router(auth.router)
+app.include_router(stripe_connect.router)
 app.include_router(pos.router)
 app.include_router(eligibility.router)
 app.include_router(procurement.router)
