@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str
     SUPABASE_JWT_SECRET: str
 
+    # Frontend URL (for Stripe redirect URLs)
+    FRONTEND_URL: str = "https://pos-ivrc.vercel.app"
+
     # CORS
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",

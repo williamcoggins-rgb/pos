@@ -15,7 +15,7 @@ import stripe
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from api.config import get_settings
-from api.routers import pos, eligibility, procurement, auth
+from api.routers import pos, eligibility, procurement, auth, stripe_connect
 
 settings = get_settings()
 
@@ -65,6 +65,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include routers
 app.include_router(auth.router)
+app.include_router(stripe_connect.router)
 app.include_router(pos.router)
 app.include_router(eligibility.router)
 app.include_router(procurement.router)
