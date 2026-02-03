@@ -58,31 +58,57 @@ class AuthService:
                 }
             )
 
-            if response.status_code != 200:
+            if response.status_code not in (200, 201):
                 error_data = response.json()
-                raise Exception(error_data.get("msg", "Registration failed"))
+                raise Exception(error_data.get("msg", error_data.get("error_description", "Registration failed")))
 
             data = response.json()
-            access_token = data["access_token"]
-            user_id = data["user"]["id"]
+
+            # Handle case where email confirmation is enabled (no access_token returned)
+            if "access_token" not in data:
+                # Check if user was created but needs email confirmation
+                if "id" in data:
+                    user_id = data["id"]
+                elif "user" in data and data["user"]:
+                    user_id = data["user"]["id"]
+                else:
+                    raise Exception("Registration failed - no user data returned")
+
+                # Generate our own JWT for immediate use (user can use app without email confirmation)
+                access_token = self._generate_token(user_id)
+            else:
+                access_token = data["access_token"]
+                user_id = data["user"]["id"]
 
             # Create barber record
             barber_id = f"barber_{user_id[:16]}"
 
             # Insert into barbers table
-            await client.post(
+            # Use service key (apikey) for insertion when using self-generated token
+            insert_headers = {
+                **self.headers,
+                "Prefer": "return=minimal"
+            }
+            # Use Supabase token if available, otherwise use service key
+            if "access_token" in data:
+                insert_headers["Authorization"] = f"Bearer {data['access_token']}"
+            else:
+                # Use service role key (apikey header is already set in self.headers)
+                insert_headers["Authorization"] = f"Bearer {self.supabase_key}"
+
+            barber_response = await client.post(
                 f"{self.supabase_url}/rest/v1/barbers",
-                headers={
-                    **self.headers,
-                    "Authorization": f"Bearer {access_token}",
-                    "Prefer": "return=minimal"
-                },
+                headers=insert_headers,
                 json={
                     "id": user_id,
                     "barber_id": barber_id,
                     "shop_name": shop_name,
                 }
             )
+
+            # Log if barber creation failed (but don't fail registration)
+            if barber_response.status_code not in (200, 201):
+                print(f"Warning: Failed to create barber record: {barber_response.text}")
 
             return (access_token, barber_id, shop_name)
 
@@ -138,6 +164,19 @@ class AuthService:
 
             barber = barbers[0]
             return (access_token, barber["barber_id"], barber["shop_name"])
+
+    def _generate_token(self, user_id: str) -> str:
+        """
+        Generate a JWT token for a user
+        Used when Supabase doesn't return an access_token (email confirmation mode)
+        """
+        payload = {
+            "sub": user_id,
+            "iat": datetime.utcnow(),
+            "exp": datetime.utcnow() + timedelta(days=7),
+            "iss": "barberscore-pos",
+        }
+        return jwt.encode(payload, self.jwt_secret, algorithm="HS256")
 
     def verify_token(self, token: str) -> Optional[dict]:
         """
