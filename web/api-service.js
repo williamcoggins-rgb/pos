@@ -74,7 +74,7 @@ class APIService {
             body: JSON.stringify({ email, password, shopName, ownerName, phone })
         });
 
-        this.setToken(data.token);
+        this.setToken(data.access_token);
         return data;
     }
 
@@ -85,7 +85,7 @@ class APIService {
             body: JSON.stringify({ email, password })
         });
 
-        this.setToken(data.token);
+        this.setToken(data.access_token);
         return data;
     }
 
