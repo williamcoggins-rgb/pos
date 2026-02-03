@@ -2810,6 +2810,9 @@
             };
             localStorage.setItem('userProfile', JSON.stringify(userProfile));
 
+            // Register with backend (non-blocking)
+            registerWithBackend(tempProfile);
+
             // Hide onboarding and start app
             document.getElementById('passcodeSetupScreen').classList.add('hidden');
             renderServices();
@@ -2817,6 +2820,43 @@
             updateAnalytics();
             updateBarberScore();
             updateProcurement();
+        }
+
+        // Register user with backend for Stripe integration
+        async function registerWithBackend(profile) {
+            try {
+                // Generate a secure random password (user doesn't need to know it - they use 4-digit passcode)
+                const randomPassword = crypto.randomUUID().slice(0, 16) + 'Aa1!';
+
+                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: profile.email,
+                        password: randomPassword,
+                        shopName: profile.shopName
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('auth_token', data.access_token);
+                    localStorage.setItem('backend_registered', 'true');
+                    console.log('Backend registration successful');
+                } else {
+                    const error = await response.json();
+                    // User might already exist - try to login instead
+                    if (error.detail && error.detail.includes('already')) {
+                        console.log('User already exists, will need to login');
+                        localStorage.setItem('backend_needs_login', 'true');
+                    } else {
+                        console.error('Backend registration failed:', error);
+                    }
+                }
+            } catch (err) {
+                console.error('Backend registration error:', err);
+                // Non-blocking - user can still use POS, just won't have Stripe until they register manually
+            }
         }
 
         // Passcode Management (Login)
