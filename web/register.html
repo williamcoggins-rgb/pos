@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- Version: 2.0.0 - Direct Stripe onboarding after registration -->
     <title>Register - BarberScore POS</title>
     <style>
         * {
@@ -177,20 +181,60 @@
 
         <div id="nextStep" class="next-step">
             <h3>✅ Account Created!</h3>
-            <p><strong>You're all set!</strong></p>
-            <p style="margin-top: 10px;">
-                <a href="login.html" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 10px;">
-                    Sign In to Your POS →
+            <p><strong>Setting up payment processing...</strong></p>
+            <p id="stripeStatus" style="margin-top: 10px; color: #666;">
+                Connecting to Stripe...
+            </p>
+            <div id="stripeError" style="display: none; margin-top: 15px;">
+                <p style="color: #c62828; margin-bottom: 10px;">Could not start Stripe setup automatically.</p>
+                <a href="login.html" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                    Continue to Login →
                 </a>
-            </p>
-            <p style="margin-top: 15px; font-size: 13px; color: #666;">
-                You can set up payment processing in Settings after logging in.
-            </p>
+                <p style="margin-top: 10px; font-size: 13px; color: #666;">
+                    You can set up payment processing in Settings after logging in.
+                </p>
+            </div>
         </div>
     </div>
 
     <script>
         const API_URL = 'https://pos-production-fd37.up.railway.app/api';
+
+        async function startStripeOnboarding(authToken) {
+            const stripeStatus = document.getElementById('stripeStatus');
+            const stripeError = document.getElementById('stripeError');
+
+            try {
+                stripeStatus.textContent = 'Creating your payment account...';
+
+                const response = await fetch(`${API_URL}/stripe/create-account-link`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.url) {
+                    stripeStatus.textContent = 'Redirecting to Stripe...';
+                    // Redirect to Stripe onboarding
+                    window.location.href = result.url;
+                } else if (result.already_onboarded) {
+                    stripeStatus.textContent = 'Payment processing already set up!';
+                    setTimeout(() => {
+                        window.location.href = 'pos-v4.html';
+                    }, 1500);
+                } else {
+                    throw new Error(result.detail || result.error || 'Failed to create Stripe account');
+                }
+            } catch (error) {
+                console.error('Stripe setup error:', error);
+                stripeStatus.style.display = 'none';
+                stripeError.style.display = 'block';
+            }
+        }
 
         async function register(event) {
             event.preventDefault();
@@ -198,11 +242,14 @@
             const btn = document.getElementById('registerBtn');
             const message = document.getElementById('message');
             const nextStep = document.getElementById('nextStep');
+            const stripeStatus = document.getElementById('stripeStatus');
+            const stripeError = document.getElementById('stripeError');
 
             btn.disabled = true;
             btn.textContent = 'Creating Account...';
             message.style.display = 'none';
             nextStep.style.display = 'none';
+            stripeError.style.display = 'none';
 
             const data = {
                 email: document.getElementById('email').value,
@@ -229,11 +276,14 @@
                     message.style.display = 'block';
                     nextStep.style.display = 'block';
 
-                    // Store credentials for migration tool
+                    // Store credentials
                     localStorage.setItem('migration_email', data.email);
                     localStorage.setItem('auth_token', result.access_token);
 
-                    document.getElementById('registerForm').reset();
+                    document.getElementById('registerForm').style.display = 'none';
+
+                    // Immediately start Stripe onboarding
+                    await startStripeOnboarding(result.access_token);
                 } else {
                     throw new Error(result.message || result.error || 'Registration failed');
                 }
