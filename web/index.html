@@ -7,8 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Stripe.js for payment processing -->
-    <script src="https://js.stripe.com/v3/"></script>
     <style>
         /* Design Tokens - 8-Point Spacing System */
         :root {
@@ -1305,9 +1303,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center;
             padding: 40px 20px;
-            overflow-y: auto;
         }
 
         .onboarding-screen.hidden {
@@ -1422,37 +1419,6 @@
 
                 <button type="submit" class="btn-primary">Continue</button>
                 <button type="button" class="btn-secondary" onclick="showWelcomeScreen()">Back</button>
-
-                <div style="margin-top: 24px; text-align: center; padding-top: 24px; border-top: 1px solid #E5E5E5;">
-                    <p style="color: #666; margin-bottom: 12px;">Already have an account?</p>
-                    <button type="button" class="btn-secondary" onclick="showLoginScreen()">Sign In</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Login Screen for Existing Users -->
-        <div class="onboarding-screen hidden" id="loginScreen">
-            <form class="setup-form" onsubmit="handleLogin(event)">
-                <div class="welcome-logo" style="width: 64px; height: 64px; font-size: 28px; margin: 0 auto 16px;">BS</div>
-                <h2 class="form-title">Welcome Back</h2>
-                <p class="form-subtitle">Sign in to your BarberScore POS</p>
-
-                <div class="form-group">
-                    <label class="form-label">Email <span class="required-badge">*</span></label>
-                    <input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" required>
-                    <div class="error-text" id="loginEmailError"></div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">4-Digit PIN <span class="required-badge">*</span></label>
-                    <input type="password" class="form-input" id="loginPin" placeholder="****" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" required>
-                    <div class="error-text" id="loginPinError"></div>
-                </div>
-
-                <div class="error-text" id="loginGeneralError" style="text-align: center; margin-bottom: 16px;"></div>
-
-                <button type="submit" class="btn-primary" id="loginSubmitBtn">Sign In</button>
-                <button type="button" class="btn-secondary" onclick="showBusinessSetup()">Create Account</button>
             </form>
         </div>
 
@@ -1619,9 +1585,9 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                             <button class="payment-method-btn" onclick="selectPaymentMethod('tap-to-pay')">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                                 </svg>
-                                <span>Card Payment</span>
+                                <span>Tap to Pay</span>
                             </button>
                             <button class="payment-method-btn" onclick="selectPaymentMethod('apple-pay')">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
@@ -1879,6 +1845,19 @@
 
                 <button class="btn btn-primary" onclick="saveProfile()">Update My Info</button>
 
+                <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Payment Setup</h2>
+                <div class="stat-card" id="stripeSetupCard">
+                    <div id="stripeStatus" style="padding: 16px; background: #FEF3C7; border-left: 3px solid #F59E0B; border-radius: 8px; margin-bottom: 16px;">
+                        <p style="color: #92400E; margin-bottom: 8px; font-weight: 600;">💳 Set Up Payment Processing</p>
+                        <p style="color: #A16207; font-size: 14px; margin: 0;">
+                            Connect Stripe to accept credit card payments, Apple Pay, and Google Pay from your clients.
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" id="stripeSetupBtn" onclick="setupStripe()" style="background: #635BFF;">
+                        Set Up Stripe Payments
+                    </button>
+                </div>
+
                 <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Import Data</h2>
                 <div class="stat-card">
                     <p style="color: #666; margin-bottom: 16px; line-height: 1.6;">
@@ -1892,28 +1871,12 @@
                 <button class="btn btn-secondary" onclick="exportData()" style="margin-bottom: 12px;">Export All Data</button>
                 <button class="btn btn-secondary" onclick="clearAllData()" style="margin-bottom: 12px;">Delete Everything</button>
 
-                <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">💳 Payment Processing</h2>
-                <div class="stat-card" id="stripeSetupCard">
-                    <div id="stripeStatus" style="padding: 16px; background: #FEE2E2; border-left: 3px solid #DC2626; border-radius: 8px; margin-bottom: 16px;">
-                        <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Login Required</p>
-                        <p style="color: #991B1B; font-size: 14px; margin: 0;">
-                            You must login to your account before setting up Stripe payments.
-                        </p>
-                    </div>
-                    <a href="login.html" class="btn btn-primary" style="display: inline-block; text-align: center; text-decoration: none; background: #635BFF; margin-bottom: 12px;">
-                        Login / Register
-                    </a>
-                    <button class="btn btn-secondary" onclick="setupStripePayments()" id="setupStripeBtn" style="display: block;">
-                        Set Up Payment Processing
-                    </button>
-                </div>
-
                 <h2 style="font-size: 18px; font-weight: 600; margin: 32px 0 16px;">Security</h2>
                 <button class="btn btn-secondary" onclick="changePasscode()" style="margin-bottom: 12px;">Change Passcode</button>
                 <button class="btn btn-secondary" onclick="logout()" style="background: #DC2626; color: white;">Logout</button>
 
                 <div style="text-align: center; margin-top: 40px; padding: 20px; color: #999; font-size: 12px;">
-                    POS System v4.1-stripe
+                    POS System v4.0
                 </div>
             </div>
         </div>
@@ -2101,60 +2064,25 @@
         </div>
     </div>
 
-    <!-- Card Payment Modal (Stripe) -->
+    <!-- Tap to Pay Modal -->
     <div class="tap-to-pay-modal" id="tapToPayModal">
         <button class="tap-to-pay-close" onclick="closeTapToPay()">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
         </button>
-        <div class="tap-to-pay-content" style="width: 100%; max-width: 400px; padding: 20px;">
+        <div class="tap-to-pay-content">
             <div class="tap-icon-container">
                 <div class="tap-icon-glow"></div>
                 <svg class="tap-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9h6m-6 4h6"></path>
                 </svg>
             </div>
-            <div class="tap-to-pay-title">Card Payment</div>
+            <div class="tap-to-pay-title">Tap to Pay</div>
             <div class="tap-to-pay-amount" id="tapToPayAmount">$0.00</div>
-
-            <!-- Stripe Card Element Container -->
-            <div id="card-element-container" style="background: white; border-radius: 8px; padding: 16px; margin: 20px 0;">
-                <div id="card-element" style="padding: 12px; border: 1px solid #E5E5E5; border-radius: 4px;"></div>
-                <div id="card-errors" style="color: #DC2626; font-size: 14px; margin-top: 8px;"></div>
-            </div>
-
-            <button id="pay-button" onclick="submitCardPayment()" style="
-                width: 100%;
-                padding: 16px;
-                background: #635BFF;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 18px;
-                font-weight: 600;
-                cursor: pointer;
-                margin-bottom: 12px;
-            ">
-                Pay Now
-            </button>
-
-            <div class="tap-to-pay-status" id="tapToPayStatus">Enter card details above</div>
-
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; opacity: 0.7;">
-                <svg width="32" height="20" viewBox="0 0 32 20" fill="none">
-                    <rect width="32" height="20" rx="2" fill="#1A1F71"/>
-                    <path d="M12.5 14.5L14 5.5H16.5L15 14.5H12.5Z" fill="white"/>
-                    <path d="M22 5.5L19.5 14.5H17L19.5 5.5H22Z" fill="white"/>
-                </svg>
-                <svg width="32" height="20" viewBox="0 0 32 20" fill="none">
-                    <rect width="32" height="20" rx="2" fill="#EB001B"/>
-                    <circle cx="12" cy="10" r="6" fill="#EB001B"/>
-                    <circle cx="20" cy="10" r="6" fill="#F79E1B"/>
-                    <path d="M16 5.5C17.5 6.8 18.5 8.8 18.5 10C18.5 11.2 17.5 13.2 16 14.5C14.5 13.2 13.5 11.2 13.5 10C13.5 8.8 14.5 6.8 16 5.5Z" fill="#FF5F00"/>
-                </svg>
-                <span style="color: white; font-size: 12px;">Secure payment by Stripe</span>
-            </div>
+            <div class="tap-to-pay-subtitle">Hold customer's device near your phone</div>
+            <div class="tap-to-pay-status" id="tapToPayStatus">Waiting for device...</div>
         </div>
     </div>
 
@@ -2199,23 +2127,6 @@
         };
 
         let userProfile = JSON.parse(localStorage.getItem('userProfile')) || null;
-
-        // Stripe Payment Processing
-        // Note: The publishable key is fetched from the backend or can be set here
-        const STRIPE_PUBLISHABLE_KEY = 'pk_live_51IaMxqKx9LUuTpHZWS7yOtOMxHQtDPLaSiLVXp1OGWcbJjZFdjSRJwau7By0dHGC0E2dwhs59CizOOn3KyDUVYEf00C6bY2Kjd';
-        let stripe = null;
-        let cardElement = null;
-        let currentPaymentIntent = null;
-
-        // Initialize Stripe when page loads
-        function initializeStripe() {
-            if (typeof Stripe !== 'undefined' && STRIPE_PUBLISHABLE_KEY) {
-                stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-                console.log('Stripe initialized');
-            } else {
-                console.warn('Stripe not available - card payments disabled');
-            }
-        }
 
         // Toast Notification System
         function showToast(type, title, message, duration = 4000) {
@@ -2355,151 +2266,28 @@
             }
         }
 
-        // Card Payment with Stripe
-        async function showTapToPay() {
+        // Tap to Pay
+        function showTapToPay() {
             const total = cart.reduce((sum, item) => sum + item.price, 0);
-            const customerContact = document.getElementById('customerContact').value.trim();
-
             document.getElementById('tapToPayAmount').textContent = `$${total.toFixed(2)}`;
-            document.getElementById('tapToPayStatus').textContent = 'Enter card details above';
+            document.getElementById('tapToPayStatus').textContent = 'Waiting for device...';
             document.getElementById('tapToPayModal').classList.add('active');
 
-            // Check if Stripe is available
-            if (!stripe) {
-                initializeStripe();
-                if (!stripe) {
-                    document.getElementById('tapToPayStatus').textContent = 'Card payments not available';
-                    document.getElementById('card-errors').textContent = 'Stripe failed to load. Please refresh the page.';
-                    return;
-                }
-            }
-
-            // Check if user has set up Stripe
-            const authToken = localStorage.getItem('auth_token');
-            if (!authToken) {
-                document.getElementById('tapToPayStatus').textContent = 'Login required for card payments';
-                document.getElementById('card-errors').textContent = 'Please log in to accept card payments.';
-                return;
-            }
-
-            try {
-                document.getElementById('tapToPayStatus').textContent = 'Setting up payment...';
-
-                // Create payment intent on backend
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/payments/create-payment-intent', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        amount: total,
-                        customer_email: customerContact.includes('@') ? customerContact : null,
-                        customer_name: customerContact,
-                        metadata: {
-                            services: cart.map(s => s.name).join(', ')
-                        }
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to create payment');
-                }
-
-                const { clientSecret, paymentIntentId } = await response.json();
-                currentPaymentIntent = { clientSecret, paymentIntentId, amount: total };
-
-                // Create Stripe Elements
-                const elements = stripe.elements({ clientSecret });
-
-                // Clear any existing card element
-                document.getElementById('card-element').innerHTML = '';
-
-                // Create and mount card element
-                cardElement = elements.create('card', {
-                    style: {
-                        base: {
-                            fontSize: '16px',
-                            color: '#1A1A1A',
-                            '::placeholder': { color: '#999' }
-                        },
-                        invalid: { color: '#DC2626' }
-                    }
-                });
-                cardElement.mount('#card-element');
-
-                // Handle card errors
-                cardElement.on('change', (event) => {
-                    const errorDiv = document.getElementById('card-errors');
-                    errorDiv.textContent = event.error ? event.error.message : '';
-                });
-
-                document.getElementById('tapToPayStatus').textContent = 'Enter card details above';
-
-            } catch (error) {
-                console.error('Payment setup error:', error);
-                document.getElementById('tapToPayStatus').textContent = 'Payment setup failed';
-                document.getElementById('card-errors').textContent = error.message;
-            }
-        }
-
-        // Submit the card payment
-        async function submitCardPayment() {
-            if (!stripe || !cardElement || !currentPaymentIntent) {
-                showToast('error', 'Payment Error', 'Payment not ready. Please try again.');
-                return;
-            }
-
-            const payButton = document.getElementById('pay-button');
-            const statusDiv = document.getElementById('tapToPayStatus');
-
-            payButton.disabled = true;
-            payButton.textContent = 'Processing...';
-            statusDiv.textContent = 'Processing payment...';
-
-            try {
-                const { error, paymentIntent } = await stripe.confirmCardPayment(
-                    currentPaymentIntent.clientSecret,
-                    {
-                        payment_method: { card: cardElement }
-                    }
-                );
-
-                if (error) {
-                    throw new Error(error.message);
-                }
-
-                if (paymentIntent.status === 'succeeded') {
-                    statusDiv.textContent = 'Payment successful!';
-                    showToast('success', 'Payment Complete', `$${currentPaymentIntent.amount.toFixed(2)} charged successfully`);
-
-                    // Close modal and complete the sale
+            // Simulate payment processing after 3 seconds
+            setTimeout(() => {
+                document.getElementById('tapToPayStatus').textContent = 'Processing payment...';
+                setTimeout(() => {
+                    document.getElementById('tapToPayStatus').textContent = 'Payment successful!';
                     setTimeout(() => {
                         closeTapToPay();
-                        completeSaleWithPayment('Card (Stripe)');
-                    }, 1500);
-                } else {
-                    throw new Error(`Payment status: ${paymentIntent.status}`);
-                }
-
-            } catch (error) {
-                console.error('Payment error:', error);
-                document.getElementById('card-errors').textContent = error.message;
-                statusDiv.textContent = 'Payment failed - try again';
-                payButton.disabled = false;
-                payButton.textContent = 'Pay Now';
-            }
+                        completeSaleWithPayment('Tap to Pay');
+                    }, 1000);
+                }, 2000);
+            }, 3000);
         }
 
         function closeTapToPay() {
             document.getElementById('tapToPayModal').classList.remove('active');
-            // Clean up
-            currentPaymentIntent = null;
-            if (cardElement) {
-                cardElement.unmount();
-                cardElement = null;
-            }
         }
 
         // Apple Pay
@@ -2638,9 +2426,6 @@
 
         // Initialize
         function init() {
-            // Initialize Stripe for card payments
-            initializeStripe();
-
             // Check for admin mode via URL parameter
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('admin') === 'true') {
@@ -2650,31 +2435,15 @@
                 }
             }
 
-            // Check for Stripe return (success or refresh)
-            const onboardingStep = localStorage.getItem('onboarding_step');
-            if (onboardingStep === 'stripe_redirect') {
-                // User is returning from Stripe - show PIN setup
-                console.log('Returning from Stripe onboarding - showing PIN setup');
-                handleStripeReturn();
-                return;
-            }
-
             // Check if user has completed setup
             if (!userProfile || !userProfile.shopName) {
                 showWelcomeScreen();
                 return;
             }
 
-            // If setup complete but no passcode, check if we have a token (returning from Stripe)
+            // If setup complete but no passcode, shouldn't happen but handle it
             if (!currentPasscode) {
-                const authToken = localStorage.getItem('auth_token');
-                if (authToken) {
-                    // User registered but hasn't set PIN yet
-                    showPasscodeSetupScreen();
-                    return;
-                }
-                // No token - need to go through full setup
-                showWelcomeScreen();
+                showPasscodeSetupScreen();
                 return;
             }
 
@@ -2683,145 +2452,18 @@
             showPasscodeScreen();
         }
 
-        // Handle return from Stripe onboarding
-        async function handleStripeReturn() {
-            // Clear the step marker
-            localStorage.removeItem('onboarding_step');
-
-            // Load saved profile
-            const savedProfile = localStorage.getItem('temp_profile');
-            if (savedProfile) {
-                tempProfile = JSON.parse(savedProfile);
-                userProfile = {
-                    id: Date.now().toString(),
-                    ...tempProfile,
-                    barberScore: 100,
-                    tier: 0,
-                    createdAt: new Date().toISOString()
-                };
-                localStorage.setItem('userProfile', JSON.stringify(userProfile));
-            }
-
-            // Show PIN setup screen
-            showPasscodeSetupScreen();
-            document.getElementById('passcodeSetupTitle').textContent = 'Create Your PIN';
-            document.getElementById('passcodeSetupSubtitle').textContent = 'Set a 4-digit PIN to secure your account';
-        }
-
         // Onboarding Flow
         function showWelcomeScreen() {
             // Skip welcome screen, go directly to business setup
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('businessSetupScreen').classList.remove('hidden');
             document.getElementById('passcodeSetupScreen').classList.add('hidden');
-            const loginScreen = document.getElementById('loginScreen');
-            if (loginScreen) loginScreen.classList.add('hidden');
         }
 
         function showBusinessSetup() {
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('businessSetupScreen').classList.remove('hidden');
             document.getElementById('passcodeSetupScreen').classList.add('hidden');
-            const loginScreen = document.getElementById('loginScreen');
-            if (loginScreen) loginScreen.classList.add('hidden');
-        }
-
-        function showLoginScreen() {
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('businessSetupScreen').classList.add('hidden');
-            document.getElementById('passcodeSetupScreen').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
-            // Clear any previous errors
-            document.getElementById('loginEmailError').textContent = '';
-            document.getElementById('loginPinError').textContent = '';
-            document.getElementById('loginGeneralError').textContent = '';
-        }
-
-        async function handleLogin(event) {
-            event.preventDefault();
-
-            // Clear previous errors
-            document.getElementById('loginEmailError').textContent = '';
-            document.getElementById('loginPinError').textContent = '';
-            document.getElementById('loginGeneralError').textContent = '';
-
-            const email = document.getElementById('loginEmail').value.trim();
-            const pin = document.getElementById('loginPin').value.trim();
-
-            let hasError = false;
-
-            if (!email) {
-                document.getElementById('loginEmailError').textContent = 'Email is required';
-                hasError = true;
-            } else if (!validateEmail(email)) {
-                document.getElementById('loginEmailError').textContent = 'Please enter a valid email address';
-                hasError = true;
-            }
-
-            if (!pin) {
-                document.getElementById('loginPinError').textContent = 'PIN is required';
-                hasError = true;
-            } else if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-                document.getElementById('loginPinError').textContent = 'PIN must be 4 digits';
-                hasError = true;
-            }
-
-            if (hasError) return;
-
-            // Show loading state
-            const submitBtn = document.getElementById('loginSubmitBtn');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Signing in...';
-            submitBtn.disabled = true;
-
-            try {
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/login-pin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, pin })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Login successful
-                    localStorage.setItem('auth_token', data.access_token);
-                    localStorage.setItem('barber_id', data.barber_id);
-                    localStorage.setItem('backend_registered', 'true');
-
-                    // Set user profile
-                    userProfile = {
-                        id: data.barber_id,
-                        shopName: data.shop_name,
-                        email: email,
-                        barberScore: 100,
-                        tier: 0,
-                    };
-                    localStorage.setItem('userProfile', JSON.stringify(userProfile));
-
-                    // Set passcode locally for this session
-                    currentPasscode = pin;
-                    localStorage.setItem('passcode', pin);
-
-                    // Hide login screen and start app
-                    document.getElementById('loginScreen').classList.add('hidden');
-                    renderServices();
-                    updateDashboard();
-                    updateAnalytics();
-                    updateBarberScore();
-                    updateProcurement();
-
-                    showToast('success', 'Welcome Back', `Logged in as ${data.shop_name}`);
-                } else {
-                    document.getElementById('loginGeneralError').textContent = data.detail || 'Login failed. Please try again.';
-                }
-            } catch (err) {
-                console.error('Login error:', err);
-                document.getElementById('loginGeneralError').textContent = 'Network error. Please try again.';
-            } finally {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
         }
 
         function validateEmail(email) {
@@ -2882,7 +2524,7 @@
 
             if (hasError) return;
 
-            // Save profile data
+            // Save profile data (will be completed after passcode setup)
             tempProfile = {
                 shopName,
                 ownerName,
@@ -2890,88 +2532,7 @@
                 phone
             };
 
-            // Register with backend and redirect to Stripe
-            await registerAndRedirectToStripe(tempProfile);
-        }
-
-        async function registerAndRedirectToStripe(profile) {
-            // Show loading state
-            const submitBtn = document.querySelector('#businessSetupScreen button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Setting up...';
-            submitBtn.disabled = true;
-
-            try {
-                // Generate a secure random password (user doesn't need to know it - they use 4-digit PIN)
-                const randomPassword = crypto.randomUUID().slice(0, 16) + 'Aa1!';
-                localStorage.setItem('backend_password', randomPassword);
-
-                console.log('Registering with backend...');
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: profile.email,
-                        password: randomPassword,
-                        shopName: profile.shopName,
-                        ownerName: profile.ownerName,
-                        phone: profile.phone
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Save auth token
-                    localStorage.setItem('auth_token', data.access_token);
-                    localStorage.setItem('barber_id', data.barber_id);
-                    localStorage.setItem('backend_registered', 'true');
-                    localStorage.setItem('temp_profile', JSON.stringify(profile));
-                    localStorage.setItem('onboarding_step', 'stripe_redirect');
-
-                    console.log('Registration successful, redirecting to Stripe...');
-
-                    // Now get Stripe onboarding link
-                    const stripeResponse = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/create-account-link', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${data.access_token}`
-                        },
-                        body: JSON.stringify({
-                            barber_id: data.barber_id,
-                            return_url: window.location.origin + window.location.pathname,
-                            refresh_url: window.location.origin + window.location.pathname
-                        })
-                    });
-
-                    const stripeData = await stripeResponse.json();
-
-                    if (stripeResponse.ok && stripeData.url) {
-                        // Redirect to Stripe
-                        window.location.href = stripeData.url;
-                    } else {
-                        console.error('Failed to get Stripe link:', stripeData);
-                        // Fall back to PIN setup without Stripe
-                        showToast('warning', 'Payment Setup Skipped', 'You can set up payments later in Settings');
-                        showPasscodeSetupScreen();
-                    }
-                } else {
-                    // Check if user already exists
-                    if (data.detail && (data.detail.includes('already') || data.detail.includes('exists'))) {
-                        document.getElementById('emailError').textContent = 'An account with this email already exists. Please sign in.';
-                        document.getElementById('setupEmail').classList.add('input-error');
-                    } else {
-                        showToast('error', 'Registration Failed', data.detail || 'Please try again');
-                    }
-                }
-            } catch (err) {
-                console.error('Registration error:', err);
-                showToast('error', 'Network Error', 'Please check your connection and try again');
-            } finally {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
+            showPasscodeSetupScreen();
         }
 
         let setupPasscodeInput = '';
@@ -2983,14 +2544,12 @@
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('businessSetupScreen').classList.add('hidden');
             document.getElementById('passcodeSetupScreen').classList.remove('hidden');
-            const loginScreen = document.getElementById('loginScreen');
-            if (loginScreen) loginScreen.classList.add('hidden');
             setupPasscodeInput = '';
             setupPasscodeConfirm = '';
             isConfirmingPasscode = false;
             updateSetupPasscodeDots();
-            document.getElementById('passcodeSetupTitle').textContent = 'Create Your PIN';
-            document.getElementById('passcodeSetupSubtitle').textContent = 'Enter a 4-digit PIN to secure your account';
+            document.getElementById('passcodeSetupTitle').textContent = 'Create Your Passcode';
+            document.getElementById('passcodeSetupSubtitle').textContent = 'Enter a 4-digit passcode to secure your POS';
         }
 
         function enterSetupPasscode(digit) {
@@ -3053,53 +2612,20 @@
             });
         }
 
-        async function completeSetup() {
-            // Save passcode locally
+        function completeSetup() {
+            // Save passcode
             currentPasscode = setupPasscodeInput;
             localStorage.setItem('passcode', currentPasscode);
 
-            // Save profile (may already be saved from handleStripeReturn)
-            if (!userProfile || !userProfile.shopName) {
-                userProfile = {
-                    id: Date.now().toString(),
-                    ...tempProfile,
-                    barberScore: 100,
-                    tier: 0,
-                    createdAt: new Date().toISOString()
-                };
-                localStorage.setItem('userProfile', JSON.stringify(userProfile));
-            }
-
-            // Show loading state
-            document.getElementById('passcodeSetupTitle').textContent = 'Saving your PIN...';
-            document.getElementById('passcodeSetupSubtitle').textContent = 'Please wait';
-
-            // Save PIN to backend if we have a token
-            const authToken = localStorage.getItem('auth_token');
-            if (authToken) {
-                try {
-                    const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/set-pin', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
-                        },
-                        body: JSON.stringify({ pin: currentPasscode })
-                    });
-
-                    if (response.ok) {
-                        console.log('PIN saved to backend successfully');
-                    } else {
-                        console.error('Failed to save PIN to backend:', await response.text());
-                    }
-                } catch (err) {
-                    console.error('Error saving PIN to backend:', err);
-                }
-            }
-
-            // Clear temporary data
-            localStorage.removeItem('temp_profile');
-            localStorage.removeItem('onboarding_step');
+            // Save profile
+            userProfile = {
+                id: Date.now().toString(),
+                ...tempProfile,
+                barberScore: 0,
+                tier: 0,
+                createdAt: new Date().toISOString()
+            };
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
 
             // Hide onboarding and start app
             document.getElementById('passcodeSetupScreen').classList.add('hidden');
@@ -3108,107 +2634,6 @@
             updateAnalytics();
             updateBarberScore();
             updateProcurement();
-
-            showToast('success', 'Welcome!', 'Your account is ready');
-        }
-
-        // Register user with backend for Stripe integration
-        async function registerWithBackend(profile) {
-            console.log('Starting backend registration for:', profile.email);
-            try {
-                // Generate a secure random password (user doesn't need to know it - they use 4-digit passcode)
-                const randomPassword = crypto.randomUUID().slice(0, 16) + 'Aa1!';
-                // Store password for potential login retry
-                localStorage.setItem('backend_password', randomPassword);
-
-                console.log('Sending registration request...');
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: profile.email,
-                        password: randomPassword,
-                        shopName: profile.shopName
-                    })
-                });
-
-                console.log('Registration response status:', response.status);
-                const data = await response.json();
-                console.log('Registration response:', data);
-
-                if (response.ok) {
-                    localStorage.setItem('auth_token', data.access_token);
-                    localStorage.setItem('backend_registered', 'true');
-                    localStorage.setItem('barber_id', data.barber_id);
-                    console.log('Backend registration successful! Token saved.');
-                    return true;
-                } else {
-                    // User might already exist - try to login instead
-                    if (data.detail && (data.detail.includes('already') || data.detail.includes('exists'))) {
-                        console.log('User already exists, attempting login...');
-                        return await loginWithBackend(profile.email, randomPassword);
-                    } else {
-                        console.error('Backend registration failed:', data);
-                        return false;
-                    }
-                }
-            } catch (err) {
-                console.error('Backend registration error:', err);
-                return false;
-            }
-        }
-
-        // Login existing user with backend
-        async function loginWithBackend(email, password) {
-            console.log('Attempting backend login for:', email);
-            try {
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-
-                console.log('Login response status:', response.status);
-                const data = await response.json();
-                console.log('Login response:', data);
-
-                if (response.ok) {
-                    localStorage.setItem('auth_token', data.access_token);
-                    localStorage.setItem('backend_registered', 'true');
-                    localStorage.setItem('barber_id', data.barber_id);
-                    console.log('Backend login successful! Token saved.');
-                    return true;
-                } else {
-                    console.error('Backend login failed:', data);
-                    return false;
-                }
-            } catch (err) {
-                console.error('Backend login error:', err);
-                return false;
-            }
-        }
-
-        // Check and retry backend registration if needed (for returning users who failed registration)
-        async function checkAndRetryBackendRegistration() {
-            const authToken = localStorage.getItem('auth_token');
-            if (authToken) {
-                console.log('Auth token exists, backend registration OK');
-                return;
-            }
-
-            console.log('No auth token found, attempting backend registration...');
-            if (userProfile && userProfile.email && userProfile.shopName) {
-                const registered = await registerWithBackend({
-                    email: userProfile.email,
-                    shopName: userProfile.shopName
-                });
-                if (registered) {
-                    console.log('Backend registration retry successful!');
-                    showToast('success', 'Account Connected', 'Your account is now ready for payment processing');
-                } else {
-                    console.log('Backend registration retry failed');
-                }
-            }
         }
 
         // Passcode Management (Login)
@@ -3243,9 +2668,6 @@
                         updateAnalytics();
                         updateBarberScore();
                         updateProcurement();
-
-                        // Check if backend registration is needed (retry if failed before)
-                        checkAndRetryBackendRegistration();
                     } else {
                         document.getElementById('passcodeError').textContent = 'Incorrect passcode';
                         setTimeout(() => {
@@ -3290,35 +2712,35 @@
             );
         }
 
-        // Stripe Payment Setup
-        async function setupStripePayments() {
-            const btn = document.getElementById('setupStripeBtn');
-            const statusDiv = document.getElementById('stripeStatus');
+        function logout() {
+            // Hide all main sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
 
-            // Check if user is logged in to backend
-            const authToken = localStorage.getItem('auth_token');
-            if (!authToken) {
-                statusDiv.innerHTML = `
-                    <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Backend Login Required</p>
-                    <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
-                        To set up Stripe payments, you need to create a backend account first.
-                    </p>
-                    <a href="login.html" style="display: inline-block; background: #635BFF; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                        Login / Register
-                    </a>
-                `;
-                statusDiv.style.background = '#FEE2E2';
-                statusDiv.style.borderLeftColor = '#DC2626';
-                btn.style.display = 'none';
-                return;
-            }
+            // Show passcode screen
+            document.getElementById('passcodeScreen').classList.remove('hidden');
+
+            // Reset passcode input
+            passcodeInput = '';
+            updatePasscodeDots();
+            document.getElementById('passcodeError').textContent = '';
+
+            // Note: We don't clear userProfile or passcode from localStorage
+            // This is logout, not account deletion
+        }
+
+        // Stripe Payment Setup
+        const STRIPE_API_URL = 'https://pos-production-fd37.up.railway.app';
+
+        async function setupStripe() {
+            const btn = document.getElementById('stripeSetupBtn');
+            const statusDiv = document.getElementById('stripeStatus');
 
             btn.disabled = true;
             btn.textContent = 'Checking status...';
 
             try {
                 // Check if user already has Stripe set up
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/account-status', {
+                const response = await fetch(`${STRIPE_API_URL}/api/stripe/account-status`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                     }
@@ -3332,8 +2754,8 @@
 
                 const status = await response.json();
 
-                if (status.charges_enabled && status.payouts_enabled) {
-                    // Fully set up - can accept AND receive payments
+                if (status.charges_enabled) {
+                    // Already set up!
                     statusDiv.innerHTML = `
                         <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
                         <p style="color: #065F46; font-size: 14px; margin: 0;">
@@ -3343,14 +2765,14 @@
                     statusDiv.style.background = '#D1FAE5';
                     statusDiv.style.borderLeftColor = '#10B981';
                     btn.textContent = 'Payment Setup Complete';
-                    btn.disabled = true;
+                    btn.style.background = '#10B981';
                     return;
                 }
 
                 // Need to set up - get onboarding link
                 btn.textContent = 'Generating setup link...';
 
-                const linkResponse = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/create-account-link', {
+                const linkResponse = await fetch(`${STRIPE_API_URL}/api/stripe/create-account-link`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
@@ -3361,8 +2783,8 @@
                     const errorData = await linkResponse.json();
                     console.error('Link creation error:', errorData);
 
-                    // Check if account is already fully onboarded (with payouts enabled)
-                    if (errorData.already_onboarded && errorData.payouts_enabled) {
+                    // Check if account is already onboarded
+                    if (errorData.already_onboarded) {
                         statusDiv.innerHTML = `
                             <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
                             <p style="color: #065F46; font-size: 14px; margin: 0;">
@@ -3372,7 +2794,7 @@
                         statusDiv.style.background = '#D1FAE5';
                         statusDiv.style.borderLeftColor = '#10B981';
                         btn.textContent = 'Payment Setup Complete';
-                        btn.disabled = true;
+                        btn.style.background = '#10B981';
                         return;
                     }
 
@@ -3392,100 +2814,29 @@
                 console.error('Stripe setup error:', error);
                 alert(`Error setting up payments: ${error.message}\n\nPlease check the browser console (F12) for more details.`);
                 btn.disabled = false;
-                btn.textContent = 'Set Up Payment Processing';
-            }
-        }
-
-        // Test Stripe setup - shows detailed debug info
-        async function testStripeSetup() {
-            const btn = document.getElementById('testStripeBtn');
-            const resultDiv = document.getElementById('testResult');
-
-            btn.disabled = true;
-            btn.textContent = '🔧 Testing...';
-            resultDiv.style.display = 'block';
-            resultDiv.textContent = 'Running test...\n';
-
-            try {
-                const response = await fetch('https://pos-production-fd37.up.railway.app/diagnostics/test-user-account', {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                    }
-                });
-
-                const result = await response.json();
-                resultDiv.textContent = JSON.stringify(result, null, 2);
-
-                if (result.status === 'SUCCESS') {
-                    resultDiv.style.background = '#D1FAE5';
-                    resultDiv.style.color = '#065F46';
-                } else {
-                    resultDiv.style.background = '#FEE2E2';
-                    resultDiv.style.color = '#991B1B';
-                }
-
-            } catch (error) {
-                resultDiv.style.background = '#FEE2E2';
-                resultDiv.style.color = '#991B1B';
-                resultDiv.textContent = `Test failed: ${error.message}\n\n${error.stack}`;
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🔧 Debug: Test Stripe Setup';
+                btn.textContent = 'Set Up Stripe Payments';
             }
         }
 
         // Check Stripe status on settings load
         async function checkStripeStatus() {
-            const statusDiv = document.getElementById('stripeStatus');
-            const btn = document.getElementById('setupStripeBtn');
-
-            // Check if user is logged in to backend
-            const authToken = localStorage.getItem('auth_token');
-            if (!authToken) {
-                statusDiv.innerHTML = `
-                    <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Backend Login Required</p>
-                    <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
-                        To set up Stripe payments, you need to create a backend account first.
-                    </p>
-                    <a href="login.html" style="display: inline-block; background: #635BFF; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                        Login / Register
-                    </a>
-                `;
-                statusDiv.style.background = '#FEE2E2';
-                statusDiv.style.borderLeftColor = '#DC2626';
-                btn.style.display = 'none';
-                return;
-            }
-
             try {
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/account-status', {
+                const token = localStorage.getItem('auth_token');
+                if (!token) return; // Not logged in with backend
+
+                const response = await fetch(`${STRIPE_API_URL}/api/stripe/account-status`, {
                     headers: {
-                        'Authorization': `Bearer ${authToken}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
-                if (!response.ok) {
-                    // Token might be expired or invalid
-                    console.log('Auth token invalid, showing login prompt');
-                    statusDiv.innerHTML = `
-                        <p style="color: #DC2626; margin-bottom: 8px; font-weight: 600;">⚠️ Session Expired</p>
-                        <p style="color: #991B1B; font-size: 14px; margin-bottom: 12px;">
-                            Your session has expired. Please log in again to set up payments.
-                        </p>
-                        <a href="login.html" style="display: inline-block; background: #635BFF; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                            Login Again
-                        </a>
-                    `;
-                    statusDiv.style.background = '#FEE2E2';
-                    statusDiv.style.borderLeftColor = '#DC2626';
-                    btn.style.display = 'none';
-                    return;
-                }
+                if (!response.ok) return;
 
                 const status = await response.json();
+                const statusDiv = document.getElementById('stripeStatus');
+                const btn = document.getElementById('stripeSetupBtn');
 
-                if (status.charges_enabled && status.payouts_enabled) {
-                    // Fully set up - can accept payments AND receive payouts
+                if (status.charges_enabled) {
                     statusDiv.innerHTML = `
                         <p style="color: #047857; margin-bottom: 8px; font-weight: 600;">✅ Payment Processing Active</p>
                         <p style="color: #065F46; font-size: 14px; margin: 0;">
@@ -3496,21 +2847,7 @@
                     statusDiv.style.borderLeftColor = '#10B981';
                     btn.textContent = 'Payment Setup Complete';
                     btn.style.background = '#10B981';
-                    btn.disabled = true;
-                } else if (status.has_account && !status.payouts_enabled) {
-                    // Account exists but needs bank info to receive payouts
-                    statusDiv.innerHTML = `
-                        <p style="color: #F59E0B; margin-bottom: 8px; font-weight: 600;">⚠️ Bank Account Required</p>
-                        <p style="color: #92400E; font-size: 14px; margin: 0;">
-                            Complete your setup to receive payouts. Add your bank account or debit card.
-                        </p>
-                    `;
-                    statusDiv.style.background = '#FEF3C7';
-                    statusDiv.style.borderLeftColor = '#F59E0B';
-                    btn.textContent = 'Complete Setup - Add Bank Info';
-                    btn.style.background = '#F59E0B';
-                    btn.disabled = false;
-                } else if (status.onboarding_complete && !status.charges_enabled) {
+                } else if (status.onboarding_complete) {
                     statusDiv.innerHTML = `
                         <p style="color: #2563EB; margin-bottom: 8px; font-weight: 600;">⏳ Verification in Progress</p>
                         <p style="color: #1E40AF; font-size: 14px; margin: 0;">
@@ -3525,36 +2862,13 @@
             }
         }
 
-        function logout() {
-            // Hide all main sections
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-
-            // Show passcode screen
-            document.getElementById('passcodeScreen').classList.remove('hidden');
-
-            // Reset passcode input
-            passcodeInput = '';
-            updatePasscodeDots();
-            document.getElementById('passcodeError').textContent = '';
-
-            // Note: We don't clear userProfile or passcode from localStorage
-            // This is logout, not account deletion
-        }
-
         // Navigation
         function navigateTo(section) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
             document.getElementById(section).classList.add('active');
-
-            // Find and activate the corresponding nav item
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(nav => {
-                if (nav.getAttribute('onclick') && nav.getAttribute('onclick').includes(`'${section}'`)) {
-                    nav.classList.add('active');
-                }
-            });
+            event.currentTarget.classList.add('active');
 
             if (section === 'dashboard') {
                 updateDashboard();
@@ -3568,8 +2882,6 @@
                 refreshAdminData();
             } else if (section === 'settings') {
                 checkStripeStatus();
-            } else if (section === 'pos') {
-                renderServices();
             }
         }
 
@@ -3577,13 +2889,7 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-            // Find and activate the corresponding tab button
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(t => {
-                if (t.getAttribute('onclick') && t.getAttribute('onclick').includes(`'${tab}'`)) {
-                    t.classList.add('active');
-                }
-            });
+            event.currentTarget.classList.add('active');
             document.getElementById(tab + 'Tab').classList.add('active');
         }
 
