@@ -1,8 +1,12 @@
 {
+  "version": 2,
   "buildCommand": "",
   "outputDirectory": "web",
   "functions": {},
   "framework": null,
+  "builds": [
+    { "src": "web/**", "use": "@vercel/static" }
+  ],
   "redirects": [
     { "source": "/register.html", "destination": "/", "permanent": false },
     { "source": "/login.html", "destination": "/", "permanent": false },
