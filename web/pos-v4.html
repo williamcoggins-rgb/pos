@@ -1421,6 +1421,37 @@
 
                 <button type="submit" class="btn-primary">Continue</button>
                 <button type="button" class="btn-secondary" onclick="showWelcomeScreen()">Back</button>
+
+                <div style="margin-top: 24px; text-align: center; padding-top: 24px; border-top: 1px solid #E5E5E5;">
+                    <p style="color: #666; margin-bottom: 12px;">Already have an account?</p>
+                    <button type="button" class="btn-secondary" onclick="showLoginScreen()">Sign In</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Login Screen for Existing Users -->
+        <div class="onboarding-screen hidden" id="loginScreen">
+            <form class="setup-form" onsubmit="handleLogin(event)">
+                <div class="welcome-logo" style="width: 64px; height: 64px; font-size: 28px; margin: 0 auto 16px;">BS</div>
+                <h2 class="form-title">Welcome Back</h2>
+                <p class="form-subtitle">Sign in to your BarberScore POS</p>
+
+                <div class="form-group">
+                    <label class="form-label">Email <span class="required-badge">*</span></label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" required>
+                    <div class="error-text" id="loginEmailError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">4-Digit PIN <span class="required-badge">*</span></label>
+                    <input type="password" class="form-input" id="loginPin" placeholder="****" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" required>
+                    <div class="error-text" id="loginPinError"></div>
+                </div>
+
+                <div class="error-text" id="loginGeneralError" style="text-align: center; margin-bottom: 16px;"></div>
+
+                <button type="submit" class="btn-primary" id="loginSubmitBtn">Sign In</button>
+                <button type="button" class="btn-secondary" onclick="showBusinessSetup()">Create Account</button>
             </form>
         </div>
 
@@ -2618,15 +2649,31 @@
                 }
             }
 
+            // Check for Stripe return (success or refresh)
+            const onboardingStep = localStorage.getItem('onboarding_step');
+            if (onboardingStep === 'stripe_redirect') {
+                // User is returning from Stripe - show PIN setup
+                console.log('Returning from Stripe onboarding - showing PIN setup');
+                handleStripeReturn();
+                return;
+            }
+
             // Check if user has completed setup
             if (!userProfile || !userProfile.shopName) {
                 showWelcomeScreen();
                 return;
             }
 
-            // If setup complete but no passcode, shouldn't happen but handle it
+            // If setup complete but no passcode, check if we have a token (returning from Stripe)
             if (!currentPasscode) {
-                showPasscodeSetupScreen();
+                const authToken = localStorage.getItem('auth_token');
+                if (authToken) {
+                    // User registered but hasn't set PIN yet
+                    showPasscodeSetupScreen();
+                    return;
+                }
+                // No token - need to go through full setup
+                showWelcomeScreen();
                 return;
             }
 
@@ -2635,18 +2682,145 @@
             showPasscodeScreen();
         }
 
+        // Handle return from Stripe onboarding
+        async function handleStripeReturn() {
+            // Clear the step marker
+            localStorage.removeItem('onboarding_step');
+
+            // Load saved profile
+            const savedProfile = localStorage.getItem('temp_profile');
+            if (savedProfile) {
+                tempProfile = JSON.parse(savedProfile);
+                userProfile = {
+                    id: Date.now().toString(),
+                    ...tempProfile,
+                    barberScore: 100,
+                    tier: 0,
+                    createdAt: new Date().toISOString()
+                };
+                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            }
+
+            // Show PIN setup screen
+            showPasscodeSetupScreen();
+            document.getElementById('passcodeSetupTitle').textContent = 'Create Your PIN';
+            document.getElementById('passcodeSetupSubtitle').textContent = 'Set a 4-digit PIN to secure your account';
+        }
+
         // Onboarding Flow
         function showWelcomeScreen() {
             // Skip welcome screen, go directly to business setup
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('businessSetupScreen').classList.remove('hidden');
             document.getElementById('passcodeSetupScreen').classList.add('hidden');
+            const loginScreen = document.getElementById('loginScreen');
+            if (loginScreen) loginScreen.classList.add('hidden');
         }
 
         function showBusinessSetup() {
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('businessSetupScreen').classList.remove('hidden');
             document.getElementById('passcodeSetupScreen').classList.add('hidden');
+            const loginScreen = document.getElementById('loginScreen');
+            if (loginScreen) loginScreen.classList.add('hidden');
+        }
+
+        function showLoginScreen() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('businessSetupScreen').classList.add('hidden');
+            document.getElementById('passcodeSetupScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            // Clear any previous errors
+            document.getElementById('loginEmailError').textContent = '';
+            document.getElementById('loginPinError').textContent = '';
+            document.getElementById('loginGeneralError').textContent = '';
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            // Clear previous errors
+            document.getElementById('loginEmailError').textContent = '';
+            document.getElementById('loginPinError').textContent = '';
+            document.getElementById('loginGeneralError').textContent = '';
+
+            const email = document.getElementById('loginEmail').value.trim();
+            const pin = document.getElementById('loginPin').value.trim();
+
+            let hasError = false;
+
+            if (!email) {
+                document.getElementById('loginEmailError').textContent = 'Email is required';
+                hasError = true;
+            } else if (!validateEmail(email)) {
+                document.getElementById('loginEmailError').textContent = 'Please enter a valid email address';
+                hasError = true;
+            }
+
+            if (!pin) {
+                document.getElementById('loginPinError').textContent = 'PIN is required';
+                hasError = true;
+            } else if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+                document.getElementById('loginPinError').textContent = 'PIN must be 4 digits';
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Show loading state
+            const submitBtn = document.getElementById('loginSubmitBtn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Signing in...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/login-pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, pin })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Login successful
+                    localStorage.setItem('auth_token', data.access_token);
+                    localStorage.setItem('barber_id', data.barber_id);
+                    localStorage.setItem('backend_registered', 'true');
+
+                    // Set user profile
+                    userProfile = {
+                        id: data.barber_id,
+                        shopName: data.shop_name,
+                        email: email,
+                        barberScore: 100,
+                        tier: 0,
+                    };
+                    localStorage.setItem('userProfile', JSON.stringify(userProfile));
+
+                    // Set passcode locally for this session
+                    currentPasscode = pin;
+                    localStorage.setItem('passcode', pin);
+
+                    // Hide login screen and start app
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    renderServices();
+                    updateDashboard();
+                    updateAnalytics();
+                    updateBarberScore();
+                    updateProcurement();
+
+                    showToast('success', 'Welcome Back', `Logged in as ${data.shop_name}`);
+                } else {
+                    document.getElementById('loginGeneralError').textContent = data.detail || 'Login failed. Please try again.';
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                document.getElementById('loginGeneralError').textContent = 'Network error. Please try again.';
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
         }
 
         function validateEmail(email) {
@@ -2707,7 +2881,7 @@
 
             if (hasError) return;
 
-            // Save profile data (will be completed after passcode setup)
+            // Save profile data
             tempProfile = {
                 shopName,
                 ownerName,
@@ -2715,7 +2889,88 @@
                 phone
             };
 
-            showPasscodeSetupScreen();
+            // Register with backend and redirect to Stripe
+            await registerAndRedirectToStripe(tempProfile);
+        }
+
+        async function registerAndRedirectToStripe(profile) {
+            // Show loading state
+            const submitBtn = document.querySelector('#businessSetupScreen button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Setting up...';
+            submitBtn.disabled = true;
+
+            try {
+                // Generate a secure random password (user doesn't need to know it - they use 4-digit PIN)
+                const randomPassword = crypto.randomUUID().slice(0, 16) + 'Aa1!';
+                localStorage.setItem('backend_password', randomPassword);
+
+                console.log('Registering with backend...');
+                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: profile.email,
+                        password: randomPassword,
+                        shopName: profile.shopName,
+                        ownerName: profile.ownerName,
+                        phone: profile.phone
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Save auth token
+                    localStorage.setItem('auth_token', data.access_token);
+                    localStorage.setItem('barber_id', data.barber_id);
+                    localStorage.setItem('backend_registered', 'true');
+                    localStorage.setItem('temp_profile', JSON.stringify(profile));
+                    localStorage.setItem('onboarding_step', 'stripe_redirect');
+
+                    console.log('Registration successful, redirecting to Stripe...');
+
+                    // Now get Stripe onboarding link
+                    const stripeResponse = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/create-account-link', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${data.access_token}`
+                        },
+                        body: JSON.stringify({
+                            barber_id: data.barber_id,
+                            return_url: window.location.origin + window.location.pathname,
+                            refresh_url: window.location.origin + window.location.pathname
+                        })
+                    });
+
+                    const stripeData = await stripeResponse.json();
+
+                    if (stripeResponse.ok && stripeData.url) {
+                        // Redirect to Stripe
+                        window.location.href = stripeData.url;
+                    } else {
+                        console.error('Failed to get Stripe link:', stripeData);
+                        // Fall back to PIN setup without Stripe
+                        showToast('warning', 'Payment Setup Skipped', 'You can set up payments later in Settings');
+                        showPasscodeSetupScreen();
+                    }
+                } else {
+                    // Check if user already exists
+                    if (data.detail && (data.detail.includes('already') || data.detail.includes('exists'))) {
+                        document.getElementById('emailError').textContent = 'An account with this email already exists. Please sign in.';
+                        document.getElementById('setupEmail').classList.add('input-error');
+                    } else {
+                        showToast('error', 'Registration Failed', data.detail || 'Please try again');
+                    }
+                }
+            } catch (err) {
+                console.error('Registration error:', err);
+                showToast('error', 'Network Error', 'Please check your connection and try again');
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
         }
 
         let setupPasscodeInput = '';
@@ -2727,12 +2982,14 @@
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('businessSetupScreen').classList.add('hidden');
             document.getElementById('passcodeSetupScreen').classList.remove('hidden');
+            const loginScreen = document.getElementById('loginScreen');
+            if (loginScreen) loginScreen.classList.add('hidden');
             setupPasscodeInput = '';
             setupPasscodeConfirm = '';
             isConfirmingPasscode = false;
             updateSetupPasscodeDots();
-            document.getElementById('passcodeSetupTitle').textContent = 'Create Your Passcode';
-            document.getElementById('passcodeSetupSubtitle').textContent = 'Enter a 4-digit passcode to secure your POS';
+            document.getElementById('passcodeSetupTitle').textContent = 'Create Your PIN';
+            document.getElementById('passcodeSetupSubtitle').textContent = 'Enter a 4-digit PIN to secure your account';
         }
 
         function enterSetupPasscode(digit) {
@@ -2796,32 +3053,52 @@
         }
 
         async function completeSetup() {
-            // Save passcode
+            // Save passcode locally
             currentPasscode = setupPasscodeInput;
             localStorage.setItem('passcode', currentPasscode);
 
-            // Save profile
-            userProfile = {
-                id: Date.now().toString(),
-                ...tempProfile,
-                barberScore: 100,
-                tier: 0,
-                createdAt: new Date().toISOString()
-            };
-            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            // Save profile (may already be saved from handleStripeReturn)
+            if (!userProfile || !userProfile.shopName) {
+                userProfile = {
+                    id: Date.now().toString(),
+                    ...tempProfile,
+                    barberScore: 100,
+                    tier: 0,
+                    createdAt: new Date().toISOString()
+                };
+                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            }
 
             // Show loading state
-            document.getElementById('passcodeSetupTitle').textContent = 'Setting up your account...';
+            document.getElementById('passcodeSetupTitle').textContent = 'Saving your PIN...';
             document.getElementById('passcodeSetupSubtitle').textContent = 'Please wait';
 
-            // Register with backend (BLOCKING - wait for result)
-            const registered = await registerWithBackend(tempProfile);
+            // Save PIN to backend if we have a token
+            const authToken = localStorage.getItem('auth_token');
+            if (authToken) {
+                try {
+                    const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/set-pin', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({ pin: currentPasscode })
+                    });
 
-            if (!registered) {
-                // Registration failed but allow user to continue
-                // They can retry from Settings later
-                console.log('Backend registration failed, user can retry from Settings');
+                    if (response.ok) {
+                        console.log('PIN saved to backend successfully');
+                    } else {
+                        console.error('Failed to save PIN to backend:', await response.text());
+                    }
+                } catch (err) {
+                    console.error('Error saving PIN to backend:', err);
+                }
             }
+
+            // Clear temporary data
+            localStorage.removeItem('temp_profile');
+            localStorage.removeItem('onboarding_step');
 
             // Hide onboarding and start app
             document.getElementById('passcodeSetupScreen').classList.add('hidden');
@@ -2830,6 +3107,8 @@
             updateAnalytics();
             updateBarberScore();
             updateProcurement();
+
+            showToast('success', 'Welcome!', 'Your account is ready');
         }
 
         // Register user with backend for Stripe integration

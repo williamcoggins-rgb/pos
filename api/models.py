@@ -210,6 +210,8 @@ class RegisterRequest(BaseModel):
     email: str = Field(..., description="Email address")
     password: str = Field(..., min_length=8, description="Password (min 8 chars)")
     shop_name: str = Field(..., alias="shopName", min_length=1, description="Shop name")
+    owner_name: Optional[str] = Field(None, alias="ownerName", description="Owner name")
+    phone: Optional[str] = Field(None, description="Phone number")
 
     class Config:
         populate_by_name = True
@@ -219,6 +221,27 @@ class LoginRequest(BaseModel):
     """Login request"""
     email: str
     password: str
+
+
+class PINLoginRequest(BaseModel):
+    """PIN-based login request"""
+    email: str
+    pin: str = Field(..., min_length=4, max_length=4, description="4-digit PIN")
+
+
+class SetPINRequest(BaseModel):
+    """Set user PIN request"""
+    pin: str = Field(..., min_length=4, max_length=4, description="4-digit PIN")
+
+
+class UserProfileResponse(BaseModel):
+    """User profile response"""
+    barber_id: str
+    email: str
+    shop_name: str
+    owner_name: Optional[str] = None
+    phone: Optional[str] = None
+    has_pin: bool = False
 
 
 class TokenResponse(BaseModel):
