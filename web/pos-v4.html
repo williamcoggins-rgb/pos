@@ -1293,8 +1293,8 @@
             margin-left: 4px;
         }
 
-        /* Onboarding Screens */
-        .onboarding-screen {
+        /* Onboarding Screens - Mobile First with Smooth Transitions */
+        .onboarding-container {
             position: fixed;
             top: 0;
             left: 0;
@@ -1304,14 +1304,126 @@
             z-index: 3000;
             display: flex;
             flex-direction: column;
+        }
+
+        .onboarding-container.hidden {
+            display: none;
+        }
+
+        /* Progress Indicator */
+        .onboarding-progress {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #F0F0F0;
+        }
+
+        .progress-step {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #E5E5E5;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            width: 24px;
+            border-radius: 4px;
+            background: #DC2626;
+        }
+
+        .progress-step.completed {
+            background: #DC2626;
+        }
+
+        .progress-connector {
+            width: 20px;
+            height: 2px;
+            background: #E5E5E5;
+            transition: background 0.3s ease;
+        }
+
+        .progress-connector.completed {
+            background: #DC2626;
+        }
+
+        /* Onboarding Screens with Transitions */
+        .onboarding-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 40px 20px;
+            padding: 80px 20px 40px;
             overflow-y: auto;
+            opacity: 1;
+            transform: translateX(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            -webkit-overflow-scrolling: touch;
         }
 
         .onboarding-screen.hidden {
-            display: none;
+            opacity: 0;
+            transform: translateX(30px);
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .onboarding-screen.slide-out-left {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+
+        /* Responsive Viewport Handling */
+        @media (max-height: 600px) {
+            .onboarding-screen {
+                padding: 70px 16px 20px;
+            }
+            .welcome-logo {
+                width: 60px !important;
+                height: 60px !important;
+                font-size: 24px !important;
+                margin-bottom: 16px !important;
+            }
+            .form-title, .welcome-title {
+                font-size: 24px !important;
+            }
+            .passcode-keypad {
+                gap: 8px !important;
+            }
+            .passcode-key {
+                font-size: 20px !important;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .onboarding-screen {
+                padding: 70px 12px 20px;
+            }
+            .setup-form {
+                gap: 12px;
+            }
+            .form-group {
+                margin-bottom: 8px;
+            }
+        }
+
+        /* Safe area for notched devices */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .onboarding-progress {
+                padding-top: calc(20px + env(safe-area-inset-top));
+            }
+            .onboarding-screen {
+                padding-bottom: calc(40px + env(safe-area-inset-bottom));
+            }
         }
 
         .welcome-logo {
@@ -1380,21 +1492,31 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <div class="container">
-        <!-- Welcome Screen -->
-        <div class="onboarding-screen hidden" id="welcomeScreen">
+    <!-- Onboarding Container with Progress -->
+    <div class="onboarding-container hidden" id="onboardingContainer">
+        <!-- Progress Indicator -->
+        <div class="onboarding-progress" id="onboardingProgress">
+            <div class="progress-step active" id="progressStep1"></div>
+            <div class="progress-connector" id="progressConnector1"></div>
+            <div class="progress-step" id="progressStep2"></div>
+            <div class="progress-connector" id="progressConnector2"></div>
+            <div class="progress-step" id="progressStep3"></div>
+        </div>
+
+        <!-- Welcome Screen (Step 1) -->
+        <div class="onboarding-screen" id="welcomeScreen">
             <div class="welcome-logo">BS</div>
             <h1 class="welcome-title">Welcome to BarberScore POS</h1>
             <p class="welcome-subtitle">Your complete point of sale system with built-in credit scoring for warehouse access</p>
-            <button class="btn-primary" onclick="showBusinessSetup()">Get Started</button>
+            <button class="btn-primary" onclick="navigateOnboarding('business')">Get Started</button>
         </div>
 
-        <!-- Business Setup Screen -->
+        <!-- Business Setup Screen (Step 2) -->
         <div class="onboarding-screen hidden" id="businessSetupScreen">
             <form class="setup-form" onsubmit="submitBusinessSetup(event)">
                 <div class="welcome-logo" style="width: 64px; height: 64px; font-size: 28px; margin: 0 auto 16px;">BS</div>
-                <h2 class="form-title">Welcome to BarberScore POS</h2>
-                <p class="form-subtitle">Let's set up your business profile to get started</p>
+                <h2 class="form-title">Set Up Your Business</h2>
+                <p class="form-subtitle">Enter your business details to get started</p>
 
                 <div class="form-group">
                     <label class="form-label">Shop Name <span class="required-badge">*</span></label>
@@ -1421,11 +1543,11 @@
                 </div>
 
                 <button type="submit" class="btn-primary">Continue</button>
-                <button type="button" class="btn-secondary" onclick="showWelcomeScreen()">Back</button>
+                <button type="button" class="btn-secondary" onclick="navigateOnboarding('welcome')">Back</button>
 
                 <div style="margin-top: 24px; text-align: center; padding-top: 24px; border-top: 1px solid #E5E5E5;">
                     <p style="color: #666; margin-bottom: 12px;">Already have an account?</p>
-                    <button type="button" class="btn-secondary" onclick="showLoginScreen()">Sign In</button>
+                    <button type="button" class="btn-secondary" onclick="navigateOnboarding('login')">Sign In</button>
                 </div>
             </form>
         </div>
@@ -1452,11 +1574,11 @@
                 <div class="error-text" id="loginGeneralError" style="text-align: center; margin-bottom: 16px;"></div>
 
                 <button type="submit" class="btn-primary" id="loginSubmitBtn">Sign In</button>
-                <button type="button" class="btn-secondary" onclick="showBusinessSetup()">Create Account</button>
+                <button type="button" class="btn-secondary" onclick="navigateOnboarding('business')">Create Account</button>
             </form>
         </div>
 
-        <!-- Passcode Setup Screen -->
+        <!-- Passcode Setup Screen (Step 3) -->
         <div class="onboarding-screen hidden" id="passcodeSetupScreen">
             <h1 class="passcode-title" id="passcodeSetupTitle">Create Your Passcode</h1>
             <p class="passcode-subtitle" id="passcodeSetupSubtitle">Enter a 4-digit passcode to secure your POS</p>
@@ -1485,9 +1607,12 @@
                 </button>
             </div>
             <div class="error-message" id="passcodeSetupError"></div>
-            <button class="btn-secondary" style="margin-top: 20px;" onclick="showBusinessSetup()">Back</button>
+            <button class="btn-secondary" style="margin-top: 20px;" onclick="navigateOnboarding('business')">Back</button>
         </div>
+    </div>
+    <!-- End Onboarding Container -->
 
+    <div class="container">
         <!-- Passcode Screen (Login) -->
         <div class="passcode-screen hidden" id="passcodeScreen">
             <h1 class="passcode-title">Enter Passcode</h1>
@@ -2708,29 +2833,114 @@
             document.getElementById('passcodeSetupSubtitle').textContent = 'Set a 4-digit PIN to secure your account';
         }
 
-        // Onboarding Flow
+        // Onboarding Flow - Unified Navigation System
+        let currentOnboardingStep = 'welcome';
+        const onboardingScreens = ['welcomeScreen', 'businessSetupScreen', 'loginScreen', 'passcodeSetupScreen'];
+        const onboardingStepOrder = { welcome: 1, business: 2, login: 2, passcode: 3 };
+
+        function navigateOnboarding(targetStep, direction = 'forward') {
+            const container = document.getElementById('onboardingContainer');
+            const currentScreen = document.getElementById(getScreenId(currentOnboardingStep));
+            const targetScreen = document.getElementById(getScreenId(targetStep));
+
+            if (!container || !targetScreen) return;
+
+            // Show container if hidden
+            container.classList.remove('hidden');
+
+            // Determine animation direction
+            const isForward = onboardingStepOrder[targetStep] >= onboardingStepOrder[currentOnboardingStep];
+
+            // Animate out current screen
+            if (currentScreen && currentScreen !== targetScreen) {
+                currentScreen.classList.add(isForward ? 'slide-out-left' : 'hidden');
+                setTimeout(() => {
+                    currentScreen.classList.add('hidden');
+                    currentScreen.classList.remove('slide-out-left');
+                }, 300);
+            }
+
+            // Animate in target screen
+            targetScreen.classList.remove('hidden', 'slide-out-left');
+
+            // Update progress indicator
+            updateOnboardingProgress(targetStep);
+
+            // Update current step
+            currentOnboardingStep = targetStep;
+
+            // Focus management for accessibility
+            setTimeout(() => {
+                const firstInput = targetScreen.querySelector('input:not([type="hidden"])');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }, 350);
+
+            // Scroll to top of screen
+            targetScreen.scrollTop = 0;
+        }
+
+        function getScreenId(step) {
+            const screenMap = {
+                welcome: 'welcomeScreen',
+                business: 'businessSetupScreen',
+                login: 'loginScreen',
+                passcode: 'passcodeSetupScreen'
+            };
+            return screenMap[step] || 'welcomeScreen';
+        }
+
+        function updateOnboardingProgress(step) {
+            const stepNum = onboardingStepOrder[step] || 1;
+
+            // Update progress steps
+            for (let i = 1; i <= 3; i++) {
+                const stepEl = document.getElementById(`progressStep${i}`);
+                const connectorEl = document.getElementById(`progressConnector${i}`);
+
+                if (stepEl) {
+                    stepEl.classList.remove('active', 'completed');
+                    if (i < stepNum) {
+                        stepEl.classList.add('completed');
+                    } else if (i === stepNum) {
+                        stepEl.classList.add('active');
+                    }
+                }
+
+                if (connectorEl) {
+                    connectorEl.classList.remove('completed');
+                    if (i < stepNum) {
+                        connectorEl.classList.add('completed');
+                    }
+                }
+            }
+
+            // Hide progress indicator on login screen (it's not part of the main flow)
+            const progressEl = document.getElementById('onboardingProgress');
+            if (progressEl) {
+                progressEl.style.display = step === 'login' ? 'none' : 'flex';
+            }
+        }
+
+        function hideOnboarding() {
+            const container = document.getElementById('onboardingContainer');
+            if (container) {
+                container.classList.add('hidden');
+            }
+        }
+
+        // Legacy function wrappers for compatibility
         function showWelcomeScreen() {
-            // Skip welcome screen, go directly to business setup
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('businessSetupScreen').classList.remove('hidden');
-            document.getElementById('passcodeSetupScreen').classList.add('hidden');
-            const loginScreen = document.getElementById('loginScreen');
-            if (loginScreen) loginScreen.classList.add('hidden');
+            navigateOnboarding('business'); // Skip welcome, go to business setup
         }
 
         function showBusinessSetup() {
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('businessSetupScreen').classList.remove('hidden');
-            document.getElementById('passcodeSetupScreen').classList.add('hidden');
-            const loginScreen = document.getElementById('loginScreen');
-            if (loginScreen) loginScreen.classList.add('hidden');
+            navigateOnboarding('business');
         }
 
         function showLoginScreen() {
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('businessSetupScreen').classList.add('hidden');
-            document.getElementById('passcodeSetupScreen').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
+            navigateOnboarding('login');
             // Clear any previous errors
             document.getElementById('loginEmailError').textContent = '';
             document.getElementById('loginPinError').textContent = '';
@@ -2803,8 +3013,8 @@
                     currentPasscode = pin;
                     localStorage.setItem('passcode', pin);
 
-                    // Hide login screen and start app
-                    document.getElementById('loginScreen').classList.add('hidden');
+                    // Hide onboarding and start app
+                    hideOnboarding();
                     renderServices();
                     updateDashboard();
                     updateAnalytics();
@@ -2980,11 +3190,7 @@
         let tempProfile = null;
 
         function showPasscodeSetupScreen() {
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('businessSetupScreen').classList.add('hidden');
-            document.getElementById('passcodeSetupScreen').classList.remove('hidden');
-            const loginScreen = document.getElementById('loginScreen');
-            if (loginScreen) loginScreen.classList.add('hidden');
+            navigateOnboarding('passcode');
             setupPasscodeInput = '';
             setupPasscodeConfirm = '';
             isConfirmingPasscode = false;
@@ -3102,7 +3308,7 @@
             localStorage.removeItem('onboarding_step');
 
             // Hide onboarding and start app
-            document.getElementById('passcodeSetupScreen').classList.add('hidden');
+            hideOnboarding();
             renderServices();
             updateDashboard();
             updateAnalytics();
