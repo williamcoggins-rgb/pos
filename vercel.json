@@ -1,5 +1,8 @@
 {
+  "buildCommand": "",
   "outputDirectory": "web",
+  "functions": {},
+  "framework": null,
   "redirects": [
     { "source": "/register.html", "destination": "/", "permanent": false },
     { "source": "/login.html", "destination": "/", "permanent": false },
