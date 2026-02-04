@@ -4,147 +4,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Refresh Payment Setup - BarberScore POS</title>
-    <script src="api-service.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F3F4F6;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
-
         .container {
             background: white;
-            border-radius: 20px;
+            border-radius: 12px;
             padding: 40px;
-            max-width: 500px;
+            max-width: 400px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             text-align: center;
         }
-
         .icon {
-            font-size: 60px;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 15px;
+            width: 64px;
+            height: 64px;
+            background: #F59E0B;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
             font-size: 28px;
         }
-
-        p {
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        h1 { font-size: 24px; margin-bottom: 8px; color: #111827; }
+        p { color: #6B7280; margin-bottom: 20px; line-height: 1.5; }
+        .btn {
+            background: #DC2626;
             color: white;
             border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
+            padding: 14px 24px;
+            border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
             width: 100%;
+            transition: background 0.2s;
         }
-
-        button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .loading {
+        .btn:hover:not(:disabled) { background: #B91C1C; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .loader {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid white;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-left: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .message {
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 20px;
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error {
+            background: #FEE2E2;
+            border-left: 4px solid #EF4444;
+            color: #991B1B;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 16px;
+            text-align: left;
             display: none;
         }
-
-        .message.error {
-            background: #ffebee;
-            border-left: 4px solid #f44336;
-            color: #c62828;
-        }
+        .link { color: #DC2626; text-decoration: none; }
+        .link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="icon">🔄</div>
-        <h1>Continue Payment Setup</h1>
-        <p>Your payment setup link has expired or needs to be refreshed. Click the button below to get a new link and continue where you left off.</p>
+        <div class="icon">&#8635;</div>
+        <h1>Continue Setup</h1>
+        <p>Your Stripe setup link has expired. Click below to get a new link and continue setting up payments.</p>
 
-        <button onclick="refreshLink()" id="refreshBtn">
+        <button class="btn" onclick="refreshLink()" id="refreshBtn">
             <span id="btnText">Get New Link</span>
         </button>
 
-        <div id="message" class="message"></div>
+        <div id="error" class="error"></div>
 
-        <p style="margin-top: 30px; font-size: 14px; color: #999;">
-            Already completed setup? <a href="pos-v4.html" style="color: #667eea;">Go to POS</a>
+        <p style="margin-top: 24px; font-size: 14px;">
+            Already completed? <a href="/" class="link">Go to App</a>
         </p>
     </div>
 
     <script>
+        const API_URL = 'https://pos-production-fd37.up.railway.app';
+
         async function refreshLink() {
             const btn = document.getElementById('refreshBtn');
             const btnText = document.getElementById('btnText');
-            const messageDiv = document.getElementById('message');
+            const errorDiv = document.getElementById('error');
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                errorDiv.textContent = 'Please sign up again to continue.';
+                errorDiv.style.display = 'block';
+                setTimeout(() => window.location.href = '/', 2000);
+                return;
+            }
 
             btn.disabled = true;
-            btnText.innerHTML = 'Getting new link<span class="loading"></span>';
-            messageDiv.style.display = 'none';
+            btnText.innerHTML = 'Getting link<span class="loader"></span>';
+            errorDiv.style.display = 'none';
 
             try {
-                const response = await api.request('/stripe/create-account-link', {
-                    method: 'POST'
+                const res = await fetch(`${API_URL}/api/stripe/create-account-link`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
+                const result = await res.json();
 
-                if (response.url) {
-                    // Redirect to new onboarding link
-                    window.location.href = response.url;
+                if (res.ok && result.url) {
+                    window.location.href = result.url;
+                } else if (result.already_onboarded) {
+                    localStorage.setItem('onboarding_step', 'stripe_complete');
+                    window.location.href = '/?stripe=success';
                 } else {
-                    throw new Error('No URL returned');
+                    throw new Error(result.detail || 'Could not get new link');
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                messageDiv.className = 'message error';
-                messageDiv.textContent = `Error: ${error.message}. Please try again or contact support.`;
-                messageDiv.style.display = 'block';
+            } catch (err) {
+                errorDiv.textContent = err.message || 'Network error. Please try again.';
+                errorDiv.style.display = 'block';
                 btn.disabled = false;
                 btnText.textContent = 'Try Again';
             }

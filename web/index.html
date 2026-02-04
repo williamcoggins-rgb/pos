@@ -721,8 +721,8 @@ body {
                 <h1>Welcome to BarberScore POS</h1>
                 <p>Your complete point of sale system with built-in credit scoring for warehouse access</p>
                 <div class="form">
-                    <button class="btn btn-primary" onclick="goToScreen('signup')">Get Started</button>
-                    <button class="btn btn-link" onclick="goToScreen('login')">Already have an account? Sign in</button>
+                    <button class="btn btn-primary" onclick="goToScreen('signup')">Sign Up</button>
+                    <button class="btn btn-secondary" onclick="goToScreen('login')">Sign In</button>
                 </div>
             </div>
 
@@ -730,7 +730,7 @@ body {
             <div class="onboarding-screen hidden" id="screen-signup">
                 <div class="logo">BS</div>
                 <h1>Create Your Account</h1>
-                <p>Enter your business details</p>
+                <p>Enter your business details, then connect with Stripe to accept payments</p>
                 <form class="form" onsubmit="handleSignup(event)">
                     <div class="form-group">
                         <label class="form-label">Shop Name</label>
@@ -749,23 +749,36 @@ body {
                         <input type="tel" class="form-input" id="phone" placeholder="(555) 123-4567" required>
                     </div>
                     <div id="signupError" class="form-error"></div>
-                    <button type="submit" class="btn btn-primary" id="signupBtn">Continue</button>
+                    <button type="submit" class="btn btn-primary" id="signupBtn">Continue to Stripe</button>
                     <button type="button" class="btn btn-secondary" onclick="goToScreen('welcome')">Back</button>
                 </form>
             </div>
 
-            <!-- Step 2b: Login -->
+            <!-- Step 2b: Stripe Loading -->
+            <div class="onboarding-screen hidden" id="screen-stripe-loading">
+                <div class="logo">BS</div>
+                <h1>Connecting to Stripe...</h1>
+                <p>You'll be redirected to Stripe to set up payments. This only takes a few minutes.</p>
+                <div class="form">
+                    <div style="text-align: center; color: var(--gray-500);">
+                        <div style="font-size: 32px; margin-bottom: 16px;">...</div>
+                        <p>Please wait</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2c: Login -->
             <div class="onboarding-screen hidden" id="screen-login">
                 <div class="logo">BS</div>
                 <h1>Welcome Back</h1>
-                <p>Sign in to your account</p>
+                <p>Sign in with your email and PIN</p>
                 <form class="form" onsubmit="handleLogin(event)">
                     <div class="form-group">
                         <label class="form-label">Email</label>
                         <input type="email" class="form-input" id="loginEmail" placeholder="john@example.com" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">PIN</label>
+                        <label class="form-label">4-Digit PIN</label>
                         <input type="password" class="form-input" id="loginPin" placeholder="****" maxlength="4" inputmode="numeric" required>
                     </div>
                     <div id="loginError" class="form-error"></div>
@@ -1037,18 +1050,48 @@ function init() {
     const savedToken = localStorage.getItem('token');
     const savedPin = localStorage.getItem('pin');
     const savedTransactions = localStorage.getItem('transactions');
+    const onboardingStep = localStorage.getItem('onboarding_step');
 
     if (savedUser) state.user = JSON.parse(savedUser);
     if (savedToken) state.token = savedToken;
     if (savedTransactions) state.transactions = JSON.parse(savedTransactions);
 
+    // Check if returning from Stripe onboarding
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('stripe') === 'success' || onboardingStep === 'stripe_complete') {
+        localStorage.removeItem('onboarding_step');
+        // Clear URL params
+        window.history.replaceState({}, document.title, window.location.pathname);
+        // User completed Stripe, now create PIN
+        if (state.user && state.token) {
+            goToScreen('pin');
+            updateDots(3);
+            renderServices();
+            return;
+        }
+    }
+
+    // Check if user was in middle of Stripe onboarding
+    if (onboardingStep === 'stripe_redirect' && state.user && state.token) {
+        // They haven't completed Stripe yet, show loading and redirect
+        goToScreen('stripe-loading');
+        redirectToStripe();
+        renderServices();
+        return;
+    }
+
+    // Normal flow
     if (state.user && savedPin) {
+        // Returning user with PIN - show lock screen
         document.getElementById('onboarding').classList.add('hidden');
         document.getElementById('lockScreen').classList.remove('hidden');
         document.getElementById('lockShopName').textContent = state.user.shopName;
     } else if (state.user && state.token && !savedPin) {
+        // User registered but no PIN - go to PIN creation
         goToScreen('pin');
+        updateDots(3);
     }
+    // Otherwise show welcome screen (default)
 
     renderServices();
 }
@@ -1059,7 +1102,7 @@ function init() {
 function goToScreen(screen) {
     document.querySelectorAll('.onboarding-screen').forEach(s => s.classList.add('hidden'));
     document.getElementById(`screen-${screen}`).classList.remove('hidden');
-    const dots = { welcome: 1, signup: 2, login: 2, pin: 3 };
+    const dots = { welcome: 1, signup: 2, login: 2, 'stripe-loading': 2, pin: 3 };
     updateDots(dots[screen] || 1);
 }
 
@@ -1103,15 +1146,51 @@ async function handleSignup(e) {
             state.token = result.access_token;
             localStorage.setItem('user', JSON.stringify(state.user));
             localStorage.setItem('token', state.token);
-            goToScreen('pin');
+            localStorage.setItem('onboarding_step', 'stripe_redirect');
+
+            // Show loading and redirect to Stripe
+            btn.textContent = 'Connecting to Stripe...';
+            goToScreen('stripe-loading');
+            await redirectToStripe();
         } else {
             errorEl.textContent = result.detail || 'Registration failed';
+            btn.disabled = false;
+            btn.textContent = 'Continue to Stripe';
         }
     } catch (err) {
         errorEl.textContent = 'Network error. Please try again.';
+        btn.disabled = false;
+        btn.textContent = 'Continue to Stripe';
     }
-    btn.disabled = false;
-    btn.textContent = 'Continue';
+}
+
+async function redirectToStripe() {
+    try {
+        const res = await fetch(`${API_URL}/api/stripe/create-account-link`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.token}`
+            },
+        });
+        const result = await res.json();
+
+        if (res.ok && result.url) {
+            // Redirect to Stripe onboarding
+            window.location.href = result.url;
+        } else if (result.already_onboarded) {
+            // Already has Stripe account, skip to PIN
+            localStorage.setItem('onboarding_step', 'stripe_complete');
+            goToScreen('pin');
+            updateDots(3);
+        } else {
+            toast('error', result.detail || 'Could not connect to Stripe');
+            goToScreen('signup');
+        }
+    } catch (err) {
+        toast('error', 'Network error connecting to Stripe');
+        goToScreen('signup');
+    }
 }
 
 async function handleLogin(e) {
