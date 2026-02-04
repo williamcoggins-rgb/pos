@@ -31,7 +31,9 @@ class AuthService:
         self,
         email: str,
         password: str,
-        shop_name: str
+        shop_name: str,
+        owner_name: str = None,
+        phone: str = None
     ) -> Tuple[str, str, str]:
         """
         Register a new barber
@@ -92,14 +94,21 @@ class AuthService:
                 # Use service role key for insertion
                 insert_headers["Authorization"] = f"Bearer {self.supabase_key}"
 
+            barber_data = {
+                "id": user_id,
+                "barber_id": barber_id,
+                "shop_name": shop_name,
+                "email": email,
+            }
+            if owner_name:
+                barber_data["owner_name"] = owner_name
+            if phone:
+                barber_data["phone"] = phone
+
             barber_response = await client.post(
                 f"{self.supabase_url}/rest/v1/barbers",
                 headers=insert_headers,
-                json={
-                    "id": user_id,
-                    "barber_id": barber_id,
-                    "shop_name": shop_name,
-                }
+                json=barber_data
             )
 
             # Log if barber creation failed (but don't fail registration)
@@ -208,3 +217,126 @@ class AuthService:
 
         # Convert to barber_id format
         return f"barber_{user_id[:16]}"
+
+    async def login_with_pin(
+        self,
+        email: str,
+        pin: str
+    ) -> Tuple[str, str, str]:
+        """
+        Login using email and 4-digit PIN
+
+        Args:
+            email: User email
+            pin: 4-digit PIN
+
+        Returns:
+            (access_token, barber_id, shop_name)
+        """
+        import hashlib
+        async with httpx.AsyncClient() as client:
+            # Look up user by email in barbers table
+            response = await client.get(
+                f"{self.supabase_url}/rest/v1/barbers?email=eq.{email}",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Bearer {self.supabase_key}",
+                }
+            )
+
+            if response.status_code != 200:
+                raise Exception("Failed to verify credentials")
+
+            barbers = response.json()
+            if not barbers:
+                raise Exception("Invalid email or PIN")
+
+            barber = barbers[0]
+
+            # Verify PIN
+            stored_pin_hash = barber.get("pin_hash")
+            if not stored_pin_hash:
+                raise Exception("PIN not set. Please complete registration first.")
+
+            pin_hash = hashlib.sha256(pin.encode()).hexdigest()
+            if pin_hash != stored_pin_hash:
+                raise Exception("Invalid email or PIN")
+
+            # Generate JWT token
+            user_id = barber.get("id")
+            access_token = self._generate_token(user_id)
+
+            return (access_token, barber["barber_id"], barber["shop_name"])
+
+    async def set_pin(
+        self,
+        user_id: str,
+        pin: str
+    ) -> bool:
+        """
+        Set or update user's 4-digit PIN
+
+        Args:
+            user_id: User ID
+            pin: 4-digit PIN
+
+        Returns:
+            True if successful
+        """
+        import hashlib
+        pin_hash = hashlib.sha256(pin.encode()).hexdigest()
+
+        async with httpx.AsyncClient() as client:
+            response = await client.patch(
+                f"{self.supabase_url}/rest/v1/barbers?id=eq.{user_id}",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Bearer {self.supabase_key}",
+                    "Prefer": "return=minimal"
+                },
+                json={"pin_hash": pin_hash}
+            )
+
+            if response.status_code not in (200, 204):
+                raise Exception(f"Failed to set PIN: {response.text}")
+
+            return True
+
+    async def get_profile(
+        self,
+        user_id: str
+    ) -> dict:
+        """
+        Get user profile
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            User profile dict
+        """
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.supabase_url}/rest/v1/barbers?id=eq.{user_id}",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Bearer {self.supabase_key}",
+                }
+            )
+
+            if response.status_code != 200:
+                raise Exception("Failed to fetch profile")
+
+            barbers = response.json()
+            if not barbers:
+                raise Exception("Profile not found")
+
+            barber = barbers[0]
+            return {
+                "barber_id": barber.get("barber_id"),
+                "email": barber.get("email"),
+                "shop_name": barber.get("shop_name"),
+                "owner_name": barber.get("owner_name"),
+                "phone": barber.get("phone"),
+                "has_pin": bool(barber.get("pin_hash")),
+            }

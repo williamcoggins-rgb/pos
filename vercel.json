@@ -1,5 +1,9 @@
 {
   "outputDirectory": "web",
+  "redirects": [
+    { "source": "/register.html", "destination": "/", "permanent": false },
+    { "source": "/login.html", "destination": "/", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/", "destination": "/pos-v4.html" },
     { "source": "/index.html", "destination": "/pos-v4.html" }
