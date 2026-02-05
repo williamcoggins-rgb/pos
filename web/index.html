@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Stripe.js for payment processing -->
     <script src="https://js.stripe.com/v3/"></script>
+    <!-- API Client for backend communication -->
+    <script src="api-client.js"></script>
     <style>
         /* Design Tokens - 8-Point Spacing System */
         :root {
@@ -2308,7 +2310,10 @@
     </div>
 
     <script>
-        // Data Storage
+        // API Client - backend communication
+        const apiClient = new APIClient();
+
+        // Data Storage (localStorage as cache, backend as source of truth)
         let services = JSON.parse(localStorage.getItem('services')) || [];
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let cart = [];
@@ -2511,7 +2516,7 @@
                 document.getElementById('tapToPayStatus').textContent = 'Setting up payment...';
 
                 // Create payment intent on backend
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/payments/create-payment-intent', {
+                const response = await fetch(`${API_URL}/api/payments/create-payment-intent`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2676,6 +2681,46 @@
             completeSaleWithPayment('Invoice');
         }
 
+        // Record sale on the backend (event-sourced POS)
+        async function recordSaleOnBackend(cartItems, paymentMethod, customerContact, trackingData) {
+            if (!apiClient.isAuthenticated()) return null;
+
+            try {
+                // 1. Create sale with metadata
+                const metadata = {
+                    customer_contact: customerContact,
+                    rebooked: trackingData.rebooked,
+                    had_retail: trackingData.hadRetail,
+                    had_addons: trackingData.hadAddons,
+                    payment_method_label: paymentMethod,
+                };
+                const { sale_id } = await apiClient.createSale(metadata);
+
+                // 2. Add each cart item as a line item
+                for (const item of cartItems) {
+                    const priceCents = Math.round(item.price * 100);
+                    await apiClient.addLineItem(sale_id, item.name, 1, priceCents);
+                }
+
+                // 3. Calculate tax
+                await apiClient.calculateTax(sale_id, 0.0);
+
+                // 4. Process payment
+                const backendMethod = paymentMethod.includes('Card') || paymentMethod === 'Tap to Pay'
+                    ? 'CARD_PRESENT' : 'CASH';
+                await apiClient.processPayment(sale_id, backendMethod);
+
+                // 5. Update BarberScore on backend
+                await apiClient.updateScore();
+
+                console.log('Sale recorded on backend:', sale_id);
+                return sale_id;
+            } catch (error) {
+                console.warn('Backend sale recording failed (using localStorage):', error.message);
+                return null;
+            }
+        }
+
         // Complete sale with payment method
         function completeSaleWithPayment(paymentMethod) {
             const customerContact = document.getElementById('customerContact').value.trim();
@@ -2707,6 +2752,9 @@
 
             transactions.push(transaction);
             localStorage.setItem('transactions', JSON.stringify(transactions));
+
+            // Record on backend asynchronously (non-blocking)
+            recordSaleOnBackend([...cart], paymentMethod, customerContact, { rebooked, hadRetail, hadAddons });
 
             // Calculate new score after transaction
             const newScoreResult = calculateBarberScore();
@@ -2985,7 +3033,7 @@
             submitBtn.disabled = true;
 
             try {
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/login-pin', {
+                const response = await fetch(`${API_URL}/api/auth/login-pin`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, pin })
@@ -3117,7 +3165,7 @@
                 localStorage.setItem('backend_password', randomPassword);
 
                 console.log('Registering with backend...');
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/register', {
+                const response = await fetch(`${API_URL}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3142,7 +3190,7 @@
                     console.log('Registration successful, redirecting to Stripe...');
 
                     // Now get Stripe onboarding link
-                    const stripeResponse = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/create-account-link', {
+                    const stripeResponse = await fetch(`${API_URL}/api/stripe/create-account-link`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -3284,7 +3332,7 @@
             const authToken = localStorage.getItem('auth_token');
             if (authToken) {
                 try {
-                    const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/set-pin', {
+                    const response = await fetch(`${API_URL}/api/auth/set-pin`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -3328,7 +3376,7 @@
                 localStorage.setItem('backend_password', randomPassword);
 
                 console.log('Sending registration request...');
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/register', {
+                const response = await fetch(`${API_URL}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3368,7 +3416,7 @@
         async function loginWithBackend(email, password) {
             console.log('Attempting backend login for:', email);
             try {
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/login', {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -3524,7 +3572,7 @@
 
             try {
                 // Check if user already has Stripe set up
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/account-status', {
+                const response = await fetch(`${API_URL}/api/stripe/account-status`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                     }
@@ -3556,7 +3604,7 @@
                 // Need to set up - get onboarding link
                 btn.textContent = 'Generating setup link...';
 
-                const linkResponse = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/create-account-link', {
+                const linkResponse = await fetch(`${API_URL}/api/stripe/create-account-link`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
@@ -3613,7 +3661,7 @@
             resultDiv.textContent = 'Running test...\n';
 
             try {
-                const response = await fetch('https://pos-production-fd37.up.railway.app/diagnostics/test-user-account', {
+                const response = await fetch(`${API_URL}/diagnostics/test-user-account`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                     }
@@ -3664,7 +3712,7 @@
             }
 
             try {
-                const response = await fetch('https://pos-production-fd37.up.railway.app/api/stripe/account-status', {
+                const response = await fetch(`${API_URL}/api/stripe/account-status`, {
                     headers: {
                         'Authorization': `Bearer ${authToken}`
                     }
@@ -4002,6 +4050,9 @@
             transactions.push(transaction);
             localStorage.setItem('transactions', JSON.stringify(transactions));
 
+            // Record on backend asynchronously (non-blocking)
+            recordSaleOnBackend([...cart], 'Cash', customerContact, { rebooked, hadRetail, hadAddons });
+
             // Calculate new score after transaction
             const newScoreResult = calculateBarberScore();
             const newScore = newScoreResult.score;
@@ -4078,6 +4129,7 @@
 
         // Dashboard
         function updateDashboard() {
+            // Use localStorage data for immediate display
             const today = new Date().toDateString();
             const todayTransactions = transactions.filter(t => new Date(t.date).toDateString() === today);
             const todayRevenue = todayTransactions.reduce((sum, t) => sum + t.total, 0);
@@ -4086,6 +4138,15 @@
             const todayTransactionsEl = document.getElementById('todayTransactions');
             if (todayRevenueEl) todayRevenueEl.textContent = `$${todayRevenue.toFixed(2)}`;
             if (todayTransactionsEl) todayTransactionsEl.textContent = todayTransactions.length;
+
+            // Try to fetch from backend to get accurate data
+            if (apiClient.isAuthenticated()) {
+                const todayISO = new Date(new Date().setHours(0,0,0,0)).toISOString();
+                apiClient.getAnalytics(todayISO).then(data => {
+                    if (todayRevenueEl) todayRevenueEl.textContent = `$${(data.total_revenue_cents / 100).toFixed(2)}`;
+                    if (todayTransactionsEl) todayTransactionsEl.textContent = data.total_transactions;
+                }).catch(() => { /* localStorage fallback already displayed */ });
+            }
 
             const result = calculateBarberScore();
             const score = result.score;
@@ -4181,6 +4242,7 @@
                     break;
             }
 
+            // Immediate display from localStorage
             const periodTransactions = transactions.filter(t => new Date(t.date) >= startDate);
             const revenue = periodTransactions.reduce((sum, t) => sum + t.total, 0);
             const average = periodTransactions.length > 0 ? revenue / periodTransactions.length : 0;
@@ -4189,12 +4251,35 @@
             document.getElementById('periodTransactions').textContent = periodTransactions.length;
             document.getElementById('periodAverage').textContent = `$${average.toFixed(2)}`;
 
-            // For demo purposes, showing positive changes
             document.getElementById('revenueChange').textContent = '+12%';
             document.getElementById('transactionsChange').textContent = '+8%';
             document.getElementById('avgChange').textContent = '+5%';
 
             renderTransactionList(periodTransactions);
+
+            // Try to update from backend for accurate data
+            if (apiClient.isAuthenticated()) {
+                apiClient.getAnalytics(startDate.toISOString()).then(data => {
+                    const backendRevenue = data.total_revenue_cents / 100;
+                    const backendCount = data.total_transactions;
+                    const backendAvg = data.avg_transaction_cents / 100;
+
+                    document.getElementById('periodRevenue').textContent = `$${backendRevenue.toFixed(2)}`;
+                    document.getElementById('periodTransactions').textContent = backendCount;
+                    document.getElementById('periodAverage').textContent = `$${backendAvg.toFixed(2)}`;
+
+                    // Render backend transactions if available
+                    if (data.recent_transactions && data.recent_transactions.length > 0) {
+                        const backendTransactions = data.recent_transactions.map(t => ({
+                            date: t.date,
+                            services: t.services.map(name => ({ name })),
+                            total: t.total_cents / 100,
+                            customerContact: t.metadata?.customer_contact || '',
+                        }));
+                        renderTransactionList(backendTransactions);
+                    }
+                }).catch(() => { /* localStorage fallback already displayed */ });
+            }
         }
 
         function renderTransactionList(transactionsList = transactions) {
@@ -4616,6 +4701,7 @@
         }
 
         function updateBarberScore() {
+            // Local calculation for immediate display
             const result = calculateBarberScore();
             const score = result.score;
             const metrics = result.metrics;
@@ -4626,6 +4712,27 @@
 
             if (scoreValueEl) scoreValueEl.textContent = score;
             if (scoreTierEl) scoreTierEl.textContent = stage.name;
+
+            // Try to fetch authoritative score from backend
+            if (apiClient.isAuthenticated()) {
+                apiClient.getBarberScore().then(backendScore => {
+                    if (scoreValueEl) scoreValueEl.textContent = backendScore.score;
+                    if (scoreTierEl) scoreTierEl.textContent = backendScore.tier;
+
+                    // Update dashboard score display too
+                    const dashboardScoreEl = document.getElementById('dashboardScore');
+                    const dashboardTierEl = document.getElementById('dashboardTier');
+                    if (dashboardScoreEl) dashboardScoreEl.textContent = backendScore.score;
+                    if (dashboardTierEl) dashboardTierEl.textContent = `Level ${backendScore.tier}`;
+
+                    // Update userProfile with backend score
+                    if (userProfile) {
+                        userProfile.barberScore = backendScore.score;
+                        userProfile.backendTier = backendScore.tier;
+                        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+                    }
+                }).catch(() => { /* localStorage fallback already displayed */ });
+            }
 
             // Update score breakdown
             const breakdownHTML = `
@@ -4683,6 +4790,7 @@
 
         // Procurement
         function updateProcurement() {
+            // Local calculation for immediate display
             const result = calculateBarberScore();
             const score = result.score;
             const stage = getScoreStage(score);
@@ -4694,11 +4802,36 @@
             // Highlight current tier
             for (let i = 0; i <= 4; i++) {
                 const tierCard = document.getElementById(`tier${i}`);
-                if (i === currentTierNum) {
-                    tierCard.classList.add('active');
-                } else {
-                    tierCard.classList.remove('active');
+                if (tierCard) {
+                    if (i === currentTierNum) {
+                        tierCard.classList.add('active');
+                    } else {
+                        tierCard.classList.remove('active');
+                    }
                 }
+            }
+
+            // Fetch authoritative entitlements from backend
+            if (apiClient.isAuthenticated()) {
+                apiClient.getEntitlements().then(entitlements => {
+                    // Extract tier number from tier string (e.g., "Level 2" → 2)
+                    const tierMatch = entitlements.tier.match(/\d+/);
+                    const backendTier = tierMatch ? parseInt(tierMatch[0]) : 0;
+
+                    if (currentTierEl) currentTierEl.textContent = entitlements.tier;
+
+                    // Highlight correct tier
+                    for (let i = 0; i <= 4; i++) {
+                        const tierCard = document.getElementById(`tier${i}`);
+                        if (tierCard) {
+                            if (i === backendTier) {
+                                tierCard.classList.add('active');
+                            } else {
+                                tierCard.classList.remove('active');
+                            }
+                        }
+                    }
+                }).catch(() => { /* localStorage fallback already displayed */ });
             }
         }
 

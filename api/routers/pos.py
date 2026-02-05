@@ -3,8 +3,8 @@ POS API endpoints
 Handles sales, payments, refunds, and voids
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Header
-from typing import Optional
+from fastapi import APIRouter, HTTPException, Depends, Header, Query
+from typing import Optional, List
 import sys
 import os
 
@@ -270,6 +270,103 @@ async def void_sale(
         pos = get_pos_runtime(barber_id)
         success = pos.void_sale(sale_id, reason=request.reason)
         return {"success": success}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/sales", response_model=List[SaleResponse])
+async def list_sales(
+    barber_id: str = Depends(get_current_barber),
+    since: Optional[str] = Query(None, description="ISO 8601 date filter"),
+    limit: Optional[int] = Query(50, description="Max results"),
+):
+    """List all sales for the current barber"""
+    try:
+        pos = get_pos_runtime(barber_id)
+        sales = pos.list_barber_sales(since=since, limit=limit)
+
+        return [
+            SaleResponse(
+                sale_id=sale.sale_id,
+                barber_id=sale.barber_id,
+                state=sale.state.value,
+                line_items=[
+                    LineItemResponse(
+                        item_id=item.item_id,
+                        name=item.name,
+                        quantity=item.quantity,
+                        unit_price=MoneyModel(
+                            amount_minor=item.unit_price.amount_minor,
+                            currency=item.unit_price.currency
+                        ),
+                        total=MoneyModel(
+                            amount_minor=item.total.amount_minor,
+                            currency=item.total.currency
+                        )
+                    )
+                    for item in sale.line_items
+                ],
+                subtotal=MoneyModel(
+                    amount_minor=sale.subtotal.amount_minor,
+                    currency=sale.subtotal.currency
+                ),
+                tax=MoneyModel(
+                    amount_minor=sale.tax.amount_minor,
+                    currency=sale.tax.currency
+                ),
+                discounts=MoneyModel(
+                    amount_minor=sale.discounts.amount_minor,
+                    currency=sale.discounts.currency
+                ),
+                total=MoneyModel(
+                    amount_minor=sale.total.amount_minor,
+                    currency=sale.total.currency
+                ),
+                created_at=sale.created_at,
+                completed_at=sale.completed_at,
+                metadata=sale.metadata,
+            )
+            for sale in sales
+        ]
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/analytics", response_model=dict)
+async def get_analytics(
+    barber_id: str = Depends(get_current_barber),
+    since: Optional[str] = Query(None, description="ISO 8601 date filter"),
+):
+    """Get aggregated analytics for the current barber"""
+    try:
+        pos = get_pos_runtime(barber_id)
+        sales = pos.list_barber_sales(since=since)
+
+        completed_sales = [s for s in sales if s.state.value == "COMPLETED"]
+        total_revenue = sum(s.total.amount_minor for s in completed_sales)
+        total_transactions = len(completed_sales)
+        avg_transaction = total_revenue // total_transactions if total_transactions > 0 else 0
+
+        recent = sorted(completed_sales, key=lambda s: s.completed_at or s.created_at or "", reverse=True)[:20]
+        recent_list = []
+        for s in recent:
+            services = [item.name for item in s.line_items]
+            recent_list.append({
+                "sale_id": s.sale_id,
+                "date": s.completed_at or s.created_at,
+                "services": services,
+                "total_cents": s.total.amount_minor,
+                "metadata": s.metadata,
+            })
+
+        return {
+            "total_revenue_cents": total_revenue,
+            "total_transactions": total_transactions,
+            "avg_transaction_cents": avg_transaction,
+            "recent_transactions": recent_list,
+        }
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

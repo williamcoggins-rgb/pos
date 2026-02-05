@@ -572,6 +572,33 @@ class POSRuntime:
         else:
             self.local_queue.enqueue(event)
 
+    def list_barber_sales(self, since: Optional[str] = None, limit: Optional[int] = None) -> List[Sale]:
+        """List all sales for this barber, optionally filtered by date"""
+        events = self.cloud_store.get_events(
+            event_type=EventType.SALE_CREATED,
+            since=since,
+        )
+
+        # Filter to this barber's sales
+        sale_ids = []
+        for event in events:
+            if event.payload.get("barber_id") == self.barber_id:
+                sale_ids.append(event.payload["sale_id"])
+
+        if limit:
+            sale_ids = sale_ids[-limit:]
+
+        # Reconstruct each sale from events
+        sales = []
+        for sale_id in sale_ids:
+            try:
+                sale = self.get_sale(sale_id)
+                sales.append(sale)
+            except ValueError:
+                continue
+
+        return sales
+
     def get_barber_revenue_today(self) -> Money:
         """Get total revenue for barber today"""
         today = datetime.now(timezone.utc).date().isoformat()
