@@ -3,198 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Setup Complete - BarberScore POS</title>
-    <script src="api-service.js"></script>
+    <title>Stripe Setup - BarberScore POS</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
-
         .container {
             background: white;
-            border-radius: 20px;
-            padding: 60px 40px;
-            max-width: 600px;
+            border-radius: 16px;
+            padding: 48px 32px;
+            max-width: 480px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             text-align: center;
         }
-
-        .success-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: bounce 0.6s ease-out;
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-20px); }
-            60% { transform: translateY(-10px); }
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 32px;
-        }
-
-        p {
-            color: #666;
-            line-height: 1.8;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
-        .features {
-            background: #f5f5f5;
-            border-radius: 12px;
-            padding: 24px;
-            margin: 30px 0;
-            text-align: left;
-        }
-
-        .features h3 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-
-        .features ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .features li {
-            padding: 10px 0;
-            color: #555;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .features li:last-child {
-            border-bottom: none;
-        }
-
-        .features li::before {
-            content: "✅ ";
-            margin-right: 10px;
-        }
-
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-
-        .status {
-            background: #e8f5e9;
-            border-left: 4px solid #4CAF50;
-            color: #2E7D32;
+        .icon { font-size: 64px; margin-bottom: 16px; }
+        h1 { color: #333; margin-bottom: 12px; font-size: 24px; }
+        p { color: #666; line-height: 1.6; margin-bottom: 16px; font-size: 15px; }
+        .status-box {
             padding: 16px;
             border-radius: 8px;
-            margin-top: 30px;
+            margin: 24px 0;
             text-align: left;
+            font-size: 14px;
         }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 10px;
+        .status-box.checking { background: #f5f5f5; color: #666; }
+        .status-box.active { background: #e8f5e9; border-left: 4px solid #4CAF50; color: #2E7D32; }
+        .status-box.pending { background: #fff3e0; border-left: 4px solid #FF9800; color: #E65100; }
+        .status-box.incomplete { background: #fce4ec; border-left: 4px solid #f44336; color: #c62828; }
+        button {
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        button:hover { background: #16213e; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .spinner {
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid #ddd; border-top: 2px solid #666;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-left: 8px; vertical-align: middle;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="success-icon">🎉</div>
-        <h1>Payment Setup Complete!</h1>
-        <p>Congratulations! Your Stripe account has been connected successfully.</p>
+        <div class="icon" id="icon">...</div>
+        <h1 id="heading">Checking account status</h1>
+        <p id="message">Verifying your Stripe connection...</p>
 
-        <div class="features">
-            <h3>What You Can Do Now:</h3>
-            <ul>
-                <li>Accept credit and debit card payments</li>
-                <li>Process Apple Pay and Google Pay</li>
-                <li>Receive money directly to your bank account</li>
-                <li>Track all payments in real-time</li>
-                <li>Automatic deposits in 2 business days</li>
-            </ul>
+        <div id="statusBox" class="status-box checking">
+            Contacting Stripe<span class="spinner"></span>
         </div>
 
-        <p><strong>Next Step:</strong> Start using your POS to accept payments from clients!</p>
-
-        <div id="statusDiv" class="status">
-            Verifying your account status<span class="loading"></span>
-        </div>
-
-        <button onclick="goToPOS()" id="continueBtn" style="display: none;">
-            Continue to POS →
-        </button>
+        <button id="continueBtn" class="hidden" onclick="continueFlow()">Continue</button>
     </div>
 
     <script>
-        // Check account status
+        // API base: same origin in production, override with window.API_BASE_URL if split
+        var API_BASE = window.API_BASE_URL || window.location.origin;
+
+        function getToken() {
+            return localStorage.getItem('access_token') || '';
+        }
+
         async function checkStatus() {
+            var token = getToken();
+            if (!token) {
+                showState('incomplete', 'Not Logged In', 'Please log in first.', 'Go to Login', function() {
+                    window.location.href = 'login.html';
+                });
+                return;
+            }
+
             try {
-                const status = await api.request('/stripe/account-status');
+                var resp = await fetch(API_BASE + '/api/stripe/account-status', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
 
-                const statusDiv = document.getElementById('statusDiv');
-                const continueBtn = document.getElementById('continueBtn');
+                if (!resp.ok) throw new Error('API error: ' + resp.status);
+                var data = await resp.json();
 
-                if (status.charges_enabled) {
-                    statusDiv.innerHTML = '<strong>✅ Verified!</strong> Your account is ready to accept payments.';
-                    continueBtn.style.display = 'inline-block';
-                } else if (status.onboarding_complete) {
-                    statusDiv.innerHTML = '<strong>⏳ Almost Ready</strong> Your account is being verified by Stripe. This usually takes a few minutes.';
-                    continueBtn.style.display = 'inline-block';
+                if (data.status === 'active') {
+                    showState('active', 'Account Verified',
+                        'Your Stripe account is active. You can accept payments.',
+                        'Continue', function() { window.location.href = 'index.html'; });
+                } else if (data.status === 'pending_verification') {
+                    showState('pending', 'Verification In Progress',
+                        'Stripe is reviewing your details. This typically takes 1-2 business days. You can still set your PIN while you wait.',
+                        'Set Your PIN', function() { window.location.href = 'index.html'; });
+                } else if (data.status === 'pending_onboarding') {
+                    showState('incomplete', 'Setup Incomplete',
+                        'You started Stripe onboarding but did not finish. Click below to continue where you left off.',
+                        'Resume Stripe Setup', resumeOnboarding);
+                } else if (data.status === 'stale_account') {
+                    showState('incomplete', 'Reconnect Required',
+                        data.message || 'Your Stripe account needs to be reconnected.',
+                        'Connect Stripe', resumeOnboarding);
                 } else {
-                    statusDiv.innerHTML = '<strong>⚠️ Setup Incomplete</strong> Please complete all required steps in your Stripe onboarding.';
+                    showState('incomplete', 'Connect Stripe',
+                        'Connect your Stripe account to start accepting payments.',
+                        'Connect Stripe', resumeOnboarding);
                 }
-            } catch (error) {
-                console.error('Error checking status:', error);
-                document.getElementById('statusDiv').innerHTML = '<strong>Account connected!</strong> You can start accepting payments.';
-                document.getElementById('continueBtn').style.display = 'inline-block';
+            } catch (err) {
+                console.error(err);
+                showState('incomplete', 'Connection Error',
+                    'Could not verify your Stripe account. Please try again.',
+                    'Retry', checkStatus);
             }
         }
 
-        function goToPOS() {
-            window.location.href = 'pos-v4.html';
+        async function resumeOnboarding() {
+            var token = getToken();
+            var btn = document.getElementById('continueBtn');
+            btn.disabled = true;
+            btn.textContent = 'Redirecting...';
+
+            try {
+                var resp = await fetch(API_BASE + '/api/stripe/create-account-link', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!resp.ok) throw new Error('API error: ' + resp.status);
+                var data = await resp.json();
+
+                if (data.url) {
+                    window.location.href = data.url;
+                } else if (data.already_onboarded) {
+                    checkStatus();
+                }
+            } catch (err) {
+                console.error(err);
+                btn.disabled = false;
+                btn.textContent = 'Try Again';
+            }
         }
 
-        // Check status on page load
-        setTimeout(checkStatus, 1000);
+        function showState(type, heading, message, btnText, btnAction) {
+            document.getElementById('icon').textContent =
+                type === 'active' ? '\u2713' : type === 'pending' ? '\u23F3' : '\u26A0';
+            document.getElementById('heading').textContent = heading;
+            document.getElementById('message').textContent = message;
+            var box = document.getElementById('statusBox');
+            box.className = 'status-box ' + type;
+            box.innerHTML = '<strong>' + heading + '</strong>';
+            var btn = document.getElementById('continueBtn');
+            btn.textContent = btnText;
+            btn.className = '';
+            btn.disabled = false;
+            btn.onclick = btnAction;
+        }
+
+        function continueFlow() {
+            window.location.href = 'index.html';
+        }
+
+        setTimeout(checkStatus, 500);
     </script>
 </body>
 </html>

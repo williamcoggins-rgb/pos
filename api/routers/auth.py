@@ -117,7 +117,10 @@ async def get_onboarding_status(user_id: str = Depends(get_current_user_id)):
     Get onboarding progress for the current user.
     Returns which step they need to complete next.
 
-    Flow: register -> stripe_connect -> set_pin -> ready
+    Flow: register -> stripe_connect -> (pending_verification) -> set_pin -> ready
+
+    Uses the actual Stripe account status, not just whether an ID exists in the DB.
+    This correctly handles test-to-live transitions and pending Stripe verification.
     """
     auth = get_auth_service()
 
@@ -132,34 +135,38 @@ async def get_onboarding_status(user_id: str = Depends(get_current_user_id)):
 
     has_pin = profile.get("has_pin", False)
 
-    # Check Stripe Connect status
-    import httpx
+    # Check actual Stripe account status (not just whether an ID is stored)
+    from api.routers.stripe_connect import get_barber_stripe_account, _retrieve_account_safe
     from api.config import get_settings
     settings = get_settings()
-    stripe_connected = False
 
-    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
-        try:
-            async with httpx.AsyncClient() as client:
-                resp = await client.get(
-                    f"{settings.SUPABASE_URL}/rest/v1/barbers?id=eq.{user_id}&select=stripe_account_id",
-                    headers={
-                        "apikey": settings.SUPABASE_KEY,
-                        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
-                    },
-                )
-                if resp.status_code == 200:
-                    barbers = resp.json()
-                    if barbers and barbers[0].get("stripe_account_id"):
-                        stripe_connected = True
-        except Exception:
-            pass
+    stripe_account_id = await get_barber_stripe_account(user_id)
+    stripe_active = False
+    stripe_pending = False
 
-    if not stripe_connected:
+    if stripe_account_id and settings.STRIPE_SECRET_KEY:
+        account = _retrieve_account_safe(stripe_account_id)
+        if account is None:
+            # Stale account (test/live mismatch) - clear it
+            from api.routers.stripe_connect import clear_barber_stripe_account
+            await clear_barber_stripe_account(user_id)
+        elif account.charges_enabled and account.payouts_enabled:
+            stripe_active = True
+        elif account.details_submitted:
+            stripe_pending = True
+
+    if not stripe_active and not stripe_pending:
         return {
             "step": "stripe_connect",
             "complete": False,
             "message": "Connect your Stripe account to accept payments.",
+        }
+
+    if stripe_pending and not stripe_active:
+        return {
+            "step": "pending_verification",
+            "complete": False,
+            "message": "Stripe is verifying your account. This can take 1-2 business days. You'll be notified when it's ready.",
         }
 
     if not has_pin:
