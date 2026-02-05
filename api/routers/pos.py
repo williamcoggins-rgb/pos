@@ -3,12 +3,7 @@ POS API endpoints
 Handles sales, payments, refunds, and voids
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Header
-from typing import Optional
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from fastapi import APIRouter, HTTPException, Depends
 
 from square_like_pos import POSRuntime, PaymentMethod, HardwareMode
 from event_store import Money
@@ -24,36 +19,14 @@ from api.models import (
     PaymentResponse,
     LineItemResponse,
     MoneyModel,
-    ErrorResponse,
 )
 from api.database import get_cloud_store, get_local_queue
 from api.services.payment_service import PaymentService
-from api.services.auth_service import AuthService
+from api.dependencies import get_current_barber
 
 router = APIRouter(prefix="/api/pos", tags=["POS"])
 
-# Services
 payment_service = PaymentService()
-auth_service = AuthService()
-
-
-def get_current_barber(authorization: Optional[str] = Header(None)) -> str:
-    """Extract barber_id from Authorization header"""
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization required")
-
-    # Extract token from "Bearer <token>"
-    parts = authorization.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(status_code=401, detail="Invalid authorization header")
-
-    token = parts[1]
-    barber_id = auth_service.get_barber_id_from_token(token)
-
-    if not barber_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    return barber_id
 
 
 def get_pos_runtime(barber_id: str) -> POSRuntime:

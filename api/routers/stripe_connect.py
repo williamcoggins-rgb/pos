@@ -1,42 +1,18 @@
 """
 Stripe Connect API endpoints
-Handles Stripe Connect onboarding for barbers to accept payments
+Handles Stripe Connect onboarding for barbers to accept payments (step 2 of onboarding).
 """
 
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 import stripe
 import httpx
 
 from api.config import get_settings
-from api.services.auth_service import AuthService
+from api.dependencies import get_current_user_id
 
 settings = get_settings()
 router = APIRouter(prefix="/api/stripe", tags=["Stripe Connect"])
-
-auth_service = AuthService()
-
-# Initialize Stripe
-if settings.STRIPE_SECRET_KEY:
-    stripe.api_key = settings.STRIPE_SECRET_KEY
-
-
-async def get_user_id_from_token(authorization: str) -> str:
-    """Extract user_id from Bearer token"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-
-    token = authorization.replace("Bearer ", "")
-    payload = auth_service.verify_token(token)
-
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token payload")
-
-    return user_id
 
 
 async def get_barber_stripe_account(user_id: str, token: str) -> Optional[str]:
@@ -78,9 +54,9 @@ async def save_barber_stripe_account(user_id: str, stripe_account_id: str, token
 
 
 @router.get("/account-status")
-async def get_account_status(authorization: str = Header(None)):
+async def get_account_status(user_id: str = Depends(get_current_user_id)):
     """
-    Get the Stripe Connect account status for the current user
+    Get the Stripe Connect account status for the current user.
 
     Returns:
         charges_enabled: Can accept payments
@@ -90,8 +66,7 @@ async def get_account_status(authorization: str = Header(None)):
     if not settings.STRIPE_SECRET_KEY:
         raise HTTPException(status_code=500, detail="Stripe not configured")
 
-    user_id = await get_user_id_from_token(authorization)
-    token = authorization.replace("Bearer ", "")
+    token = settings.SUPABASE_KEY  # Use service key for internal lookup
 
     # Get stored Stripe account ID
     stripe_account_id = await get_barber_stripe_account(user_id, token)
@@ -121,9 +96,9 @@ async def get_account_status(authorization: str = Header(None)):
 
 
 @router.post("/create-account-link")
-async def create_account_link(authorization: str = Header(None)):
+async def create_account_link(user_id: str = Depends(get_current_user_id)):
     """
-    Create or retrieve a Stripe Connect account and generate an onboarding link
+    Create or retrieve a Stripe Connect account and generate an onboarding link (step 2 of onboarding).
 
     Returns:
         url: The Stripe onboarding URL to redirect the user to
@@ -131,8 +106,7 @@ async def create_account_link(authorization: str = Header(None)):
     if not settings.STRIPE_SECRET_KEY:
         raise HTTPException(status_code=500, detail="Stripe not configured")
 
-    user_id = await get_user_id_from_token(authorization)
-    token = authorization.replace("Bearer ", "")
+    token = settings.SUPABASE_KEY  # Use service key for internal operations
 
     # Check for existing Stripe account
     stripe_account_id = await get_barber_stripe_account(user_id, token)

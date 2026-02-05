@@ -2,46 +2,17 @@
 Eligibility and BarberScore API endpoints
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Header
-from typing import Optional
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from fastapi import APIRouter, HTTPException, Depends
 
 from api.models import (
     BarberScoreResponse,
     BarberMetricsResponse,
     EntitlementResponse,
-    ErrorResponse,
 )
-from api.database import get_eligibility_engine, get_entitlement_ledger
-from enforcement_middleware import EnforcementMiddleware
-from procurement_service import ProcurementService
-from api.database import get_cloud_store
-from api.services.auth_service import AuthService
+from api.database import get_eligibility_engine
+from api.dependencies import get_current_barber, get_enforcement_middleware
 
 router = APIRouter(prefix="/api/eligibility", tags=["Eligibility"])
-
-auth_service = AuthService()
-
-
-def get_current_barber(authorization: Optional[str] = Header(None)) -> str:
-    """Extract barber_id from Authorization header"""
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization required")
-
-    parts = authorization.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(status_code=401, detail="Invalid authorization header")
-
-    token = parts[1]
-    barber_id = auth_service.get_barber_id_from_token(token)
-
-    if not barber_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    return barber_id
 
 
 @router.get("/score/{barber_id}", response_model=BarberScoreResponse)
@@ -117,12 +88,8 @@ async def get_entitlements(
         raise HTTPException(status_code=403, detail="Cannot view other barbers' entitlements")
 
     try:
-        ledger = get_entitlement_ledger()
-        procurement = ProcurementService(get_cloud_store())
-        enforcement = EnforcementMiddleware(ledger, procurement)
-
+        enforcement = get_enforcement_middleware()
         summary = enforcement.get_entitlement_summary(barber_id)
-
         return EntitlementResponse(**summary)
 
     except Exception as e:
@@ -140,10 +107,7 @@ async def get_unlock_requirements(
         raise HTTPException(status_code=403, detail="Cannot view other barbers' data")
 
     try:
-        ledger = get_entitlement_ledger()
-        procurement = ProcurementService(get_cloud_store())
-        enforcement = EnforcementMiddleware(ledger, procurement)
-
+        enforcement = get_enforcement_middleware()
         requirements = enforcement.get_unlock_requirements(barber_id, tier)
         return requirements
 

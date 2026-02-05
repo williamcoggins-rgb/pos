@@ -1,44 +1,24 @@
 """
 Authentication API endpoints
-Handles registration and login
+Handles registration, login, PIN, and onboarding status.
 """
 
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Depends
 from api.models import (
-    RegisterRequest, LoginRequest, TokenResponse, ErrorResponse,
+    RegisterRequest, LoginRequest, TokenResponse,
     PINLoginRequest, SetPINRequest, UserProfileResponse
 )
+from api.dependencies import get_current_user_id, get_auth_service
 from api.services.auth_service import AuthService
-from typing import Optional
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
-
-auth_service = AuthService()
-
-
-def get_user_id_from_token(authorization: str) -> str:
-    """Extract user_id from Authorization header"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-
-    token = authorization.replace("Bearer ", "")
-    payload = auth_service.verify_token(token)
-
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token payload")
-
-    return user_id
 
 
 @router.post("/register", response_model=TokenResponse)
 async def register(request: RegisterRequest):
     """Register a new barber account"""
     try:
-        access_token, barber_id, shop_name = await auth_service.register(
+        access_token, barber_id, shop_name = await get_auth_service().register(
             email=request.email,
             password=request.password,
             shop_name=request.shop_name,
@@ -61,7 +41,7 @@ async def register(request: RegisterRequest):
 async def login(request: LoginRequest):
     """Login to existing barber account"""
     try:
-        access_token, barber_id, shop_name = await auth_service.login(
+        access_token, barber_id, shop_name = await get_auth_service().login(
             email=request.email,
             password=request.password,
         )
@@ -80,7 +60,7 @@ async def login(request: LoginRequest):
 @router.post("/verify", response_model=dict)
 async def verify_token(token: str):
     """Verify a JWT token"""
-    payload = auth_service.verify_token(token)
+    payload = get_auth_service().verify_token(token)
 
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -92,7 +72,7 @@ async def verify_token(token: str):
 async def login_with_pin(request: PINLoginRequest):
     """Login using email and 4-digit PIN"""
     try:
-        access_token, barber_id, shop_name = await auth_service.login_with_pin(
+        access_token, barber_id, shop_name = await get_auth_service().login_with_pin(
             email=request.email,
             pin=request.pin,
         )
@@ -111,25 +91,86 @@ async def login_with_pin(request: PINLoginRequest):
 @router.post("/set-pin")
 async def set_pin(
     request: SetPINRequest,
-    authorization: Optional[str] = Header(None)
+    user_id: str = Depends(get_current_user_id),
 ):
-    """Set or update user's 4-digit PIN"""
-    user_id = get_user_id_from_token(authorization)
-
+    """Set or update user's 4-digit PIN (step 3 of onboarding)"""
     try:
-        await auth_service.set_pin(user_id=user_id, pin=request.pin)
+        await get_auth_service().set_pin(user_id=user_id, pin=request.pin)
         return {"success": True, "message": "PIN set successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/profile", response_model=UserProfileResponse)
-async def get_profile(authorization: Optional[str] = Header(None)):
+async def get_profile(user_id: str = Depends(get_current_user_id)):
     """Get user profile"""
-    user_id = get_user_id_from_token(authorization)
-
     try:
-        profile = await auth_service.get_profile(user_id=user_id)
+        profile = await get_auth_service().get_profile(user_id=user_id)
         return UserProfileResponse(**profile)
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/onboarding-status")
+async def get_onboarding_status(user_id: str = Depends(get_current_user_id)):
+    """
+    Get onboarding progress for the current user.
+    Returns which step they need to complete next.
+
+    Flow: register -> stripe_connect -> set_pin -> ready
+    """
+    auth = get_auth_service()
+
+    try:
+        profile = await auth.get_profile(user_id=user_id)
+    except Exception:
+        return {
+            "step": "register",
+            "complete": False,
+            "message": "Account not found. Please register.",
+        }
+
+    has_pin = profile.get("has_pin", False)
+
+    # Check Stripe Connect status
+    import httpx
+    from api.config import get_settings
+    settings = get_settings()
+    stripe_connected = False
+
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    f"{settings.SUPABASE_URL}/rest/v1/barbers?id=eq.{user_id}&select=stripe_account_id",
+                    headers={
+                        "apikey": settings.SUPABASE_KEY,
+                        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                    },
+                )
+                if resp.status_code == 200:
+                    barbers = resp.json()
+                    if barbers and barbers[0].get("stripe_account_id"):
+                        stripe_connected = True
+        except Exception:
+            pass
+
+    if not stripe_connected:
+        return {
+            "step": "stripe_connect",
+            "complete": False,
+            "message": "Connect your Stripe account to accept payments.",
+        }
+
+    if not has_pin:
+        return {
+            "step": "set_pin",
+            "complete": False,
+            "message": "Set your 4-digit PIN for quick login.",
+        }
+
+    return {
+        "step": "ready",
+        "complete": True,
+        "message": "Onboarding complete. Welcome to BarberScore POS.",
+    }

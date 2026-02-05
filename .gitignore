@@ -36,7 +36,8 @@ env/
 .coverage
 htmlcov/
 
-# Database
+# Database / data directory
+data/
 *.db
 *.sqlite
 *.sqlite3

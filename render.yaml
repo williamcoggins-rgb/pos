@@ -1,22 +1,21 @@
 services:
-  # API Service
   - type: web
     name: barberscore-pos-api
     env: python
     region: oregon
-    plan: starter  # $7/month (can start with free tier)
+    plan: starter
     buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn api.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: DATABASE_URL
-        fromDatabase:
-          name: barberscore-pos-db
-          property: connectionString
+      - key: DATA_DIR
+        value: /opt/render/project/data
       - key: STRIPE_SECRET_KEY
-        sync: false  # Set manually in Render dashboard
+        sync: false
       - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
         sync: false
       - key: SUPABASE_URL
         sync: false
@@ -25,16 +24,10 @@ services:
       - key: SUPABASE_JWT_SECRET
         sync: false
       - key: SECRET_KEY
-        generateValue: true  # Auto-generate secure key
-      - key: ALGORITHM
-        value: HS256
-      - key: ACCESS_TOKEN_EXPIRE_MINUTES
-        value: 30
-      - key: DEBUG
-        value: false
-
-databases:
-  - name: barberscore-pos-db
-    databaseName: pos_production
-    user: pos_user
-    plan: starter  # $7/month (can start with free tier)
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+    disk:
+      name: pos-data
+      mountPath: /opt/render/project/data
+      sizeGB: 1

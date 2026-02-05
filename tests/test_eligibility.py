@@ -200,8 +200,11 @@ class TestAntiGaming:
         """Detect void spike"""
         events = []
 
-        # 10 payments
-        for i in range(10):
+        # 20 payments with varied amounts spread over days (avoid triggering other flags)
+        base_time = datetime(2024, 6, 15, 14, 0, 0, tzinfo=timezone.utc)
+        amounts = [1250, 3500, 2100, 4800, 1900, 3200, 2750, 4100, 1850, 3900,
+                   1300, 2600, 4400, 3100, 2200, 3700, 1600, 2900, 4500, 3300]
+        for i in range(20):
             payment = Event(
                 event_id=generate_event_id(),
                 event_type=EventType.PAYMENT_CAPTURED,
@@ -209,14 +212,14 @@ class TestAntiGaming:
                 aggregate_type="payment",
                 payload={
                     "barber_id": self.barber_id,
-                    "amount": {"amount_minor": 1000, "currency": "USD"},
+                    "amount": {"amount_minor": amounts[i], "currency": "USD"},
                 },
-                created_at=datetime.now(timezone.utc).isoformat(),
+                created_at=(base_time + timedelta(hours=i * 4)).isoformat(),
             )
             events.append(payment)
 
-        # 2 voids (20% rate, above 15% threshold)
-        for i in range(2):
+        # 5 voids (25% rate, above 15% threshold, meets min_voids=5)
+        for i in range(5):
             void = Event(
                 event_id=generate_event_id(),
                 event_type=EventType.VOID_APPLIED,
@@ -226,7 +229,7 @@ class TestAntiGaming:
                     "sale_id": f"sale_{i}",
                     "reason": "test",
                 },
-                created_at=datetime.now(timezone.utc).isoformat(),
+                created_at=(base_time + timedelta(hours=i * 8)).isoformat(),
             )
             events.append(void)
 
@@ -237,7 +240,8 @@ class TestAntiGaming:
         """Detect excessive round number amounts"""
         events = []
 
-        # 10 payments, all exactly $10, $20, or $50
+        # 10 payments, all exactly $10, $20, or $50, spread over days
+        base_time = datetime(2024, 6, 15, 14, 0, 0, tzinfo=timezone.utc)
         round_amounts = [1000, 2000, 5000]
         for i in range(10):
             payment = Event(
@@ -249,9 +253,9 @@ class TestAntiGaming:
                     "barber_id": self.barber_id,
                     "amount": {"amount_minor": round_amounts[i % 3], "currency": "USD"},
                 },
-                created_at=datetime.now(timezone.utc).isoformat(),
+                created_at=(base_time + timedelta(hours=i * 4)).isoformat(),
             )
-            events.append(event)
+            events.append(payment)
 
         flags = self.engine._detect_gaming_patterns(events)
         assert "ROUND_NUMBER_BIAS" in flags
@@ -260,7 +264,8 @@ class TestAntiGaming:
         """No flags for diverse, legitimate transaction patterns"""
         events = []
 
-        # Varied amounts, no patterns
+        # Varied amounts spread over multiple days during business hours
+        base_time = datetime(2024, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
         amounts = [1250, 3500, 2100, 4800, 1900, 3200, 2750, 4100, 1850, 3900]
         for i, amount in enumerate(amounts):
             payment = Event(
@@ -272,7 +277,7 @@ class TestAntiGaming:
                     "barber_id": self.barber_id,
                     "amount": {"amount_minor": amount, "currency": "USD"},
                 },
-                created_at=datetime.now(timezone.utc).isoformat(),
+                created_at=(base_time + timedelta(days=i, hours=i % 6)).isoformat(),
             )
             events.append(payment)
 
@@ -286,7 +291,7 @@ class TestAntiGaming:
                 "sale_id": "sale_1",
                 "amount": {"amount_minor": 1250, "currency": "USD"},
             },
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=(base_time + timedelta(days=15)).isoformat(),
         )
         events.append(refund)
 

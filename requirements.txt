@@ -1,38 +1,24 @@
-# POS BarberScore Integration Dependencies
-
-# Core
-python-dateutil>=2.8.2
-pytz>=2023.3
-
-# Data validation
-pydantic>=2.0.0
-pydantic-settings>=2.0.0
+# BarberScore POS API Dependencies
 
 # Web Framework
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
 
-# Database
-psycopg2-binary>=2.9.9
-sqlalchemy>=2.0.0
+# Data validation
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
 
-# HTTP Client
+# HTTP Client (Supabase REST calls, Stripe Connect)
 httpx>=0.26.0
 
 # Authentication & Security
-python-jose[cryptography]>=3.3.0
 python-multipart>=0.0.6
-passlib[bcrypt]>=1.7.4
 PyJWT>=2.8.0
 
 # Payment Processing
 stripe>=7.0.0
 
-# Auth Provider
-supabase>=2.3.0
-
 # Testing
 pytest>=7.4.0
 pytest-asyncio>=0.21.0
 pytest-cov>=4.1.0
-httpx>=0.26.0  # For testing async endpoints

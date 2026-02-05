@@ -1,23 +1,13 @@
 """
 Payment processing service - Stripe Terminal integration
-Handles card reader communication and payment processing
+Handles card reader communication and payment processing.
+Stripe API key is initialized once in api/main.py.
 """
 
 import stripe
 from typing import Tuple, Optional
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from event_store import Money
-from api.config import get_settings
-
-settings = get_settings()
-
-# Only set Stripe API key if configured (runtime env var, not build-time)
-if settings.STRIPE_SECRET_KEY:
-    stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 class PaymentService:

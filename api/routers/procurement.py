@@ -3,52 +3,21 @@ Procurement API endpoints
 Handles warehouse orders with entitlement enforcement
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Header
-from typing import Optional, List
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from fastapi import APIRouter, HTTPException, Depends
+from typing import List
 
 from api.models import (
     CreateOrderRequest,
-    ProcurementLineItemRequest,
     OrderResponse,
     OrderLineItemResponse,
     MoneyModel,
-    ErrorResponse,
 )
-from api.database import (
-    get_cloud_store,
-    get_entitlement_ledger,
-    get_procurement_service
-)
-from enforcement_middleware import EnforcementMiddleware
+from api.database import get_procurement_service
 from event_store import Money
 from procurement_service import FulfillmentSLA
-from api.services.auth_service import AuthService
+from api.dependencies import get_current_barber, get_enforcement_middleware
 
 router = APIRouter(prefix="/api/procurement", tags=["Procurement"])
-
-auth_service = AuthService()
-
-
-def get_current_barber(authorization: Optional[str] = Header(None)) -> str:
-    """Extract barber_id from Authorization header"""
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization required")
-
-    parts = authorization.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(status_code=401, detail="Invalid authorization header")
-
-    token = parts[1]
-    barber_id = auth_service.get_barber_id_from_token(token)
-
-    if not barber_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    return barber_id
 
 
 @router.post("/orders", response_model=OrderResponse)
@@ -63,10 +32,8 @@ async def create_order(
         raise HTTPException(status_code=403, detail="Cannot create orders for other barbers")
 
     try:
-        # Check entitlements
-        ledger = get_entitlement_ledger()
+        enforcement = get_enforcement_middleware()
         procurement = get_procurement_service()
-        enforcement = EnforcementMiddleware(ledger, procurement)
 
         # Validate order before creation
         line_items_dict = [
