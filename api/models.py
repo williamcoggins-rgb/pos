@@ -27,8 +27,8 @@ class MoneyModel(BaseModel):
 
 class CreateSaleRequest(BaseModel):
     """Request to create a new sale"""
-    barber_id: str = Field(..., description="Barber's unique ID")
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    customer_id: Optional[str] = Field(None, description="Optional customer ID")
 
 
 class AddLineItemRequest(BaseModel):
@@ -68,6 +68,31 @@ class VoidSaleRequest(BaseModel):
     reason: str = Field(default="", description="Reason for void")
 
 
+class CancelSaleRequest(BaseModel):
+    """Request to cancel a sale (before payment)"""
+    reason: str = Field(default="", description="Reason for cancellation")
+
+
+class RemoveLineItemRequest(BaseModel):
+    """Request to remove a line item"""
+    item_id: str = Field(..., description="ID of item to remove")
+
+
+class AddTipRequest(BaseModel):
+    """Request to add tip"""
+    amount_cents: int = Field(..., description="Tip amount in cents", ge=0)
+
+
+class CatalogItemRequest(BaseModel):
+    """Request to create/update a catalog item"""
+    name: str = Field(..., description="Service/product name", min_length=1)
+    price_cents: int = Field(..., description="Price in cents", ge=0)
+    category: str = Field(default="service", description="Category: service, product, etc.")
+    description: Optional[str] = Field(None, description="Item description")
+    duration_minutes: Optional[int] = Field(None, description="Service duration in minutes")
+    is_active: bool = Field(default=True, description="Whether item is available")
+
+
 # ============================================================================
 # POS Response Models
 # ============================================================================
@@ -81,18 +106,43 @@ class LineItemResponse(BaseModel):
     total: MoneyModel
 
 
+class RefundResponse(BaseModel):
+    """Refund record in response"""
+    refund_id: str
+    amount: MoneyModel
+    reason: str = ""
+    created_at: str
+    payment_id: Optional[str] = None
+
+
+class SalePaymentResponse(BaseModel):
+    """Payment summary within a sale"""
+    payment_id: str
+    amount: MoneyModel
+    tip: Optional[MoneyModel] = None
+    captured_at: Optional[str] = None
+    method: Optional[str] = None
+
+
 class SaleResponse(BaseModel):
     """Sale details response"""
     sale_id: str
     barber_id: str
     state: str
+    version: int = 0
     line_items: List[LineItemResponse]
     subtotal: MoneyModel
     tax: MoneyModel
+    tip: MoneyModel = MoneyModel(amount_minor=0, currency="USD")
     discounts: MoneyModel
     total: MoneyModel
+    payments: List[SalePaymentResponse] = Field(default_factory=list)
+    refunds: List[RefundResponse] = Field(default_factory=list)
+    refunded_amount: MoneyModel = MoneyModel(amount_minor=0, currency="USD")
     created_at: Optional[str] = None
     completed_at: Optional[str] = None
+    canceled_at: Optional[str] = None
+    customer_id: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -101,11 +151,26 @@ class PaymentResponse(BaseModel):
     payment_id: str
     sale_id: str
     amount: MoneyModel
+    tip: MoneyModel = MoneyModel(amount_minor=0, currency="USD")
     state: str
     method: str
     created_at: str
     captured_at: Optional[str] = None
     card_last_four: Optional[str] = None
+
+
+class CatalogItemResponse(BaseModel):
+    """Catalog item response"""
+    item_id: str
+    barber_id: str
+    name: str
+    price: MoneyModel
+    category: str = "service"
+    description: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    is_active: bool = True
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 # ============================================================================

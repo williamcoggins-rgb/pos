@@ -1,6 +1,7 @@
 """
 Event Sourcing Infrastructure
 Provides CloudEventStore (immutable ledger) and LocalEventQueue (offline buffer)
+Supports both SQLite (local dev) and PostgreSQL (production)
 """
 
 import json
@@ -19,9 +20,13 @@ class EventType(str, Enum):
 
     # POS Events
     SALE_CREATED = "SALE_CREATED"
+    SALE_OPENED = "SALE_OPENED"
+    SALE_CANCELED = "SALE_CANCELED"
     LINE_ITEM_ADDED = "LINE_ITEM_ADDED"
+    LINE_ITEM_REMOVED = "LINE_ITEM_REMOVED"
     DISCOUNT_APPLIED = "DISCOUNT_APPLIED"
     TAX_CALCULATED = "TAX_CALCULATED"
+    TIP_ADDED = "TIP_ADDED"
     PAYMENT_INITIATED = "PAYMENT_INITIATED"
     PAYMENT_AUTHORIZED = "PAYMENT_AUTHORIZED"
     PAYMENT_CAPTURED = "PAYMENT_CAPTURED"
@@ -32,6 +37,11 @@ class EventType(str, Enum):
     VOID_APPLIED = "VOID_APPLIED"
     SHIFT_OPENED = "SHIFT_OPENED"
     SHIFT_CLOSED = "SHIFT_CLOSED"
+
+    # Catalog Events
+    CATALOG_ITEM_CREATED = "CATALOG_ITEM_CREATED"
+    CATALOG_ITEM_UPDATED = "CATALOG_ITEM_UPDATED"
+    CATALOG_ITEM_DELETED = "CATALOG_ITEM_DELETED"
 
     # Procurement Events
     PROCUREMENT_ORDER_CREATED = "PROCUREMENT_ORDER_CREATED"
@@ -125,60 +135,180 @@ class Event:
         )
 
 
+def _is_postgres_url(db_path: str) -> bool:
+    """Check if a database path is a PostgreSQL URL"""
+    return db_path.startswith("postgres://") or db_path.startswith("postgresql://")
+
+
 class CloudEventStore:
     """
     Immutable append-only event ledger.
     Acts as single source of truth for all events.
+    Supports SQLite (dev/testing) and PostgreSQL (production).
     """
 
     def __init__(self, db_path: str = ":memory:"):
         self.db_path = db_path
         self._lock = Lock()
         self._subscribers: List[Callable[[Event], None]] = []
-        self._initialize_db()
+        self._use_postgres = _is_postgres_url(db_path)
+        self._sqlite_conn = None  # Persistent connection for :memory:
 
-    def _initialize_db(self):
-        """Create events table with idempotency support"""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
+        if self._use_postgres:
+            self._init_postgres()
+        else:
+            self._init_sqlite()
+
+    def _get_pg_conn(self):
+        """Get a psycopg2 connection"""
+        import psycopg2
+        url = self.db_path
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        return psycopg2.connect(url)
+
+    def _init_postgres(self):
+        """Create events table in PostgreSQL"""
+        conn = self._get_pg_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
                 CREATE TABLE IF NOT EXISTS events (
                     event_id TEXT PRIMARY KEY,
                     event_type TEXT NOT NULL,
                     aggregate_id TEXT NOT NULL,
                     aggregate_type TEXT NOT NULL,
-                    payload TEXT NOT NULL,
+                    payload JSONB NOT NULL,
                     created_at TEXT NOT NULL,
                     idempotency_key TEXT,
-                    metadata TEXT,
-                    sequence INTEGER NOT NULL
+                    metadata JSONB,
+                    sequence SERIAL NOT NULL
                 )
             """)
-            conn.execute("""
+            cur.execute("""
                 CREATE INDEX IF NOT EXISTS idx_aggregate
                 ON events(aggregate_type, aggregate_id)
             """)
-            conn.execute("""
+            cur.execute("""
                 CREATE INDEX IF NOT EXISTS idx_event_type
                 ON events(event_type)
             """)
-            conn.execute("""
+            cur.execute("""
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_idempotency
                 ON events(idempotency_key)
                 WHERE idempotency_key IS NOT NULL
             """)
-            conn.execute("""
+            cur.execute("""
                 CREATE INDEX IF NOT EXISTS idx_created_at
                 ON events(created_at)
             """)
             conn.commit()
+        finally:
+            conn.close()
+
+    def _get_sqlite_conn(self):
+        """Get SQLite connection (persistent for :memory:, new for file-based)"""
+        if self.db_path == ":memory:":
+            if self._sqlite_conn is None:
+                self._sqlite_conn = sqlite3.connect(":memory:")
+            return self._sqlite_conn
+        return sqlite3.connect(self.db_path)
+
+    def _init_sqlite(self):
+        """Create events table in SQLite"""
+        conn = self._get_sqlite_conn()
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                aggregate_id TEXT NOT NULL,
+                aggregate_type TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                idempotency_key TEXT,
+                metadata TEXT,
+                sequence INTEGER NOT NULL
+            )
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_aggregate
+            ON events(aggregate_type, aggregate_id)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_event_type
+            ON events(event_type)
+        """)
+        conn.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_idempotency
+            ON events(idempotency_key)
+            WHERE idempotency_key IS NOT NULL
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_created_at
+            ON events(created_at)
+        """)
+        conn.commit()
 
     def append(self, event: Event) -> bool:
         """
         Append event to immutable ledger.
         Returns True if event was added, False if duplicate (idempotency).
         """
+        if self._use_postgres:
+            return self._append_pg(event)
+        return self._append_sqlite(event)
+
+    def _append_pg(self, event: Event) -> bool:
+        """Append event to PostgreSQL"""
         with self._lock:
-            with sqlite3.connect(self.db_path) as conn:
+            conn = self._get_pg_conn()
+            try:
+                cur = conn.cursor()
+                # Check idempotency
+                if event.idempotency_key:
+                    cur.execute(
+                        "SELECT event_id FROM events WHERE idempotency_key = %s",
+                        (event.idempotency_key,)
+                    )
+                    if cur.fetchone():
+                        return False
+
+                cur.execute("""
+                    INSERT INTO events
+                    (event_id, event_type, aggregate_id, aggregate_type,
+                     payload, created_at, idempotency_key, metadata)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    event.event_id,
+                    event.event_type.value,
+                    event.aggregate_id,
+                    event.aggregate_type,
+                    json.dumps(event.payload),
+                    event.created_at,
+                    event.idempotency_key,
+                    json.dumps(event.metadata),
+                ))
+                conn.commit()
+
+                # Notify subscribers
+                for subscriber in self._subscribers:
+                    try:
+                        subscriber(event)
+                    except Exception as e:
+                        print(f"Subscriber error: {e}")
+
+                return True
+            except Exception:
+                conn.rollback()
+                raise
+            finally:
+                conn.close()
+
+    def _append_sqlite(self, event: Event) -> bool:
+        """Append event to SQLite"""
+        with self._lock:
+            conn = self._get_sqlite_conn()
+            try:
                 # Check idempotency
                 if event.idempotency_key:
                     cursor = conn.execute(
@@ -186,13 +316,12 @@ class CloudEventStore:
                         (event.idempotency_key,)
                     )
                     if cursor.fetchone():
-                        return False  # Duplicate, skip
+                        return False
 
                 # Get next sequence number
                 cursor = conn.execute("SELECT COALESCE(MAX(sequence), 0) + 1 FROM events")
                 sequence = cursor.fetchone()[0]
 
-                # Append event
                 conn.execute("""
                     INSERT INTO events
                     (event_id, event_type, aggregate_id, aggregate_type,
@@ -219,6 +348,9 @@ class CloudEventStore:
                         print(f"Subscriber error: {e}")
 
                 return True
+            finally:
+                if self.db_path != ":memory:":
+                    conn.close()
 
     def get_events(
         self,
@@ -229,6 +361,61 @@ class CloudEventStore:
         limit: Optional[int] = None,
     ) -> List[Event]:
         """Query events with filters"""
+        if self._use_postgres:
+            return self._get_events_pg(aggregate_type, aggregate_id, event_type, since, limit)
+        return self._get_events_sqlite(aggregate_type, aggregate_id, event_type, since, limit)
+
+    def _get_events_pg(self, aggregate_type, aggregate_id, event_type, since, limit) -> List[Event]:
+        """Query events from PostgreSQL"""
+        query = "SELECT event_id, event_type, aggregate_id, aggregate_type, payload, created_at, idempotency_key, metadata FROM events WHERE 1=1"
+        params = []
+
+        if aggregate_type:
+            params.append(aggregate_type)
+            query += f" AND aggregate_type = %s"
+
+        if aggregate_id:
+            params.append(aggregate_id)
+            query += f" AND aggregate_id = %s"
+
+        if event_type:
+            params.append(event_type.value)
+            query += f" AND event_type = %s"
+
+        if since:
+            params.append(since)
+            query += f" AND created_at > %s"
+
+        query += " ORDER BY sequence ASC"
+
+        if limit:
+            params.append(limit)
+            query += f" LIMIT %s"
+
+        conn = self._get_pg_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(query, params)
+            rows = cur.fetchall()
+
+            return [
+                Event(
+                    event_id=row[0],
+                    event_type=EventType(row[1]),
+                    aggregate_id=row[2],
+                    aggregate_type=row[3],
+                    payload=row[4] if isinstance(row[4], dict) else json.loads(row[4]),
+                    created_at=row[5],
+                    idempotency_key=row[6],
+                    metadata=row[7] if isinstance(row[7], dict) else (json.loads(row[7]) if row[7] else {}),
+                )
+                for row in rows
+            ]
+        finally:
+            conn.close()
+
+    def _get_events_sqlite(self, aggregate_type, aggregate_id, event_type, since, limit) -> List[Event]:
+        """Query events from SQLite"""
         query = "SELECT * FROM events WHERE 1=1"
         params = []
 
@@ -253,7 +440,8 @@ class CloudEventStore:
         if limit:
             query += f" LIMIT {limit}"
 
-        with sqlite3.connect(self.db_path) as conn:
+        conn = self._get_sqlite_conn()
+        try:
             conn.row_factory = sqlite3.Row
             cursor = conn.execute(query, params)
             rows = cursor.fetchall()
@@ -271,6 +459,9 @@ class CloudEventStore:
                 )
                 for row in rows
             ]
+        finally:
+            if self.db_path != ":memory:":
+                conn.close()
 
     def subscribe(self, handler: Callable[[Event], None]):
         """Subscribe to all new events"""
@@ -287,6 +478,7 @@ class LocalEventQueue:
     """
     Offline-first event buffer.
     Stores events locally when offline, syncs to CloudEventStore when online.
+    Always uses SQLite (local storage only).
     """
 
     def __init__(self, queue_path: str = "local_events.db"):

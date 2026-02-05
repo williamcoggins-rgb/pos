@@ -23,6 +23,7 @@ httpx>=0.26.0
 python-jose[cryptography]>=3.3.0
 python-multipart>=0.0.6
 passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
 PyJWT>=2.8.0
 
 # Payment Processing
@@ -35,4 +36,3 @@ supabase>=2.3.0
 pytest>=7.4.0
 pytest-asyncio>=0.21.0
 pytest-cov>=4.1.0
-httpx>=0.26.0  # For testing async endpoints

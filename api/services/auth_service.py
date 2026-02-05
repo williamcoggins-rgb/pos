@@ -224,7 +224,7 @@ class AuthService:
         pin: str
     ) -> Tuple[str, str, str]:
         """
-        Login using email and 4-digit PIN
+        Login using email and 4-digit PIN (bcrypt verified)
 
         Args:
             email: User email
@@ -233,7 +233,8 @@ class AuthService:
         Returns:
             (access_token, barber_id, shop_name)
         """
-        import hashlib
+        from passlib.hash import bcrypt
+
         async with httpx.AsyncClient() as client:
             # Look up user by email in barbers table
             response = await client.get(
@@ -253,14 +254,33 @@ class AuthService:
 
             barber = barbers[0]
 
-            # Verify PIN
+            # Verify PIN using bcrypt
             stored_pin_hash = barber.get("pin_hash")
             if not stored_pin_hash:
                 raise Exception("PIN not set. Please complete registration first.")
 
-            pin_hash = hashlib.sha256(pin.encode()).hexdigest()
-            if pin_hash != stored_pin_hash:
-                raise Exception("Invalid email or PIN")
+            # Support both legacy SHA-256 and new bcrypt hashes
+            if stored_pin_hash.startswith("$2"):
+                # bcrypt hash
+                if not bcrypt.verify(pin, stored_pin_hash):
+                    raise Exception("Invalid email or PIN")
+            else:
+                # Legacy SHA-256 hash - verify then auto-upgrade to bcrypt
+                import hashlib
+                legacy_hash = hashlib.sha256(pin.encode()).hexdigest()
+                if legacy_hash != stored_pin_hash:
+                    raise Exception("Invalid email or PIN")
+                # Auto-upgrade to bcrypt
+                new_hash = bcrypt.hash(pin)
+                await client.patch(
+                    f"{self.supabase_url}/rest/v1/barbers?id=eq.{barber.get('id')}",
+                    headers={
+                        **self.headers,
+                        "Authorization": f"Bearer {self.supabase_key}",
+                        "Prefer": "return=minimal"
+                    },
+                    json={"pin_hash": new_hash}
+                )
 
             # Generate JWT token
             user_id = barber.get("id")
@@ -274,7 +294,7 @@ class AuthService:
         pin: str
     ) -> bool:
         """
-        Set or update user's 4-digit PIN
+        Set or update user's 4-digit PIN (bcrypt hashed)
 
         Args:
             user_id: User ID
@@ -283,8 +303,8 @@ class AuthService:
         Returns:
             True if successful
         """
-        import hashlib
-        pin_hash = hashlib.sha256(pin.encode()).hexdigest()
+        from passlib.hash import bcrypt
+        pin_hash = bcrypt.hash(pin)
 
         async with httpx.AsyncClient() as client:
             response = await client.patch(
