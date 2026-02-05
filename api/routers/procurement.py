@@ -1,6 +1,7 @@
 """
 Procurement API endpoints
-Handles warehouse orders with entitlement enforcement
+Handles readiness signals — barber expresses interest, admin reaches out.
+This is NOT an ordering system.
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Header
@@ -11,21 +12,16 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from api.models import (
-    CreateOrderRequest,
-    ProcurementLineItemRequest,
-    OrderResponse,
-    OrderLineItemResponse,
-    MoneyModel,
+    ReadinessSignalRequest,
+    ReadinessSignalResponse,
     ErrorResponse,
 )
 from api.database import (
     get_cloud_store,
     get_entitlement_ledger,
-    get_procurement_service
+    get_procurement_service,
+    get_eligibility_engine,
 )
-from enforcement_middleware import EnforcementMiddleware
-from event_store import Money
-from procurement_service import FulfillmentSLA
 from api.services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/procurement", tags=["Procurement"])
@@ -51,101 +47,49 @@ def get_current_barber(authorization: Optional[str] = Header(None)) -> str:
     return barber_id
 
 
-@router.post("/orders", response_model=OrderResponse)
-async def create_order(
-    request: CreateOrderRequest,
-    current_user: str = Depends(get_current_barber)
+@router.post("/signal", response_model=ReadinessSignalResponse)
+async def signal_readiness(
+    request: ReadinessSignalRequest,
+    current_user: str = Depends(get_current_barber),
 ):
-    """Create a procurement order (with entitlement enforcement)"""
-
-    # Ensure user can only order for themselves
-    if request.barber_id != current_user:
-        raise HTTPException(status_code=403, detail="Cannot create orders for other barbers")
-
+    """
+    Signal that you are ready for procurement access.
+    Administration will be notified and reach out to you via your preferred contact method.
+    """
     try:
-        # Check entitlements
-        ledger = get_entitlement_ledger()
         procurement = get_procurement_service()
-        enforcement = EnforcementMiddleware(ledger, procurement)
 
-        # Validate order before creation
-        line_items_dict = [
-            {
-                "sku": item.sku,
-                "name": item.name,
-                "quantity": item.quantity,
-                "unit_price": {"amount_minor": item.unit_price_cents, "currency": "USD"}
-            }
-            for item in request.line_items
-        ]
-
-        validation = enforcement.validate_order_creation(
-            request.barber_id,
-            line_items_dict
-        )
-
-        if not validation.allowed:
+        # Check if barber already has a pending/active signal
+        if procurement.has_active_signal(current_user):
             raise HTTPException(
-                status_code=403,
-                detail={
-                    "error": "Order blocked",
-                    "reason": validation.reason,
-                    "blocked_by": validation.blocked_by,
-                }
+                status_code=409,
+                detail="You already have an active procurement readiness signal. "
+                       "Our team will reach out soon.",
             )
 
-        # Create order
-        sla = FulfillmentSLA(request.sla)
-        order_id = procurement.create_order(
-            request.barber_id,
-            line_items_dict,
-            sla=sla
+        # Get current score for the signal
+        engine = get_eligibility_engine()
+        barberscore = engine.calculate_barberscore(current_user)
+
+        signal_id = procurement.signal_readiness(
+            barber_id=current_user,
+            tier=barberscore.tier,
+            score=barberscore.score,
+            contact_preference=request.contact_preference,
+            message=request.message,
         )
 
-        # Get order details
-        order = procurement.get_order(order_id)
+        signal = procurement.get_signal(signal_id)
 
-        return OrderResponse(
-            order_id=order.order_id,
-            barber_id=order.barber_id,
-            state=order.state.value,
-            line_items=[
-                OrderLineItemResponse(
-                    sku=item.sku,
-                    name=item.name,
-                    quantity=item.quantity,
-                    unit_price=MoneyModel(
-                        amount_minor=item.unit_price.amount_minor,
-                        currency=item.unit_price.currency
-                    ),
-                    total=MoneyModel(
-                        amount_minor=item.total.amount_minor,
-                        currency=item.total.currency
-                    )
-                )
-                for item in order.line_items
-            ],
-            subtotal=MoneyModel(
-                amount_minor=order.subtotal.amount_minor,
-                currency=order.subtotal.currency
-            ),
-            tax=MoneyModel(
-                amount_minor=order.tax.amount_minor,
-                currency=order.tax.currency
-            ),
-            shipping=MoneyModel(
-                amount_minor=order.shipping.amount_minor,
-                currency=order.shipping.currency
-            ),
-            total=MoneyModel(
-                amount_minor=order.total.amount_minor,
-                currency=order.total.currency
-            ),
-            sla=order.sla.value,
-            created_at=order.created_at,
-            shipped_at=order.shipped_at,
-            delivered_at=order.delivered_at,
-            tracking_number=order.tracking_number,
+        return ReadinessSignalResponse(
+            signal_id=signal.signal_id,
+            barber_id=signal.barber_id,
+            tier=signal.tier,
+            score=signal.score,
+            status=signal.status.value,
+            contact_preference=signal.contact_preference,
+            message=signal.message,
+            created_at=signal.created_at,
         )
 
     except HTTPException:
@@ -154,120 +98,59 @@ async def create_order(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/orders", response_model=List[OrderResponse])
-async def list_orders(
-    current_user: str = Depends(get_current_barber)
+@router.get("/signals", response_model=List[ReadinessSignalResponse])
+async def list_signals(
+    current_user: str = Depends(get_current_barber),
 ):
-    """List all orders for current barber"""
+    """List all your procurement readiness signals and their statuses."""
     try:
         procurement = get_procurement_service()
-        orders = procurement.get_barber_orders(current_user)
+        signals = procurement.get_barber_signals(current_user)
 
         return [
-            OrderResponse(
-                order_id=order.order_id,
-                barber_id=order.barber_id,
-                state=order.state.value,
-                line_items=[
-                    OrderLineItemResponse(
-                        sku=item.sku,
-                        name=item.name,
-                        quantity=item.quantity,
-                        unit_price=MoneyModel(
-                            amount_minor=item.unit_price.amount_minor,
-                            currency=item.unit_price.currency
-                        ),
-                        total=MoneyModel(
-                            amount_minor=item.total.amount_minor,
-                            currency=item.total.currency
-                        )
-                    )
-                    for item in order.line_items
-                ],
-                subtotal=MoneyModel(
-                    amount_minor=order.subtotal.amount_minor,
-                    currency=order.subtotal.currency
-                ),
-                tax=MoneyModel(
-                    amount_minor=order.tax.amount_minor,
-                    currency=order.tax.currency
-                ),
-                shipping=MoneyModel(
-                    amount_minor=order.shipping.amount_minor,
-                    currency=order.shipping.currency
-                ),
-                total=MoneyModel(
-                    amount_minor=order.total.amount_minor,
-                    currency=order.total.currency
-                ),
-                sla=order.sla.value,
-                created_at=order.created_at,
-                shipped_at=order.shipped_at,
-                delivered_at=order.delivered_at,
-                tracking_number=order.tracking_number,
+            ReadinessSignalResponse(
+                signal_id=s.signal_id,
+                barber_id=s.barber_id,
+                tier=s.tier,
+                score=s.score,
+                status=s.status.value,
+                contact_preference=s.contact_preference,
+                message=s.message,
+                created_at=s.created_at,
+                contacted_at=s.contacted_at,
+                resolved_at=s.resolved_at,
             )
-            for order in orders
+            for s in signals
         ]
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/orders/{order_id}", response_model=OrderResponse)
-async def get_order(
-    order_id: str,
-    current_user: str = Depends(get_current_barber)
+@router.get("/signals/{signal_id}", response_model=ReadinessSignalResponse)
+async def get_signal(
+    signal_id: str,
+    current_user: str = Depends(get_current_barber),
 ):
-    """Get order details"""
+    """Get details of a specific readiness signal."""
     try:
         procurement = get_procurement_service()
-        order = procurement.get_order(order_id)
+        signal = procurement.get_signal(signal_id)
 
-        # Ensure user can only view their own orders
-        if order.barber_id != current_user:
-            raise HTTPException(status_code=403, detail="Cannot view other barbers' orders")
+        if signal.barber_id != current_user:
+            raise HTTPException(status_code=403, detail="Cannot view other barbers' signals")
 
-        return OrderResponse(
-            order_id=order.order_id,
-            barber_id=order.barber_id,
-            state=order.state.value,
-            line_items=[
-                OrderLineItemResponse(
-                    sku=item.sku,
-                    name=item.name,
-                    quantity=item.quantity,
-                    unit_price=MoneyModel(
-                        amount_minor=item.unit_price.amount_minor,
-                        currency=item.unit_price.currency
-                    ),
-                    total=MoneyModel(
-                        amount_minor=item.total.amount_minor,
-                        currency=item.total.currency
-                    )
-                )
-                for item in order.line_items
-            ],
-            subtotal=MoneyModel(
-                amount_minor=order.subtotal.amount_minor,
-                currency=order.subtotal.currency
-            ),
-            tax=MoneyModel(
-                amount_minor=order.tax.amount_minor,
-                currency=order.tax.currency
-            ),
-            shipping=MoneyModel(
-                amount_minor=order.shipping.amount_minor,
-                currency=order.shipping.currency
-            ),
-            total=MoneyModel(
-                amount_minor=order.total.amount_minor,
-                currency=order.total.currency
-            ),
-            sla=order.sla.value,
-            created_at=order.created_at,
-            shipped_at=order.shipped_at,
-            delivered_at=order.delivered_at,
-            tracking_number=order.tracking_number,
+        return ReadinessSignalResponse(
+            signal_id=signal.signal_id,
+            barber_id=signal.barber_id,
+            tier=signal.tier,
+            score=signal.score,
+            status=signal.status.value,
+            contact_preference=signal.contact_preference,
+            message=signal.message,
+            created_at=signal.created_at,
+            contacted_at=signal.contacted_at,
+            resolved_at=signal.resolved_at,
         )
 
     except HTTPException:
@@ -276,24 +159,52 @@ async def get_order(
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.post("/orders/{order_id}/cancel", response_model=dict)
-async def cancel_order(
-    order_id: str,
-    current_user: str = Depends(get_current_barber)
+@router.get("/status", response_model=dict)
+async def get_procurement_status(
+    current_user: str = Depends(get_current_barber),
 ):
-    """Cancel an order"""
+    """
+    Get barber's overall procurement readiness status.
+    Returns tier info, whether they've signaled interest, and next steps.
+    """
     try:
         procurement = get_procurement_service()
-        order = procurement.get_order(order_id)
+        engine = get_eligibility_engine()
 
-        # Ensure user can only cancel their own orders
-        if order.barber_id != current_user:
-            raise HTTPException(status_code=403, detail="Cannot cancel other barbers' orders")
+        barberscore = engine.calculate_barberscore(current_user)
+        signals = procurement.get_barber_signals(current_user)
 
-        procurement.cancel_order(order_id, reason="Customer requested")
-        return {"success": True}
+        has_pending = any(s.status.value == "PENDING" for s in signals)
+        has_active = any(s.status.value == "ACTIVE" for s in signals)
+        has_contacted = any(s.status.value == "CONTACTED" for s in signals)
 
-    except HTTPException:
-        raise
+        # Determine next step
+        if has_active:
+            next_step = "Your procurement access is active. Our team will be in touch with available products and pricing."
+        elif has_contacted:
+            next_step = "Our team has reached out to you. Check your email or phone for next steps."
+        elif has_pending:
+            next_step = "Your interest has been noted. Our team will reach out soon."
+        elif barberscore.score >= 50:
+            next_step = "You're eligible for procurement access. Signal your interest to get started."
+        else:
+            next_step = "Keep using the POS to build your BarberScore. Procurement unlocks at Level 1 (50+ points)."
+
+        return {
+            "barber_id": current_user,
+            "tier": barberscore.tier,
+            "score": barberscore.score,
+            "eligible": barberscore.score >= 50,
+            "has_signaled": has_pending or has_contacted or has_active,
+            "signal_status": (
+                "ACTIVE" if has_active
+                else "CONTACTED" if has_contacted
+                else "PENDING" if has_pending
+                else "NONE"
+            ),
+            "next_step": next_step,
+            "signals_count": len(signals),
+        }
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

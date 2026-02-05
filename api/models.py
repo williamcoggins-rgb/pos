@@ -222,48 +222,33 @@ class EntitlementResponse(BaseModel):
 
 
 # ============================================================================
-# Procurement Request/Response Models
+# Procurement Signal Request/Response Models
 # ============================================================================
 
-class ProcurementLineItemRequest(BaseModel):
-    """Line item for procurement order"""
-    sku: str
-    name: str
-    quantity: int = Field(..., ge=1)
-    unit_price_cents: int = Field(..., ge=0)
+class ReadinessSignalRequest(BaseModel):
+    """Request to signal procurement readiness"""
+    contact_preference: str = Field(
+        default="email",
+        description="Preferred contact method: email, phone, or both"
+    )
+    message: str = Field(
+        default="",
+        description="Optional message to administration"
+    )
 
 
-class CreateOrderRequest(BaseModel):
-    """Request to create procurement order"""
+class ReadinessSignalResponse(BaseModel):
+    """Procurement readiness signal response"""
+    signal_id: str
     barber_id: str
-    line_items: List[ProcurementLineItemRequest]
-    sla: str = Field(default="STANDARD", description="STANDARD or PRIORITY")
-
-
-class OrderLineItemResponse(BaseModel):
-    """Order line item response"""
-    sku: str
-    name: str
-    quantity: int
-    unit_price: MoneyModel
-    total: MoneyModel
-
-
-class OrderResponse(BaseModel):
-    """Procurement order response"""
-    order_id: str
-    barber_id: str
-    state: str
-    line_items: List[OrderLineItemResponse]
-    subtotal: MoneyModel
-    tax: MoneyModel
-    shipping: MoneyModel
-    total: MoneyModel
-    sla: str
+    tier: str
+    score: int
+    status: str  # PENDING, CONTACTED, ACTIVE, DECLINED, EXPIRED
+    contact_preference: str = "email"
+    message: str = ""
     created_at: Optional[str] = None
-    shipped_at: Optional[str] = None
-    delivered_at: Optional[str] = None
-    tracking_number: Optional[str] = None
+    contacted_at: Optional[str] = None
+    resolved_at: Optional[str] = None
 
 
 # ============================================================================

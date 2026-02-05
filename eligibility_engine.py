@@ -66,7 +66,11 @@ class EligibilityEngine:
     """
     BarberScore calculation engine with anti-gaming.
     Consumes POS events, produces entitlement events.
+    Includes score snapshot caching to avoid replaying all events on every read.
     """
+
+    # Score cache TTL in seconds (5 minutes)
+    SCORE_CACHE_TTL = 300
 
     def __init__(
         self,
@@ -75,6 +79,9 @@ class EligibilityEngine:
     ):
         self.cloud_store = cloud_store
         self.config_dir = Path(config_dir)
+
+        # Score snapshot cache: barber_id -> (BarberScore, timestamp)
+        self._score_cache: Dict[str, tuple] = {}
 
         # Load configurations
         self.score_rules = self._load_json("score_rules.json")
@@ -87,11 +94,20 @@ class EligibilityEngine:
         with open(path, 'r') as f:
             return json.load(f)
 
-    def calculate_barberscore(self, barber_id: str) -> BarberScore:
+    def calculate_barberscore(self, barber_id: str, force_refresh: bool = False) -> BarberScore:
         """
         Calculate BarberScore for a barber from their event history.
+        Uses cached snapshot if available and fresh (< SCORE_CACHE_TTL).
         Returns BarberScore with tier, metrics, and flags.
         """
+        # Check cache first (unless force refresh)
+        if not force_refresh and barber_id in self._score_cache:
+            cached_score, cached_at = self._score_cache[barber_id]
+            now = datetime.now(timezone.utc)
+            age = (now - cached_at).total_seconds()
+            if age < self.SCORE_CACHE_TTL:
+                return cached_score
+
         # Get all events for this barber
         events = self._get_barber_events(barber_id)
 
@@ -110,7 +126,7 @@ class EligibilityEngine:
         # Determine tier
         tier = self._determine_tier(score)
 
-        return BarberScore(
+        result = BarberScore(
             barber_id=barber_id,
             score=score,
             tier=tier,
@@ -119,13 +135,24 @@ class EligibilityEngine:
             hard_gate_blocks=hard_gate_blocks,
         )
 
+        # Cache the result
+        self._score_cache[barber_id] = (result, datetime.now(timezone.utc))
+
+        return result
+
+    def invalidate_cache(self, barber_id: str):
+        """Invalidate cached score for a barber (called after mutations)."""
+        self._score_cache.pop(barber_id, None)
+
     def update_and_emit_entitlements(self, barber_id: str):
         """
         Calculate BarberScore and emit entitlement events.
         This is the main entry point for score updates.
+        Always force-refreshes the cache since this is a mutation trigger.
         """
-        # Calculate score
-        barberscore = self.calculate_barberscore(barber_id)
+        # Invalidate cache and force recalculation
+        self.invalidate_cache(barber_id)
+        barberscore = self.calculate_barberscore(barber_id, force_refresh=True)
 
         # Emit BARBERSCORE_UPDATED event
         score_event = Event(
@@ -248,9 +275,17 @@ class EligibilityEngine:
                     methods.add(method)
         metrics.payment_methods_used = len(methods)
 
-        # Chargebacks (placeholder - would come from payment processor)
-        metrics.chargeback_count = 0
-        metrics.chargeback_rate = 0.0
+        # Chargebacks from RISK_FLAG_RAISED events (disputes)
+        chargeback_events = [
+            e for e in events
+            if e.event_type == EventType.RISK_FLAG_RAISED
+            and e.payload.get("dispute_status") == "open"
+        ]
+        metrics.chargeback_count = len(chargeback_events)
+        if metrics.transaction_count_total > 0:
+            metrics.chargeback_rate = metrics.chargeback_count / metrics.transaction_count_total
+        else:
+            metrics.chargeback_rate = 0.0
 
         return metrics
 

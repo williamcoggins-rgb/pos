@@ -1,6 +1,7 @@
 """
 Enforcement Middleware
-Gates procurement actions based on BarberScore entitlements.
+Gates actions based on BarberScore entitlements.
+Checks tier-based access and provides entitlement summaries.
 """
 
 from dataclasses import dataclass
@@ -22,8 +23,8 @@ class EnforcementResult:
 
 class EnforcementMiddleware:
     """
-    Entitlement enforcement for procurement operations.
-    Checks tier-based access and caps before allowing actions.
+    Entitlement enforcement for barber operations.
+    Checks tier-based access before allowing actions.
     """
 
     def __init__(
@@ -34,18 +35,11 @@ class EnforcementMiddleware:
         self.entitlement_ledger = entitlement_ledger
         self.procurement_service = procurement_service
 
-    def can_place_order(
-        self,
-        barber_id: str,
-        order_value: Money,
-    ) -> EnforcementResult:
+    def can_access_procurement(self, barber_id: str) -> EnforcementResult:
         """
-        Check if barber can place a procurement order.
-
-        Returns:
-            EnforcementResult with allowed=True if permitted, False with reason if blocked.
+        Check if barber can access procurement features.
+        Requires Level 1+ (score >= 50).
         """
-        # Get current entitlement
         entitlement = self.entitlement_ledger.get_entitlement(barber_id)
 
         if not entitlement:
@@ -55,97 +49,27 @@ class EnforcementMiddleware:
                 blocked_by="access",
             )
 
-        # Check if active
         if not entitlement.is_active:
             reasons = ", ".join(entitlement.blocked_reasons)
             return EnforcementResult(
                 allowed=False,
-                reason=f"Store access locked: {reasons}",
+                reason=f"Access locked: {reasons}",
                 blocked_by="blocked",
                 current_entitlement=entitlement,
             )
 
-        # Check store access
         if not self.entitlement_ledger.has_access(barber_id, "STORE_PREPAID"):
             return EnforcementResult(
                 allowed=False,
-                reason=f"Store access not available for {entitlement.tier}. "
+                reason=f"Procurement not available for {entitlement.tier}. "
                        f"Build your score to Level 1 (50+) to unlock.",
                 blocked_by="access",
                 current_entitlement=entitlement,
             )
 
-        # Check order value cap
-        max_order_value = entitlement.caps.get("max_order_value")
-        if max_order_value is not None:
-            if order_value.amount_minor > max_order_value:
-                return EnforcementResult(
-                    allowed=False,
-                    reason=f"Order value ${order_value.amount_dollars:.2f} exceeds "
-                           f"your cap of ${max_order_value/100:.2f}. "
-                           f"Upgrade to {self._next_tier(entitlement.tier)} to increase limit.",
-                    blocked_by="cap",
-                    current_entitlement=entitlement,
-                )
-
-        # All checks passed
         return EnforcementResult(
             allowed=True,
-            reason="Order approved",
-            current_entitlement=entitlement,
-        )
-
-    def can_use_terms(
-        self,
-        barber_id: str,
-        invoice_amount: Money,
-        outstanding_balance: Money,
-    ) -> EnforcementResult:
-        """
-        Check if barber can use net terms (credit).
-
-        Returns:
-            EnforcementResult with allowed=True if permitted, False with reason if blocked.
-        """
-        # Get current entitlement
-        entitlement = self.entitlement_ledger.get_entitlement(barber_id)
-
-        if not entitlement or not entitlement.is_active:
-            return EnforcementResult(
-                allowed=False,
-                reason="Terms not available. No active entitlement.",
-                blocked_by="access",
-                current_entitlement=entitlement,
-            )
-
-        # Check terms access
-        if not self.entitlement_ledger.has_access(barber_id, "TERMS_ELIGIBLE"):
-            return EnforcementResult(
-                allowed=False,
-                reason=f"Net terms not available for {entitlement.tier}. "
-                       f"Build your score to Level 3 (85+) to unlock.",
-                blocked_by="access",
-                current_entitlement=entitlement,
-            )
-
-        # Check outstanding balance cap
-        max_outstanding = entitlement.caps.get("max_terms_outstanding")
-        if max_outstanding is not None:
-            new_balance = outstanding_balance.amount_minor + invoice_amount.amount_minor
-            if new_balance > max_outstanding:
-                available = max_outstanding - outstanding_balance.amount_minor
-                return EnforcementResult(
-                    allowed=False,
-                    reason=f"Outstanding balance limit exceeded. "
-                           f"Available credit: ${available/100:.2f}. "
-                           f"Pay down existing invoices or upgrade to {self._next_tier(entitlement.tier)}.",
-                    blocked_by="cap",
-                    current_entitlement=entitlement,
-                )
-
-        return EnforcementResult(
-            allowed=True,
-            reason="Terms approved",
+            reason="Procurement access available",
             current_entitlement=entitlement,
         )
 
@@ -154,14 +78,14 @@ class EnforcementMiddleware:
         entitlement = self.entitlement_ledger.get_entitlement(barber_id)
 
         if not entitlement or not entitlement.is_active:
-            return "STANDARD"  # No discount
+            return "STANDARD"
 
         if "BEST_PRICING" in entitlement.access_list:
-            return "BEST"  # 15% discount
+            return "BEST"
         elif "BETTER_PRICING" in entitlement.access_list:
-            return "BETTER"  # 10% discount or 5% depending on tier
+            return "BETTER"
         else:
-            return "STANDARD"  # No discount
+            return "STANDARD"
 
     def get_fulfillment_sla(self, barber_id: str) -> str:
         """Get fulfillment SLA for barber"""
@@ -171,16 +95,13 @@ class EnforcementMiddleware:
             return "STANDARD"
 
         if "PRIORITY_FULFILLMENT" in entitlement.access_list:
-            return "PRIORITY"  # 24hr SLA
+            return "PRIORITY"
         else:
-            return "STANDARD"  # 3-5 days
+            return "STANDARD"
 
     def get_entitlement_summary(self, barber_id: str) -> Dict[str, Any]:
         """
         Get comprehensive entitlement summary for UI display.
-
-        Returns:
-            Dictionary with current tier, access, caps, next tier info, etc.
         """
         entitlement = self.entitlement_ledger.get_entitlement(barber_id)
 
@@ -228,7 +149,7 @@ class EnforcementMiddleware:
             "Level 1": "Level 2",
             "Level 2": "Level 3",
             "Level 3": "Level 4",
-            "Level 4": "Level 4",  # Already at max
+            "Level 4": "Level 4",
         }
         return tier_progression.get(current_tier, "Unknown")
 
@@ -236,25 +157,19 @@ class EnforcementMiddleware:
         self,
         entitlement: CurrentEntitlement
     ) -> Tuple[str, int]:
-        """
-        Calculate progress to next tier.
-
-        Returns:
-            (next_tier_name, points_needed)
-        """
+        """Calculate progress to next tier."""
         tier_thresholds = {
             "Level 0": 50,
             "Level 1": 70,
             "Level 2": 85,
             "Level 3": 95,
-            "Level 4": 100,  # Max tier
+            "Level 4": 100,
         }
 
         current = entitlement.tier
         next_tier = self._next_tier(current)
 
         if next_tier == current:
-            # Already at max
             return (next_tier, 0)
 
         next_threshold = tier_thresholds[next_tier]
@@ -262,39 +177,8 @@ class EnforcementMiddleware:
 
         return (next_tier, points_needed)
 
-    def validate_order_creation(
-        self,
-        barber_id: str,
-        line_items: List[Dict[str, Any]],
-    ) -> EnforcementResult:
-        """
-        Validate order before creation (convenience method).
-
-        Calculates total and checks enforcement.
-        """
-        # Calculate order total
-        total = 0
-        for item in line_items:
-            unit_price = item["unit_price"]["amount_minor"]
-            quantity = item["quantity"]
-            total += unit_price * quantity
-
-        # Add tax and shipping estimate
-        tax = int(total * 0.08)
-        shipping = 1000  # $10 standard
-        total_with_fees = total + tax + shipping
-
-        order_value = Money(amount_minor=total_with_fees)
-
-        return self.can_place_order(barber_id, order_value)
-
     def get_unlock_requirements(self, barber_id: str, desired_tier: str) -> Dict[str, Any]:
-        """
-        Get requirements to unlock a specific tier.
-
-        Returns:
-            Dictionary with current status, requirements, and gap analysis.
-        """
+        """Get requirements to unlock a specific tier."""
         entitlement = self.entitlement_ledger.get_entitlement(barber_id)
         current_score = entitlement.score if entitlement else 0
 
@@ -302,31 +186,29 @@ class EnforcementMiddleware:
             "Level 1": {
                 "score": 50,
                 "benefits": [
-                    "Procurement store access",
-                    "Prepaid orders up to $500",
+                    "Procurement access (signal readiness)",
+                    "Administration outreach for supplies",
                 ],
             },
             "Level 2": {
                 "score": 70,
                 "benefits": [
-                    "5% discount on supplies",
-                    "Orders up to $1,500",
+                    "Better pricing on supplies",
+                    "Higher order limits",
                 ],
             },
             "Level 3": {
                 "score": 85,
                 "benefits": [
-                    "10% discount on supplies",
-                    "Net-30 terms up to $1,000",
-                    "Orders up to $3,000",
+                    "Net-30 payment terms",
+                    "Premium pricing",
                 ],
             },
             "Level 4": {
                 "score": 95,
                 "benefits": [
-                    "15% discount on supplies",
-                    "Net-60 terms up to $5,000",
-                    "Priority fulfillment (24hr SLA)",
+                    "Best pricing available",
+                    "Priority fulfillment",
                     "Dedicated account manager",
                 ],
             },
@@ -344,3 +226,8 @@ class EnforcementMiddleware:
             "benefits": requirements.get("benefits", []),
             "is_unlocked": current_score >= required_score,
         }
+
+    # Legacy compatibility
+    def validate_order_creation(self, barber_id: str, line_items) -> EnforcementResult:
+        """Legacy compat — redirects to procurement access check."""
+        return self.can_access_procurement(barber_id)

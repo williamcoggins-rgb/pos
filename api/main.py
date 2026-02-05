@@ -107,7 +107,7 @@ async def stripe_webhook(request: Request):
     import json as json_module
     import logging
     from event_store import Event, EventType, generate_event_id, utc_now
-    from api.database import get_cloud_store
+    from api.database import get_cloud_store, get_eligibility_engine
 
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
@@ -130,10 +130,16 @@ async def stripe_webhook(request: Request):
     stripe_event_id = event.get("id", "")
     cloud_store = get_cloud_store()
 
+    # Track barber_id for auto-score recalculation
+    affected_barber_id = data.get("metadata", {}).get("barber_id")
+    should_recalc_score = False
+
     if event_type == "payment_intent.succeeded":
         payment_intent_id = data.get("id")
         amount = data.get("amount", 0)
         sale_id = data.get("metadata", {}).get("sale_id", payment_intent_id)
+        if not affected_barber_id:
+            affected_barber_id = data.get("metadata", {}).get("barber_id")
 
         store_event = Event(
             event_id=generate_event_id(),
@@ -143,6 +149,7 @@ async def stripe_webhook(request: Request):
             payload={
                 "payment_intent_id": payment_intent_id,
                 "sale_id": sale_id,
+                "barber_id": affected_barber_id,
                 "amount": {"amount_minor": amount, "currency": "USD"},
                 "tip": {"amount_minor": 0, "currency": "USD"},
                 "captured_at": utc_now(),
@@ -153,6 +160,7 @@ async def stripe_webhook(request: Request):
             metadata={"stripe_event_id": stripe_event_id},
         )
         cloud_store.append(store_event)
+        should_recalc_score = True
         logging.info(f"Payment succeeded: {payment_intent_id} for {amount} cents")
 
     elif event_type == "payment_intent.payment_failed":
@@ -168,6 +176,7 @@ async def stripe_webhook(request: Request):
             payload={
                 "payment_intent_id": payment_intent_id,
                 "sale_id": sale_id,
+                "barber_id": affected_barber_id,
                 "error": error_msg,
                 "source": "stripe_webhook",
             },
@@ -193,6 +202,7 @@ async def stripe_webhook(request: Request):
                 "charge_id": charge_id,
                 "payment_intent_id": payment_intent_id,
                 "sale_id": sale_id,
+                "barber_id": affected_barber_id,
                 "amount_refunded": {"amount_minor": amount_refunded, "currency": "USD"},
                 "source": "stripe_webhook",
             },
@@ -201,6 +211,7 @@ async def stripe_webhook(request: Request):
             metadata={"stripe_event_id": stripe_event_id},
         )
         cloud_store.append(store_event)
+        should_recalc_score = True
         logging.info(f"Refund processed: {charge_id} for {amount_refunded} cents")
 
     elif event_type == "charge.dispute.created":
@@ -215,6 +226,7 @@ async def stripe_webhook(request: Request):
             aggregate_type="dispute",
             payload={
                 "charge_id": charge_id,
+                "barber_id": affected_barber_id,
                 "amount": {"amount_minor": amount, "currency": "USD"},
                 "reason": reason,
                 "dispute_status": "open",
@@ -225,6 +237,7 @@ async def stripe_webhook(request: Request):
             metadata={"stripe_event_id": stripe_event_id},
         )
         cloud_store.append(store_event)
+        should_recalc_score = True
         logging.warning(f"Dispute created: {charge_id} for {amount} cents - {reason}")
 
     elif event_type == "charge.dispute.closed":
@@ -238,6 +251,7 @@ async def stripe_webhook(request: Request):
             aggregate_type="dispute",
             payload={
                 "charge_id": charge_id,
+                "barber_id": affected_barber_id,
                 "dispute_status": status,
                 "source": "stripe_webhook",
             },
@@ -246,7 +260,17 @@ async def stripe_webhook(request: Request):
             metadata={"stripe_event_id": stripe_event_id},
         )
         cloud_store.append(store_event)
+        should_recalc_score = True
         logging.info(f"Dispute closed: {charge_id} - {status}")
+
+    # Auto-recalculate BarberScore when risk-impacting events arrive
+    if should_recalc_score and affected_barber_id:
+        try:
+            engine = get_eligibility_engine()
+            engine.update_and_emit_entitlements(affected_barber_id)
+            logging.info(f"Auto-recalculated score for {affected_barber_id} after {event_type}")
+        except Exception as e:
+            logging.error(f"Score auto-recalc failed for {affected_barber_id}: {e}")
 
     return {"received": True, "type": event_type}
 

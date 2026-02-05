@@ -118,8 +118,39 @@ class EntitlementLedger:
                 conn.close()
 
     def subscribe_to_events(self, cloud_store: CloudEventStore):
-        """Subscribe to entitlement events from cloud store"""
+        """
+        Subscribe to entitlement events from cloud store.
+        Also replays existing events to build initial state.
+        """
+        self._cloud_store_ref = cloud_store
+        self._initialized = False
+
+        # Subscribe for future events
         cloud_store.subscribe(self._handle_event)
+
+        # Replay existing events to build initial state
+        self._ensure_initialized()
+
+    def _ensure_initialized(self):
+        """Replay events from store if ledger is empty (lazy init)."""
+        if getattr(self, '_initialized', False):
+            return
+
+        store = getattr(self, '_cloud_store_ref', None)
+        if store is None:
+            return
+
+        events = store.get_events()
+        for event in events:
+            if event.event_type in [
+                EventType.BARBERSCORE_UPDATED,
+                EventType.ENTITLEMENT_GRANTED,
+                EventType.ENTITLEMENT_REVOKED,
+                EventType.ENTITLEMENT_UPDATED,
+            ]:
+                self._handle_event(event)
+
+        self._initialized = True
 
     def _handle_event(self, event: Event):
         """Handle entitlement-related events"""

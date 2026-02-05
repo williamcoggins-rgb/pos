@@ -226,32 +226,29 @@ class APIClient {
     }
 
     // ============================================
-    // PROCUREMENT
+    // PROCUREMENT (Signal-Based)
     // ============================================
 
-    async createOrder(lineItems, sla = 'STANDARD') {
-        return this.request('/api/procurement/orders', {
+    async getProcurementStatus() {
+        return this.request('/api/procurement/status');
+    }
+
+    async signalReadiness(contactPreference = 'email', message = '') {
+        return this.request('/api/procurement/signal', {
             method: 'POST',
             body: JSON.stringify({
-                barber_id: this.barberId,
-                line_items: lineItems,
-                sla,
+                contact_preference: contactPreference,
+                message,
             }),
         });
     }
 
-    async listOrders() {
-        return this.request('/api/procurement/orders');
+    async listSignals() {
+        return this.request('/api/procurement/signals');
     }
 
-    async getOrder(orderId) {
-        return this.request(`/api/procurement/orders/${orderId}`);
-    }
-
-    async cancelOrder(orderId) {
-        return this.request(`/api/procurement/orders/${orderId}/cancel`, {
-            method: 'POST',
-        });
+    async getSignal(signalId) {
+        return this.request(`/api/procurement/signals/${signalId}`);
     }
 
     // ============================================

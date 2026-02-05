@@ -830,6 +830,101 @@
             border-bottom: none;
         }
 
+        /* Locked/Coming Soon tiers */
+        .tier-card.locked {
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .tier-card.locked .tier-header,
+        .tier-card.locked .tier-benefits {
+            filter: blur(4px);
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .tier-card.locked .tier-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.6);
+            z-index: 2;
+        }
+
+        .tier-overlay-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .tier-overlay-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        /* Procurement signal button */
+        .signal-btn {
+            width: 100%;
+            padding: 16px;
+            background: #DC2626;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background 0.2s;
+        }
+
+        .signal-btn:hover {
+            background: #B91C1C;
+        }
+
+        .signal-btn:disabled {
+            background: #9CA3AF;
+            cursor: not-allowed;
+        }
+
+        .signal-status {
+            background: #F3F4F6;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .signal-status .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .signal-status .status-badge.pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .signal-status .status-badge.contacted {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .signal-status .status-badge.active {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
         /* Passcode Screen */
         .passcode-screen {
             position: fixed;
@@ -1899,78 +1994,106 @@
             <div class="content">
                 <div class="stat-card">
                     <div class="stat-label">Your Current Tier</div>
-                    <div class="stat-value" id="currentTier">Tier 0</div>
+                    <div class="stat-value" id="currentTier">Level 0</div>
+                </div>
+
+                <!-- Procurement Signal Section -->
+                <div id="procurementSignalArea" style="margin-top: 16px;">
+                    <div class="stat-card" id="procurementNextStep">
+                        <div class="stat-label">Next Step</div>
+                        <div id="procurementNextStepText" style="font-size: 14px; color: #666; margin-top: 4px;">
+                            Keep using the POS to build your BarberScore. Procurement unlocks at Level 1.
+                        </div>
+                    </div>
+                    <div id="signalStatusArea" style="display:none;">
+                        <div class="signal-status">
+                            <span class="status-badge pending" id="signalBadge">PENDING</span>
+                            <div style="font-size: 14px; color: #666;" id="signalMessage">
+                                Our team has been notified and will reach out soon.
+                            </div>
+                        </div>
+                    </div>
+                    <button class="signal-btn" id="signalReadinessBtn" style="display:none;" onclick="signalProcurementReadiness()">
+                        I'm Ready for Procurement Access
+                    </button>
                 </div>
 
                 <h2 style="font-size: 18px; font-weight: 600; margin: 24px 0 16px;">Tier Levels</h2>
                 <div class="tier-list">
                     <div class="tier-card" id="tier0">
                         <div class="tier-header">
-                            <span class="tier-name">Level 0 - Beginning</span>
-                            <span class="tier-range">0-200 pts</span>
+                            <span class="tier-name">Level 0 - Getting Started</span>
+                            <span class="tier-range">Starter</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>POS access only</li>
-                            <li>No procurement access</li>
-                            <li>Focus on building your foundation</li>
+                            <li>Full POS access</li>
+                            <li>Accept card and cash payments</li>
+                            <li>Transaction tracking and analytics</li>
+                            <li>Build your BarberScore</li>
                         </ul>
                     </div>
 
-                    <div class="tier-card" id="tier1">
+                    <div class="tier-card locked" id="tier1">
+                        <div class="tier-overlay">
+                            <span class="tier-overlay-icon">Coming Soon</span>
+                            <span class="tier-overlay-text">Level 1 details being finalized</span>
+                        </div>
                         <div class="tier-header">
-                            <span class="tier-name">Level 1 - Building</span>
-                            <span class="tier-range">201-400 pts</span>
+                            <span class="tier-name">Level 1</span>
+                            <span class="tier-range">--</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>Prepaid warehouse orders</li>
-                            <li>Up to $500 per order</li>
+                            <li>Procurement access</li>
+                            <li>Supply ordering</li>
                             <li>Standard pricing</li>
-                            <li>Email support</li>
                         </ul>
                     </div>
 
-                    <div class="tier-card" id="tier2">
+                    <div class="tier-card locked" id="tier2">
+                        <div class="tier-overlay">
+                            <span class="tier-overlay-icon">Coming Soon</span>
+                            <span class="tier-overlay-text">Level 2 details being finalized</span>
+                        </div>
                         <div class="tier-header">
-                            <span class="tier-name">Level 2 - Growing</span>
-                            <span class="tier-range">401-600 pts</span>
+                            <span class="tier-name">Level 2</span>
+                            <span class="tier-range">--</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>5-10% discount on products</li>
-                            <li>Up to $1,500 per order</li>
-                            <li>Faster order processing</li>
+                            <li>Better pricing</li>
+                            <li>Higher limits</li>
                             <li>Priority support</li>
-                            <li>Free shipping</li>
                         </ul>
                     </div>
 
-                    <div class="tier-card" id="tier3">
+                    <div class="tier-card locked" id="tier3">
+                        <div class="tier-overlay">
+                            <span class="tier-overlay-icon">Coming Soon</span>
+                            <span class="tier-overlay-text">Level 3 details being finalized</span>
+                        </div>
                         <div class="tier-header">
-                            <span class="tier-name">Level 3 - Scaling</span>
-                            <span class="tier-range">601-750 pts</span>
+                            <span class="tier-name">Level 3</span>
+                            <span class="tier-range">--</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>Net-30 payment terms</li>
-                            <li>Up to $3,000 per order</li>
-                            <li>$1,000 credit line</li>
-                            <li>10-15% discount</li>
-                            <li>Quarterly business review</li>
-                            <li>Exclusive product access</li>
+                            <li>Premium benefits</li>
+                            <li>Extended terms</li>
+                            <li>Exclusive access</li>
                         </ul>
                     </div>
 
-                    <div class="tier-card" id="tier4">
+                    <div class="tier-card locked" id="tier4">
+                        <div class="tier-overlay">
+                            <span class="tier-overlay-icon">Coming Soon</span>
+                            <span class="tier-overlay-text">Level 4 details being finalized</span>
+                        </div>
                         <div class="tier-header">
-                            <span class="tier-name">Level 4 - Mastery</span>
-                            <span class="tier-range">751-850 pts</span>
+                            <span class="tier-name">Level 4</span>
+                            <span class="tier-range">--</span>
                         </div>
                         <ul class="tier-benefits">
-                            <li>15% discount on all products</li>
-                            <li>Up to $10,000 per order</li>
-                            <li>$5,000 credit line</li>
-                            <li>Net-60 payment terms</li>
-                            <li>Priority fulfillment</li>
-                            <li>Dedicated account manager</li>
-                            <li>VIP partnership opportunities</li>
+                            <li>Elite benefits</li>
+                            <li>VIP partnership</li>
+                            <li>Dedicated support</li>
                         </ul>
                     </div>
                 </div>
@@ -4799,39 +4922,81 @@
             const currentTierEl = document.getElementById('currentTier');
             if (currentTierEl) currentTierEl.textContent = `Level ${currentTierNum} - ${stage.name}`;
 
-            // Highlight current tier
-            for (let i = 0; i <= 4; i++) {
-                const tierCard = document.getElementById(`tier${i}`);
-                if (tierCard) {
-                    if (i === currentTierNum) {
-                        tierCard.classList.add('active');
-                    } else {
-                        tierCard.classList.remove('active');
-                    }
-                }
+            // Only Level 0 is fully visible — tiers 1-4 stay locked/blurred via CSS class
+            // Highlight current tier (only tier0 can be .active since others are .locked)
+            const tier0Card = document.getElementById('tier0');
+            if (tier0Card) {
+                tier0Card.classList.add('active');
             }
 
-            // Fetch authoritative entitlements from backend
+            // Update procurement signal UI
+            const signalBtn = document.getElementById('signalReadinessBtn');
+            const signalStatusArea = document.getElementById('signalStatusArea');
+            const nextStepText = document.getElementById('procurementNextStepText');
+
             if (apiClient.isAuthenticated()) {
-                apiClient.getEntitlements().then(entitlements => {
-                    // Extract tier number from tier string (e.g., "Level 2" → 2)
-                    const tierMatch = entitlements.tier.match(/\d+/);
-                    const backendTier = tierMatch ? parseInt(tierMatch[0]) : 0;
+                // Fetch procurement status from backend
+                apiClient.request('/api/procurement/status').then(status => {
+                    if (currentTierEl) currentTierEl.textContent = status.tier || `Level ${currentTierNum}`;
+                    if (nextStepText) nextStepText.textContent = status.next_step;
 
-                    if (currentTierEl) currentTierEl.textContent = entitlements.tier;
-
-                    // Highlight correct tier
-                    for (let i = 0; i <= 4; i++) {
-                        const tierCard = document.getElementById(`tier${i}`);
-                        if (tierCard) {
-                            if (i === backendTier) {
-                                tierCard.classList.add('active');
-                            } else {
-                                tierCard.classList.remove('active');
+                    if (status.has_signaled) {
+                        // Show signal status
+                        if (signalBtn) signalBtn.style.display = 'none';
+                        if (signalStatusArea) {
+                            signalStatusArea.style.display = 'block';
+                            const badge = document.getElementById('signalBadge');
+                            const msg = document.getElementById('signalMessage');
+                            if (badge) {
+                                badge.textContent = status.signal_status;
+                                badge.className = 'status-badge ' + status.signal_status.toLowerCase();
+                            }
+                            if (msg) {
+                                if (status.signal_status === 'ACTIVE') {
+                                    msg.textContent = 'Your procurement access is active!';
+                                } else if (status.signal_status === 'CONTACTED') {
+                                    msg.textContent = 'Our team has reached out. Check your email or phone.';
+                                } else {
+                                    msg.textContent = 'Our team has been notified and will reach out soon.';
+                                }
                             }
                         }
+                    } else if (status.eligible) {
+                        // Show signal button
+                        if (signalBtn) signalBtn.style.display = 'block';
+                        if (signalStatusArea) signalStatusArea.style.display = 'none';
+                    } else {
+                        // Not eligible yet
+                        if (signalBtn) signalBtn.style.display = 'none';
+                        if (signalStatusArea) signalStatusArea.style.display = 'none';
                     }
                 }).catch(() => { /* localStorage fallback already displayed */ });
+            }
+        }
+
+        async function signalProcurementReadiness() {
+            const btn = document.getElementById('signalReadinessBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Sending...';
+            }
+            try {
+                await apiClient.request('/api/procurement/signal', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        contact_preference: 'email',
+                        message: '',
+                    }),
+                });
+                // Refresh procurement section
+                updateProcurement();
+            } catch (err) {
+                alert(err.message || 'Failed to signal readiness. Please try again.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "I'm Ready for Procurement Access";
+                }
             }
         }
 
