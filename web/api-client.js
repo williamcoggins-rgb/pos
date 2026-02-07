@@ -32,6 +32,11 @@ class APIClient {
             throw new Error(error.detail || error.error || 'Request failed');
         }
 
+        // Handle 204 No Content responses
+        if (response.status === 204) {
+            return { success: true };
+        }
+
         return response.json();
     }
 
@@ -121,6 +126,47 @@ class APIClient {
 
     async getSale(saleId) {
         return this.request(`/api/pos/sales/${saleId}`);
+    }
+
+    // Catalog
+    async listCatalogItems(category = null, includeInactive = false) {
+        let url = '/api/catalog/items';
+        const params = [];
+        if (category) params.push(`category=${encodeURIComponent(category)}`);
+        if (includeInactive) params.push('include_inactive=true');
+        if (params.length > 0) url += '?' + params.join('&');
+        return this.request(url);
+    }
+
+    async createCatalogItem(name, priceCents, category = 'service', description = null, durationMinutes = null) {
+        return this.request('/api/catalog/items', {
+            method: 'POST',
+            body: JSON.stringify({
+                name,
+                price_cents: priceCents,
+                category,
+                description,
+                duration_minutes: durationMinutes,
+            }),
+        });
+    }
+
+    async updateCatalogItem(itemId, updates) {
+        // updates can include: name, price_cents, category, description, duration_minutes
+        return this.request(`/api/catalog/items/${itemId}`, {
+            method: 'PUT',
+            body: JSON.stringify(updates),
+        });
+    }
+
+    async deleteCatalogItem(itemId) {
+        return this.request(`/api/catalog/items/${itemId}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async getCatalogItem(itemId) {
+        return this.request(`/api/catalog/items/${itemId}`);
     }
 
     // Eligibility

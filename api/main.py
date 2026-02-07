@@ -15,7 +15,7 @@ import stripe
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from api.config import get_settings
-from api.routers import pos, eligibility, procurement, auth, stripe_connect
+from api.routers import pos, eligibility, procurement, auth, stripe_connect, catalog
 
 settings = get_settings()
 
@@ -70,6 +70,7 @@ app.include_router(stripe_connect.router)
 app.include_router(pos.router)
 app.include_router(eligibility.router)
 app.include_router(procurement.router)
+app.include_router(catalog.router)
 
 
 # Health check endpoint

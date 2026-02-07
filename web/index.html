@@ -2997,7 +2997,6 @@
                     // Login successful
                     localStorage.setItem('auth_token', data.access_token);
                     localStorage.setItem('barber_id', data.barber_id);
-                    localStorage.setItem('backend_registered', 'true');
 
                     // Set user profile
                     userProfile = {
@@ -3016,6 +3015,7 @@
                     // Hide onboarding and start app
                     hideOnboarding();
                     renderServices();
+                    loadServicesFromBackend(); // Load services from backend API
                     updateDashboard();
                     updateAnalytics();
                     updateBarberScore();
@@ -3114,7 +3114,6 @@
             try {
                 // Generate a secure random password (user doesn't need to know it - they use 4-digit PIN)
                 const randomPassword = crypto.randomUUID().slice(0, 16) + 'Aa1!';
-                localStorage.setItem('backend_password', randomPassword);
 
                 console.log('Registering with backend...');
                 const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/register', {
@@ -3135,7 +3134,6 @@
                     // Save auth token
                     localStorage.setItem('auth_token', data.access_token);
                     localStorage.setItem('barber_id', data.barber_id);
-                    localStorage.setItem('backend_registered', 'true');
                     localStorage.setItem('temp_profile', JSON.stringify(profile));
                     localStorage.setItem('onboarding_step', 'stripe_redirect');
 
@@ -3310,6 +3308,7 @@
             // Hide onboarding and start app
             hideOnboarding();
             renderServices();
+            loadServicesFromBackend(); // Load services from backend API
             updateDashboard();
             updateAnalytics();
             updateBarberScore();
@@ -3324,8 +3323,6 @@
             try {
                 // Generate a secure random password (user doesn't need to know it - they use 4-digit passcode)
                 const randomPassword = crypto.randomUUID().slice(0, 16) + 'Aa1!';
-                // Store password for potential login retry
-                localStorage.setItem('backend_password', randomPassword);
 
                 console.log('Sending registration request...');
                 const response = await fetch('https://pos-production-fd37.up.railway.app/api/auth/register', {
@@ -3344,7 +3341,6 @@
 
                 if (response.ok) {
                     localStorage.setItem('auth_token', data.access_token);
-                    localStorage.setItem('backend_registered', 'true');
                     localStorage.setItem('barber_id', data.barber_id);
                     console.log('Backend registration successful! Token saved.');
                     return true;
@@ -3380,7 +3376,6 @@
 
                 if (response.ok) {
                     localStorage.setItem('auth_token', data.access_token);
-                    localStorage.setItem('backend_registered', 'true');
                     localStorage.setItem('barber_id', data.barber_id);
                     console.log('Backend login successful! Token saved.');
                     return true;
@@ -3445,6 +3440,7 @@
                         // Load app after successful login
                         loadProfile();
                         renderServices();
+                        loadServicesFromBackend(); // Load services from backend API
                         updateDashboard();
                         updateAnalytics();
                         updateBarberScore();
@@ -3820,6 +3816,33 @@
             `).join('');
         }
 
+        // Load services from backend API
+        async function loadServicesFromBackend() {
+            if (!apiClient.isAuthenticated()) {
+                console.log('Not authenticated, using localStorage services');
+                return;
+            }
+
+            try {
+                const items = await apiClient.listCatalogItems();
+                // Transform backend format to frontend format
+                services = items.map(item => ({
+                    item_id: item.item_id,
+                    name: item.name,
+                    price: item.price.amount_minor / 100,
+                    category: item.category,
+                    description: item.description,
+                    duration_minutes: item.duration_minutes,
+                }));
+                localStorage.setItem('services', JSON.stringify(services));
+                renderServices();
+                console.log(`Loaded ${services.length} services from backend`);
+            } catch (error) {
+                console.error('Failed to load services from backend:', error);
+                // Keep using localStorage services as fallback
+            }
+        }
+
         function showAddServiceModal() {
             currentEditingService = null;
             document.getElementById('serviceModalTitle').textContent = 'Add Service';
@@ -3837,7 +3860,7 @@
             document.getElementById('serviceModal').classList.add('active');
         }
 
-        function saveService() {
+        async function saveService() {
             const name = document.getElementById('serviceName').value.trim();
             const price = parseFloat(document.getElementById('servicePrice').value);
 
@@ -3846,27 +3869,77 @@
                 return;
             }
 
-            if (currentEditingService !== null) {
-                services[currentEditingService] = { name, price };
-            } else {
-                services.push({ name, price });
-            }
+            const priceCents = Math.round(price * 100);
 
-            localStorage.setItem('services', JSON.stringify(services));
-            renderServices();
-            closeServiceModal();
+            try {
+                if (currentEditingService !== null) {
+                    // Update existing service
+                    const existingService = services[currentEditingService];
+                    if (existingService.item_id && apiClient.isAuthenticated()) {
+                        const updated = await apiClient.updateCatalogItem(existingService.item_id, {
+                            name,
+                            price_cents: priceCents,
+                        });
+                        services[currentEditingService] = {
+                            item_id: updated.item_id,
+                            name: updated.name,
+                            price: updated.price.amount_minor / 100,
+                            category: updated.category,
+                            description: updated.description,
+                            duration_minutes: updated.duration_minutes,
+                        };
+                    } else {
+                        // Fallback for local-only service
+                        services[currentEditingService] = { name, price };
+                    }
+                } else {
+                    // Create new service
+                    if (apiClient.isAuthenticated()) {
+                        const created = await apiClient.createCatalogItem(name, priceCents);
+                        services.push({
+                            item_id: created.item_id,
+                            name: created.name,
+                            price: created.price.amount_minor / 100,
+                            category: created.category,
+                            description: created.description,
+                            duration_minutes: created.duration_minutes,
+                        });
+                    } else {
+                        // Fallback for offline
+                        services.push({ name, price });
+                    }
+                }
+
+                localStorage.setItem('services', JSON.stringify(services));
+                renderServices();
+                closeServiceModal();
+                showToast('success', 'Service saved', `${name} has been saved`);
+            } catch (error) {
+                console.error('Failed to save service:', error);
+                showToast('error', 'Save failed', error.message || 'Could not save service to server');
+            }
         }
 
         function deleteService(index) {
-            const serviceName = services[index].name;
+            const service = services[index];
+            const serviceName = service.name;
             showConfirm(
                 'Delete Service',
                 `Are you sure you want to delete "${serviceName}"? This cannot be undone.`,
-                () => {
-                    services.splice(index, 1);
-                    localStorage.setItem('services', JSON.stringify(services));
-                    renderServices();
-                    showToast('success', 'Service deleted', `${serviceName} has been removed`);
+                async () => {
+                    try {
+                        // Delete from backend if authenticated and has item_id
+                        if (service.item_id && apiClient.isAuthenticated()) {
+                            await apiClient.deleteCatalogItem(service.item_id);
+                        }
+                        services.splice(index, 1);
+                        localStorage.setItem('services', JSON.stringify(services));
+                        renderServices();
+                        showToast('success', 'Service deleted', `${serviceName} has been removed`);
+                    } catch (error) {
+                        console.error('Failed to delete service:', error);
+                        showToast('error', 'Delete failed', error.message || 'Could not delete service');
+                    }
                 },
                 'Delete',
                 true
@@ -3953,7 +4026,7 @@
             }
         }
 
-        function completeSale() {
+        async function completeSale() {
             if (cart.length === 0) {
                 showToast('error', 'Cart is empty', 'Add services to cart before completing sale');
                 return;
@@ -3986,8 +4059,41 @@
             const hadAddons = document.getElementById('trackAddons').checked;
 
             const total = cart.reduce((sum, item) => sum + item.price, 0);
+            const catalogItemIds = cart.filter(item => item.item_id).map(item => item.item_id);
+
+            // Try backend-first sale recording
+            let backendSaleId = null;
+            let backendFailed = false;
+
+            if (apiClient.isAuthenticated()) {
+                try {
+                    // Create sale on backend
+                    const sale = await apiClient.createSale();
+                    backendSaleId = sale.sale_id;
+
+                    // Add line items
+                    for (const item of cart) {
+                        await apiClient.addLineItem(
+                            backendSaleId,
+                            item.name,
+                            1,
+                            Math.round(item.price * 100)
+                        );
+                    }
+
+                    // Process payment (CASH for now - card payments handled separately)
+                    await apiClient.processPayment(backendSaleId, 'CASH');
+
+                    console.log('Sale recorded on backend:', backendSaleId);
+                } catch (error) {
+                    console.error('Backend sale failed, falling back to local:', error);
+                    backendFailed = true;
+                }
+            }
+
+            // Store in localStorage (as cache or primary if backend failed)
             const transaction = {
-                id: Date.now(),
+                id: backendSaleId || Date.now(),
                 date: new Date().toISOString(),
                 services: [...cart],
                 total: total,
@@ -3996,7 +4102,10 @@
                 hadRetail: hadRetail,
                 hadAddons: hadAddons,
                 noShow: false,
-                cancelled: false
+                cancelled: false,
+                catalogItemIds: catalogItemIds,
+                backendSaleId: backendSaleId,
+                syncedToBackend: !backendFailed && !!backendSaleId,
             };
 
             transactions.push(transaction);
@@ -4043,9 +4152,10 @@
             }
 
             // Show success toast with score info
+            const offlineNote = backendFailed ? ' (offline)' : '';
             showToast(
                 'success',
-                `$${total.toFixed(2)} Sale Complete!`,
+                `$${total.toFixed(2)} Sale Complete!${offlineNote}`,
                 `Score: ${newScore} (+${scoreDiff}) • ${newStage.name} • ${trackingText}`,
                 6000
             );
